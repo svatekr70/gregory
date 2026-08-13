@@ -1,4 +1,4 @@
-import { createDate, formatISOTime } from './date.js'
+import { createDate, formatISOTime, parseDate as parseISO, today } from './date.js'
 import { translationFor } from './i18n.js'
 import type { Locale, LocaleInput, WeekDay } from './types.js'
 
@@ -36,6 +36,60 @@ function supportedCode(code: string): string {
   }
 }
 
+/**
+ * Přečte datum tak, jak ho člověk napíše. Bere ISO tvar, plné datum podle
+ * pořadí polí v locale, i zkratky „13. 8." nebo „13" (doplní se aktuální
+ * měsíc a rok). Volitelný čas na konci se použije, pokud tam je.
+ */
+function parseWritten(text: string, order: Array<'day' | 'month' | 'year'>): Date | null {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+
+  const iso = parseISO(trimmed)
+  if (iso) return iso
+
+  // Čas na konci se odloupne dřív, ať neplete číslice data.
+  let rest = trimmed
+  let hours = 0
+  let minutes = 0
+  const time = /(\d{1,2}):(\d{2})\s*$/.exec(rest)
+  if (time) {
+    hours = Number(time[1])
+    minutes = Number(time[2])
+    if (hours > 23 || minutes > 59) return null
+    rest = rest.slice(0, time.index)
+  }
+
+  const numbers = rest.match(/\d+/g)?.map(Number)
+  if (!numbers?.length || numbers.length > 3) return null
+
+  const now = today()
+  let day = now.getDate()
+  let month = now.getMonth()
+  let year = now.getFullYear()
+
+  if (numbers.length === 3) {
+    order.forEach((field, index) => {
+      const value = numbers[index]!
+      if (field === 'day') day = value
+      else if (field === 'month') month = value - 1
+      else year = value < 100 ? 2000 + value : value
+    })
+  } else if (numbers.length === 2) {
+    // Bez roku: pořadí dne a měsíce se drží locale.
+    const dayFirst = order.indexOf('day') < order.indexOf('month')
+    day = dayFirst ? numbers[0]! : numbers[1]!
+    month = (dayFirst ? numbers[1]! : numbers[0]!) - 1
+  } else {
+    day = numbers[0]!
+  }
+
+  if (month < 0 || month > 11 || day < 1 || day > 31) return null
+  const date = createDate(year, month, day, hours, minutes)
+  // Přetečení typu 31. 2. se nemá tiše překlopit na březen.
+  return date.getMonth() === month && date.getDate() === day ? date : null
+}
+
 function createIntlLocale(requested: string): Locale {
   const code = supportedCode(requested)
   // Popisky jdou z tabulky překladů, zbytek řeší Intl.
@@ -48,9 +102,18 @@ function createIntlLocale(requested: string): Locale {
   const weekdayFormat = new Intl.DateTimeFormat(code, { weekday: 'short' })
   const dateFormat = new Intl.DateTimeFormat(code, { day: 'numeric', month: 'numeric', year: 'numeric' })
 
+  // Pořadí polí v datu: en-US má měsíc první, většina Evropy den.
+  const order = dateFormat
+    .formatToParts(createDate(2026, 10, 25))
+    .filter((part): part is Intl.DateTimeFormatPart & { type: 'day' | 'month' | 'year' } =>
+      part.type === 'day' || part.type === 'month' || part.type === 'year',
+    )
+    .map((part) => part.type)
+
   return {
     code,
     firstDayOfWeek: detectFirstDayOfWeek(code),
+    parseInput: (text) => parseWritten(text, order),
     monthLabel: (date) => monthYearFormat.format(date),
     monthNames: () => Array.from({ length: 12 }, (_, month) => monthFormat.format(createDate(2026, month, 1))),
     weekdayNames: (firstDayOfWeek) =>

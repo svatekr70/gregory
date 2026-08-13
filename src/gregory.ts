@@ -180,6 +180,7 @@ export class Gregory {
       months: options.months ?? (isRangeMode(mode) ? 2 : 1),
       linkedCalendars: options.linkedCalendars ?? false,
       endInput: options.endInput ?? null,
+      allowTyping: options.allowTyping ?? true,
       weekNumbers: options.weekNumbers ?? false,
       showOutsideDays: options.showOutsideDays ?? true,
       weekSelection: options.weekSelection ?? 'off',
@@ -518,7 +519,48 @@ export class Gregory {
       field.addEventListener('focus', this.onInputFocus)
       field.addEventListener('click', this.onInputFocus)
       field.addEventListener('keydown', this.onInputKeydown)
+      if (this.options.allowTyping) field.addEventListener('blur', this.onInputBlur)
     }
+  }
+
+  /**
+   * Přečte, co uživatel do pole napsal. Rozdělený picker bere každé pole
+   * zvlášť, jinak se v jednom poli hledá i oddělovač rozsahu.
+   */
+  private readTyped(field: HTMLInputElement): void {
+    const { locale, mode } = this.options
+    const text = field.value.trim()
+
+    if (!text) {
+      if (this.committed.from || this.committed.to) this.clear()
+      return
+    }
+
+    if (this.endField) {
+      const parsed = locale.parseInput(text)
+      if (!parsed) return this.syncInput()
+      const bound = field === this.endField ? 'to' : 'from'
+      this.setValue({ ...this.committed, [bound]: parsed })
+      return
+    }
+
+    if (isRangeMode(mode)) {
+      const parts = text.split(/\s*(?:–|—|-{1,2}|až|to)\s*/i).filter(Boolean)
+      const from = locale.parseInput(parts[0] ?? '')
+      const to = parts.length > 1 ? locale.parseInput(parts[1] ?? '') : null
+      if (!from && !to) return this.syncInput()
+      this.setValue({ from, to: to ?? (this.options.allowOpenRange ? null : from) })
+      return
+    }
+
+    const parsed = locale.parseInput(text)
+    if (!parsed) return this.syncInput()
+    this.setValue(parsed)
+  }
+
+  private onInputBlur = (event: Event): void => {
+    const field = event.currentTarget
+    if (field instanceof HTMLInputElement) this.readTyped(field)
   }
 
   /** Pole, na kterých picker visí — jedno, nebo dvojice od/do. */
@@ -557,6 +599,14 @@ export class Gregory {
   }
 
   private onInputKeydown = (event: KeyboardEvent): void => {
+    const field = event.currentTarget
+    // Enter napsané datum přečte a zavře; do mřížky se jde šipkou dolů.
+    if (event.key === 'Enter' && this.options.allowTyping && field instanceof HTMLInputElement) {
+      event.preventDefault()
+      this.readTyped(field)
+      this.close()
+      return
+    }
     if (event.key === 'ArrowDown' || event.key === 'Enter') {
       event.preventDefault()
       this.openPanel()
@@ -1539,6 +1589,7 @@ export class Gregory {
       field.removeEventListener('focus', this.onInputFocus)
       field.removeEventListener('click', this.onInputFocus)
       field.removeEventListener('keydown', this.onInputKeydown)
+      field.removeEventListener('blur', this.onInputBlur)
     }
     if (this.trigger) {
       this.trigger.removeEventListener('click', this.onTriggerClick)

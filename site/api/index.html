@@ -180,6 +180,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>weekSelection</code></td><td><code>'off' | 'number' | 'day' | 'both'</code></td><td><code>'off'</code></td><td>Výběr celého týdne jedním klikem.</td></tr>
           <tr><td><code>dropdowns</code></td><td><code>boolean | 'menu'</code></td><td><code>false</code></td><td>Výběr měsíce a roku: nativní <code>&lt;select&gt;</code>, nebo seznam otevřený klikem na caption.</td></tr>
           <tr><td><code>endInput</code></td><td><code>string | HTMLInputElement</code></td><td>—</td><td>Druhé pole pro konec rozsahu.</td></tr>
+          <tr><td><code>allowTyping</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Číst datum napsané rukou do pole.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
@@ -307,6 +308,38 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>allowTyping</code></h3>
+
+      <p>Datum se dá napsat rovnou do pole — zkušený uživatel je napíše rychleji,
+        než naklikne. Čte se při opuštění pole nebo po Enteru.</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Napsané</th><th>Přečte se jako</th></tr></thead>
+        <tbody>
+          <tr><td><code>13. 8. 2026</code></td><td>Plné datum v pořadí podle locale — <code>en-US</code> čeká <code>8/13/2026</code>.</td></tr>
+          <tr><td><code>1.9.2026</code></td><td>Mezery a tvar oddělovače nehrají roli; pole se pak přepíše na kanonický tvar.</td></tr>
+          <tr><td><code>13. 8.</code></td><td>Bez roku — doplní se letošní.</td></tr>
+          <tr><td><code>13</code></td><td>Jen den — doplní se aktuální měsíc a rok.</td></tr>
+          <tr><td><code>13. 8. 26</code></td><td>Dvojciferný rok se rozvine na 2026.</td></tr>
+          <tr><td><code>2026-08-13</code></td><td>ISO tvar projde v každém jazyce.</td></tr>
+          <tr><td><code>13. 8. 2026 14:30</code></td><td>Čas na konci se v <code>datetime</code> režimech použije.</td></tr>
+          <tr><td><code>10. 8. – 14. 8.</code></td><td>Rozsah v jednom poli; jako oddělovač projde pomlčka, „až" i „to".</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Co se přečíst nedá, se zahodí a pole se vrátí na poslední platnou
+        hodnotu — nesmyslný text tedy nikdy nepřepíše to, co bylo předtím.
+        Nesmysl je i <code>31. 2.</code>, datum se nepřetáčí na březen.
+        Vymazání pole hodnotu vymaže.</p>
+
+      <p>U rozděleného pickeru (<code>endInput</code>) se každé pole čte zvlášť,
+        takže do nich jde psát nezávisle. Vypnout jde volbou
+        <code>allowTyping: false</code>, čímž se pole stane jen výstupem.</p>
+
+      <p>Samotné čtení je i na locale: <code>locale.parseInput(text)</code>.</p>
 
       <h3><code>endInput</code></h3>
 

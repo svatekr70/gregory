@@ -43,6 +43,12 @@ export interface Locale {
   weekdayNames(firstDayOfWeek: WeekDay): string[]
   /** Human-facing rendering of one date, used in the input. */
   formatDate(date: Date, withTime: boolean): string
+  /**
+   * Opak `formatDate` — přečte, co uživatel do pole napsal. Pořadí dne,
+   * měsíce a roku se bere z `Intl`, takže „8/13/2026" projde v en-US a
+   * „13. 8. 2026" v češtině.
+   */
+  parseInput(text: string): Date | null
   /** Separator between range bounds in the input. */
   rangeSeparator: string
   labels: {
@@ -120,6 +126,11 @@ export interface GregoryOptions {
    * panel otevře kterékoli z nich. Jen v range režimech.
    */
   endInput?: string | HTMLInputElement | null
+  /**
+   * Čtení data napsaného rukou. Pole se přečte při opuštění nebo Enteru;
+   * nesrozumitelný text se vrátí na poslední platnou hodnotu.
+   */
+  allowTyping?: boolean
   /** Render the panel in place instead of a popover attached to an input. */
   inline?: boolean
   /** Commit on the last click instead of showing Apply/Cancel. */
@@ -167,6 +178,7 @@ export interface ResolvedOptions {
   months: number
   linkedCalendars: boolean
   endInput: string | HTMLInputElement | null
+  allowTyping: boolean
   weekNumbers: boolean
   showOutsideDays: boolean
   weekSelection: WeekSelection
