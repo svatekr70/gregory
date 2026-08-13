@@ -1,0 +1,56 @@
+# Sestaví projektový web ze site/ a nasadí ho na GitHub Pages.
+# Web importuje knihovnu přímo ze src/, takže build zároveň ověří, že se
+# dokumentace pořád opírá o aktuální kód.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  # Ať jde nasazení spustit i ručně, bez commitu.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Souběžná nasazení nemají smysl; poslední vyhrává. Rozdělaný běh se ale
+# nepřerušuje, aby se Pages nezasekly v půlce publikace.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typy a testy hlídají, že se na web nedostane rozbitá verze knihovny.
+      - run: npm run typecheck
+      - run: npm test
+
+      - run: npm run site:build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
