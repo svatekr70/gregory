@@ -52,6 +52,8 @@ export interface MonthContext {
   maxSpan: number | null
   /** Paints a half-picked range as running to the edge of time. */
   openEnded?: boolean | undefined
+  /** Overrides the painted range, e.g. the week under the cursor. */
+  previewRange?: DateRange | null | undefined
   isDisabled?: ((date: Date) => boolean) | undefined
   dayClass?: ((date: Date) => string | null | undefined) | undefined
   /** Overrides "today", so tests do not depend on the clock. */
@@ -60,10 +62,18 @@ export interface MonthContext {
 
 /** Range bounds sorted ascending; `preview` stands in for a missing second bound. */
 function effectiveRange(context: MonthContext): DateRange {
+  // A whole-week preview replaces the selection outright — it is what clicking
+  // right now would produce.
+  if (context.previewRange) return sorted(context.previewRange)
   const { from, to } = context.selection
   const end = to ?? context.preview
   if (!from || !end) return { from, to }
-  return compareDay(from, end) <= 0 ? { from, to: end } : { from: end, to: from }
+  return sorted({ from, to: end })
+}
+
+function sorted({ from, to }: DateRange): DateRange {
+  if (!from || !to) return { from, to }
+  return compareDay(from, to) <= 0 ? { from, to } : { from: to, to: from }
 }
 
 /**

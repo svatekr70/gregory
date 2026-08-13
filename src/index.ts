@@ -47,4 +47,5 @@ export type {
   RangePreset,
   ResolvedOptions,
   WeekDay,
+  WeekSelection,
 } from './core/types.js'

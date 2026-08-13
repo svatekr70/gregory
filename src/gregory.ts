@@ -9,6 +9,7 @@ import {
   isSameDay,
   parseDate,
   startOfDay,
+  startOfWeek,
   today,
   withTimeOf,
 } from './core/date.js'
@@ -97,6 +98,8 @@ export class Gregory {
   /** One month anchor per visible panel, always kept in ascending order. */
   private views: Date[] = [today()]
   private preview: Date | null = null
+  /** Whole week under the cursor, used by the week-picking modes. */
+  private previewWeek: DateRange | null = null
   /** `panelIndex:iso` → day button, so hover can restyle without rebuilding. */
   private dayCells = new Map<string, HTMLButtonElement>()
   private focusedDay: Date = today()
@@ -156,7 +159,7 @@ export class Gregory {
       months: options.months ?? (isRangeMode(mode) ? 2 : 1),
       linkedCalendars: options.linkedCalendars ?? false,
       weekNumbers: options.weekNumbers ?? false,
-      selectableWeeks: options.selectableWeeks ?? false,
+      weekSelection: options.weekSelection ?? 'off',
       dropdowns: options.dropdowns ?? false,
       inline: options.inline ?? false,
       // Only a plain date is complete on the first click. A range still needs its
@@ -334,6 +337,7 @@ export class Gregory {
     this.open = false
     this.element.hidden = true
     this.preview = null
+    this.previewWeek = null
     document.removeEventListener('mousedown', this.onDocumentDown, true)
     document.removeEventListener('keydown', this.onDocumentKeydown, true)
     this.emitter.emit('close', { value: this.getValue() })
@@ -548,9 +552,23 @@ export class Gregory {
 
   private onPanelHover = (event: MouseEvent): void => {
     if (!isRangeMode(this.options.mode)) return
+    const target = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+      '[data-action="day"], [data-action="week"]',
+    )
+    const hovered = target ? parseDate(target.dataset.value ?? null) : null
+
+    // Week pickers preview the whole row, whatever is already selected.
+    const asWeek = target?.dataset.action === 'week' || this.daysPickWeeks()
+    if (asWeek) {
+      const start = hovered ? (target?.dataset.action === 'week' ? hovered : this.weekStartOf(hovered)) : null
+      const next = start ? this.weekRange(start) : null
+      if (isSameDay(next?.from ?? null, this.previewWeek?.from ?? null)) return
+      this.previewWeek = next
+      this.refreshDayStates()
+      return
+    }
+
     if (!this.selection.from || this.selection.to) return
-    const day = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-action="day"]')
-    const hovered = day ? parseDate(day.dataset.value ?? null) : null
     if (isSameDay(hovered, this.preview)) return
     if (hovered === null && this.preview === null) return
 
@@ -709,6 +727,10 @@ export class Gregory {
 
   private pick(date: Date | null): void {
     if (!date || isDayDisabled(date, this.monthContext())) return
+    if (this.daysPickWeeks()) {
+      this.pickWeek(this.weekStartOf(date))
+      return
+    }
 
     if (!isRangeMode(this.options.mode)) {
       this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: null }
@@ -746,24 +768,17 @@ export class Gregory {
    * user clicked, so it follows `firstDayOfWeek` rather than the ISO week.
    */
   private pickWeek(start: Date | null): void {
-    if (!start || !this.canSelectWeeks()) return
-    const { min, max, maxSpan, isDisabled } = this.options
-
-    // A week is 7 days; a shorter maxSpan makes the whole gesture impossible.
-    if (maxSpan !== null && maxSpan < 7) return
-
-    // Clip to min/max so a partially available week still selects its usable part.
-    const first = clampDate(start, min, max)
-    const last = clampDate(addDays(start, 6), min, max)
-    if (compareDay(first, last) > 0) return
-    if (isDisabled?.(first) && isDisabled(last)) return
+    if (!start || !isRangeMode(this.options.mode)) return
+    const week = this.weekRange(start)
+    if (!week) return
 
     this.selection = {
-      from: withTimeOf(first, this.timeFor(this.selection.from)),
-      to: withTimeOf(last, this.timeFor(this.selection.to)),
+      from: withTimeOf(week.from!, this.timeFor(this.selection.from)),
+      to: withTimeOf(week.to!, this.timeFor(this.selection.to)),
     }
-    this.focusedDay = first
+    this.focusedDay = week.from!
     this.preview = null
+    this.previewWeek = null
 
     if (this.options.autoApply) {
       this.committed = { ...this.selection }
@@ -780,9 +795,36 @@ export class Gregory {
     this.render()
   }
 
-  private canSelectWeeks(): boolean {
-    const { selectableWeeks, weekNumbers, mode } = this.options
-    return selectableWeeks && weekNumbers && isRangeMode(mode)
+  /** Week numbers act as buttons. */
+  private weekNumbersPickable(): boolean {
+    const { weekSelection, weekNumbers, mode } = this.options
+    return (weekSelection === 'number' || weekSelection === 'both') && weekNumbers && isRangeMode(mode)
+  }
+
+  /** A click on any day picks that day's whole week. */
+  private daysPickWeeks(): boolean {
+    const { weekSelection, mode } = this.options
+    return (weekSelection === 'day' || weekSelection === 'both') && isRangeMode(mode)
+  }
+
+  /** The selectable span of the week starting at `start`, or null if unusable. */
+  private weekRange(start: Date): DateRange | null {
+    const { min, max, maxSpan, isDisabled } = this.options
+
+    // A week is 7 days; a shorter maxSpan makes the whole gesture impossible.
+    if (maxSpan !== null && maxSpan < 7) return null
+
+    // Clip to min/max so a partially available week still selects its usable part.
+    const first = clampDate(start, min, max)
+    const last = clampDate(addDays(start, 6), min, max)
+    if (compareDay(first, last) > 0) return null
+    if (isDisabled?.(first) && isDisabled(last)) return null
+    return { from: first, to: last }
+  }
+
+  /** First day of the row a date sits in, honouring `firstDayOfWeek`. */
+  private weekStartOf(date: Date): Date {
+    return startOfWeek(date, this.options.firstDayOfWeek)
   }
 
   /** Drops one end of the range, keeping the other one whichever side it sits on. */
@@ -812,6 +854,7 @@ export class Gregory {
       max: this.options.max,
       maxSpan: isRangeMode(this.options.mode) ? this.options.maxSpan : null,
       openEnded: isRangeMode(this.options.mode) && this.options.allowOpenRange,
+      previewRange: this.previewWeek,
       isDisabled: this.options.isDisabled,
       dayClass: this.options.dayClass,
     }
@@ -914,7 +957,7 @@ export class Gregory {
 
   private renderWeekNumber(week: WeekRow): HTMLElement {
     const label = String(week.weekNumber)
-    if (!this.canSelectWeeks()) return h('div', { class: 'gr-weeknum' }, [label])
+    if (!this.weekNumbersPickable()) return h('div', { class: 'gr-weeknum' }, [label])
 
     // The row's own first day, so the selection follows firstDayOfWeek.
     return h(

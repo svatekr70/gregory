@@ -115,8 +115,15 @@
               <span>Zkratky rozsahů v postranním panelu <code>presets</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-weeknumbers">
               <span>Čísla týdnů <code>weekNumbers</code></span></label>
-            <label class="switch"><input type="checkbox" id="opt-selectableweeks">
-              <span>Klikem na číslo týdne vybrat celý týden <code>selectableWeeks</code></span></label>
+            <label class="field">
+              <span>Výběr celého týdne <code>weekSelection</code></span>
+              <select id="opt-weekselection">
+                <option value="off" selected>off — vypnuto</option>
+                <option value="number">number — klikem na číslo týdne</option>
+                <option value="day">day — klikem na kterýkoli den</option>
+                <option value="both">both — obojí</option>
+              </select>
+            </label>
             <label class="switch"><input type="checkbox" id="opt-dropdowns">
               <span>Výběr měsíce a roku <code>dropdowns</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-autoapply">
@@ -198,11 +205,19 @@
         </div>
 
         <div class="card example">
-          <h3>Výběr týdne</h3>
-          <p><code>selectableWeeks: true</code> — klikni na číslo týdne vlevo a vybere se
+          <h3>Výběr týdne číslem</h3>
+          <p><code>weekSelection: 'number'</code> — klikni na číslo týdne vlevo a vybere se
             celých sedm dní. Řídí se prvním dnem týdne podle locale.</p>
           <input class="stage-input" id="ex-week" placeholder="Vyber týden…">
           <div class="readout" data-for="ex-week">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Výběr týdne dnem</h3>
+          <p><code>weekSelection: 'day'</code> — klikni na kterýkoli den a vybere se celý
+            jeho týden. Týden pod kurzorem se předsvítí.</p>
+          <input class="stage-input" id="ex-weekday" placeholder="Klikni na libovolný den…">
+          <div class="readout" data-for="ex-weekday">—</div>
         </div>
 
         <div class="card example">

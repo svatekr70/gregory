@@ -198,15 +198,15 @@ describe('week selection', () => {
   })
 
   it('needs week numbers and a range mode', () => {
-    mount({ mode: 'range', presets: false, selectableWeeks: true })
+    mount({ mode: 'range', presets: false, weekSelection: 'number' })
     expect(weeks()).toHaveLength(0)
 
-    mount({ mode: 'date', weekNumbers: true, selectableWeeks: true })
+    mount({ mode: 'date', weekNumbers: true, weekSelection: 'number' })
     expect(weeks()).toHaveLength(0)
   })
 
   it('selects the whole week in one click', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number' })
 
     week('2026-08-10').click()
 
@@ -216,7 +216,7 @@ describe('week selection', () => {
   })
 
   it('follows firstDayOfWeek rather than the ISO week', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, firstDayOfWeek: 0 })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number', firstDayOfWeek: 0 })
 
     // Sunday-first locale: the row runs Sunday to Saturday.
     week('2026-08-09').click()
@@ -227,7 +227,7 @@ describe('week selection', () => {
   })
 
   it('marks the whole week as selected in the grid', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number' })
 
     week('2026-08-10').click()
 
@@ -242,7 +242,7 @@ describe('week selection', () => {
       mode: 'range',
       presets: false,
       weekNumbers: true,
-      selectableWeeks: true,
+      weekSelection: 'number',
       min: '2026-08-12',
       max: '2026-08-14',
     })
@@ -255,7 +255,7 @@ describe('week selection', () => {
   })
 
   it('ignores a week that cannot fit in maxSpan', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, maxSpan: 5 })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number', maxSpan: 5 })
 
     week('2026-08-10').click()
 
@@ -263,7 +263,7 @@ describe('week selection', () => {
   })
 
   it('allows a week when maxSpan is exactly seven days', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, maxSpan: 7 })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number', maxSpan: 7 })
 
     week('2026-08-10').click()
 
@@ -271,7 +271,7 @@ describe('week selection', () => {
   })
 
   it('commits and closes when autoApply is on', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, autoApply: true })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number', autoApply: true })
 
     week('2026-08-10').click()
 
@@ -282,7 +282,7 @@ describe('week selection', () => {
   })
 
   it('waits for Apply otherwise', () => {
-    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true })
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number' })
     const onChange = vi.fn()
     picker.on('change', onChange)
 
@@ -295,12 +295,85 @@ describe('week selection', () => {
     expect((picker.getValue() as DateRange).from).not.toBeNull()
   })
 
+  it('picks the whole week from any day when weekSelection is "day"', () => {
+    mount({ mode: 'range', presets: false, weekSelection: 'day' })
+
+    // A Thursday in the middle of the row.
+    day('2026-08-13').click()
+
+    const selection = picker.getSelection()
+    expect(formatISODate(selection.from!)).toBe('2026-08-10')
+    expect(formatISODate(selection.to!)).toBe('2026-08-16')
+  })
+
+  it('does not need week numbers for the "day" variant', () => {
+    mount({ mode: 'range', presets: false, weekSelection: 'day' })
+    expect(picker.element.querySelector('.gr-weeknum')).toBeNull()
+
+    day('2026-08-13').click()
+    expect(picker.getSelection().from).not.toBeNull()
+  })
+
+  it('offers both affordances with "both"', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'both' })
+    expect(weeks().length).toBeGreaterThan(0)
+
+    day('2026-08-13').click()
+    expect(formatISODate(picker.getSelection().from!)).toBe('2026-08-10')
+
+    week('2026-08-17').click()
+    expect(formatISODate(picker.getSelection().from!)).toBe('2026-08-17')
+  })
+
+  it('keeps plain day picking with "number"', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, weekSelection: 'number' })
+
+    day('2026-08-13').click()
+
+    expect(formatISODate(picker.getSelection().from!)).toBe('2026-08-13')
+    expect(picker.getSelection().to).toBeNull()
+  })
+
+  it('follows firstDayOfWeek when a day picks the week', () => {
+    mount({ mode: 'range', presets: false, weekSelection: 'day', firstDayOfWeek: 0 })
+
+    day('2026-08-13').click()
+
+    expect(formatISODate(picker.getSelection().from!)).toBe('2026-08-09')
+    expect(formatISODate(picker.getSelection().to!)).toBe('2026-08-15')
+  })
+
+  it('previews the hovered week', () => {
+    mount({ mode: 'range', presets: false, weekSelection: 'day' })
+
+    day('2026-08-13').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+
+    expect(day('2026-08-10').classList.contains('is-start')).toBe(true)
+    expect(day('2026-08-12').classList.contains('is-in-range')).toBe(true)
+    expect(day('2026-08-16').classList.contains('is-end')).toBe(true)
+    expect(day('2026-08-17').classList.contains('is-in-range')).toBe(false)
+
+    // Leaving the grid drops the preview again.
+    picker.element.querySelector<HTMLElement>('.gr-foot')!.dispatchEvent(
+      new MouseEvent('mouseover', { bubbles: true }),
+    )
+    expect(day('2026-08-12').classList.contains('is-in-range')).toBe(false)
+  })
+
+  it('ignores whole-week picking outside range modes', () => {
+    mount({ mode: 'date', weekSelection: 'day' })
+
+    day('2026-08-13').click()
+
+    expect((picker.getValue() as Date).getDate()).toBe(13)
+  })
+
   it('keeps the time of day in a datetime range', () => {
     mount({
       mode: 'datetime-range',
       presets: false,
       weekNumbers: true,
-      selectableWeeks: true,
+      weekSelection: 'number',
       minTime: '08:00',
       maxTime: '18:00',
     })

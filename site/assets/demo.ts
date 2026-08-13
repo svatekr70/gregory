@@ -1,5 +1,12 @@
 import { Gregory, addDays, defineElement, formatISODate, formatISOTime, today } from '../../src/index.js'
-import type { DateRange, GregoryOptions, GregoryValue, Mode, RangePreset } from '../../src/index.js'
+import type {
+  DateRange,
+  GregoryOptions,
+  GregoryValue,
+  Mode,
+  RangePreset,
+  WeekSelection,
+} from '../../src/index.js'
 
 defineElement()
 
@@ -59,7 +66,7 @@ const controls = {
   linkedCalendars: $<HTMLInputElement>('#opt-linked'),
   presets: $<HTMLInputElement>('#opt-presets'),
   weekNumbers: $<HTMLInputElement>('#opt-weeknumbers'),
-  selectableWeeks: $<HTMLInputElement>('#opt-selectableweeks'),
+  weekSelection: $<HTMLSelectElement>('#opt-weekselection'),
   dropdowns: $<HTMLInputElement>('#opt-dropdowns'),
   autoApply: $<HTMLInputElement>('#opt-autoapply'),
   inline: $<HTMLInputElement>('#opt-inline'),
@@ -89,7 +96,7 @@ function readOptions(): GregoryOptions & { mode: Mode } {
     linkedCalendars: controls.linkedCalendars.checked,
     presets: controls.presets.checked,
     weekNumbers: controls.weekNumbers.checked,
-    selectableWeeks: controls.selectableWeeks.checked,
+    weekSelection: controls.weekSelection.value as WeekSelection,
     dropdowns: controls.dropdowns.checked,
     autoApply: controls.autoApply.checked,
     inline: controls.inline.checked,
@@ -117,7 +124,7 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
   if (options.linkedCalendars) lines.push('linkedCalendars: true')
   if (options.presets !== range) lines.push(`presets: ${options.presets}`)
   if (options.weekNumbers) lines.push('weekNumbers: true')
-  if (options.selectableWeeks) lines.push('selectableWeeks: true')
+  if (options.weekSelection && options.weekSelection !== 'off') lines.push(`weekSelection: '${options.weekSelection}'`)
   if (options.dropdowns) lines.push('dropdowns: true')
   if (options.autoApply !== (options.mode === 'date')) lines.push(`autoApply: ${options.autoApply}`)
   if (options.inline) lines.push('inline: true')
@@ -189,7 +196,7 @@ function rebuild(): void {
     control.disabled = !hasTime(options.mode)
   }
   // Tyhle se týkají jen rozsahů.
-  for (const control of [controls.maxSpan, controls.allowOpenRange, controls.selectableWeeks]) {
+  for (const control of [controls.maxSpan, controls.allowOpenRange, controls.weekSelection]) {
     control.disabled = !isRange(options.mode)
   }
   controls.linkedCalendars.disabled = Number(controls.months.value) < 2
@@ -208,7 +215,7 @@ function applyModeDefaults(mode: Mode): void {
   controls.autoApply.checked = mode === 'date'
   if (!range) {
     controls.allowOpenRange.checked = false
-    controls.selectableWeeks.checked = false
+    controls.weekSelection.value = 'off'
     controls.maxSpan.value = '0'
   }
 }
@@ -238,7 +245,15 @@ example('ex-week', {
   mode: 'range',
   locale: 'cs',
   weekNumbers: true,
-  selectableWeeks: true,
+  weekSelection: 'number',
+  presets: false,
+  months: 1,
+})
+
+example('ex-weekday', {
+  mode: 'range',
+  locale: 'cs',
+  weekSelection: 'day',
   presets: false,
   months: 1,
 })

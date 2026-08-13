@@ -3,6 +3,9 @@ export type DateLike = Date | string | number | null | undefined
 
 export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range'
 
+/** How a whole week can be picked. See `GregoryOptions.weekSelection`. */
+export type WeekSelection = 'off' | 'number' | 'day' | 'both'
+
 /** Day index as used by `Date#getDay()` — 0 = Sunday … 6 = Saturday. */
 export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
@@ -86,10 +89,11 @@ export interface GregoryOptions {
   linkedCalendars?: boolean
   weekNumbers?: boolean
   /**
-   * Makes the week numbers clickable: one click selects that whole week as a
-   * range. Needs `weekNumbers` and a range mode.
+   * Turns the picker into a week picker. `'number'` makes the week numbers
+   * clickable (needs `weekNumbers`), `'day'` makes any day select its whole
+   * week, `'both'` offers both. Range modes only.
    */
-  selectableWeeks?: boolean
+  weekSelection?: WeekSelection
   /** Month/year `<select>`s in the panel header. */
   dropdowns?: boolean
   /** Render the panel in place instead of a popover attached to an input. */
@@ -133,7 +137,7 @@ export interface ResolvedOptions {
   months: number
   linkedCalendars: boolean
   weekNumbers: boolean
-  selectableWeeks: boolean
+  weekSelection: WeekSelection
   dropdowns: boolean
   inline: boolean
   autoApply: boolean

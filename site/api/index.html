@@ -145,7 +145,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>months</code></td><td><code>number</code></td><td><code>2</code> v range, jinak <code>1</code></td><td>Počet panelů vedle sebe.</td></tr>
           <tr><td><code>linkedCalendars</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Listovat všemi panely najednou místo každým zvlášť.</td></tr>
           <tr><td><code>weekNumbers</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Sloupec s ISO čísly týdnů.</td></tr>
-          <tr><td><code>selectableWeeks</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Klik na číslo týdne vybere celý týden jako rozsah.</td></tr>
+          <tr><td><code>weekSelection</code></td><td><code>'off' | 'number' | 'day' | 'both'</code></td><td><code>'off'</code></td><td>Výběr celého týdne jedním klikem.</td></tr>
           <tr><td><code>dropdowns</code></td><td><code>boolean</code></td><td><code>false</code></td><td><code>&lt;select&gt;</code> pro měsíc a rok.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
@@ -254,17 +254,30 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
 
-      <h3><code>selectableWeeks</code></h3>
+      <h3><code>weekSelection</code></h3>
 
-      <p>Zapne výběr celého týdne jedním klikem — čísla týdnů se stanou tlačítky
-        a klik na ně vybere těch sedm dní jako rozsah. Potřebuje zapnuté
-        <code>weekNumbers</code> a range režim, jinak nedělá nic.</p>
+      <p>Udělá z pickeru výběr týdnů — jeden klik vybere celých sedm dní jako
+        rozsah. Platí jen v range režimech.</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hodnota</th><th>Chování</th></tr></thead>
+        <tbody>
+          <tr><td><code>'off'</code></td><td>Výchozí. Klikání po dnech jako obvykle.</td></tr>
+          <tr><td><code>'number'</code></td><td>Čísla týdnů se stanou tlačítky. Vyžaduje <code>weekNumbers</code>. Dny se vybírají normálně.</td></tr>
+          <tr><td><code>'day'</code></td><td>Klik na <strong>kterýkoli den</strong> vybere jeho týden. Čísla týdnů nejsou potřeba.</td></tr>
+          <tr><td><code>'both'</code></td><td>Obojí zároveň.</td></tr>
+        </tbody>
+      </table>
+      </div>
 
       <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
   mode: <span class="s">'range'</span>,
-  weekNumbers: <span class="k">true</span>,
-  selectableWeeks: <span class="k">true</span>,
+  weekSelection: <span class="s">'day'</span>,
 })</pre>
+
+      <p>V režimu <code>'day'</code> se týden pod kurzorem rovnou předsvítí, takže je
+        před kliknutím vidět, co se vybere.</p>
 
       <p>Vybraný týden se řídí <strong>zobrazeným řádkem</strong>, tedy volbou
         <code>firstDayOfWeek</code>. V české locale to je pondělí až neděle, v
