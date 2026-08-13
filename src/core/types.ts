@@ -65,7 +65,11 @@ export interface Locale {
     /** Prefixes for a range that is open at one end: "od 1. 8.", "do 1. 8." */
     since: string
     until: string
+    /** Shown by the summary line while nothing is picked. */
+    nothingSelected: string
   }
+  /** "7 dní" — plural forms differ per language, so the locale owns this. */
+  formatDayCount(count: number): string
 }
 
 /**
@@ -141,6 +145,11 @@ export interface GregoryOptions {
   dayClass?: ((date: Date) => string | null | undefined) | undefined
   /** Overrides `locale.formatDate` for the input text. */
   format?: ((value: GregoryValue, locale: Locale) => string) | undefined
+  /**
+   * Line inside the panel spelling out what is picked right now. `true` uses
+   * the built-in wording, a function returns your own.
+   */
+  summary?: boolean | ((value: GregoryValue, locale: Locale) => string)
 }
 
 export interface ResolvedOptions {
@@ -171,6 +180,7 @@ export interface ResolvedOptions {
   isDisabled: ((date: Date) => boolean) | undefined
   dayClass: ((date: Date) => string | null | undefined) | undefined
   format: ((value: GregoryValue, locale: Locale) => string) | undefined
+  summary: boolean | ((value: GregoryValue, locale: Locale) => string)
 }
 
 /**

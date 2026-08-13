@@ -81,6 +81,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `isDisabled` | — | `(date) => boolean` |
 | `dayClass` | — | `(date) => string \| null`, např. svátky |
 | `format` | — | `(value, locale) => string` pro text v inputu |
+| `summary` | `false` | řádek v panelu s právě vybranými daty (`true` nebo vlastní funkce) |
 
 ## API
 

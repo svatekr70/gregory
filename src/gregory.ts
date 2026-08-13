@@ -179,6 +179,7 @@ export class Gregory {
       isDisabled: options.isDisabled,
       dayClass: options.dayClass,
       format: options.format,
+      summary: options.summary ?? false,
     }
   }
 
@@ -1001,6 +1002,8 @@ export class Gregory {
     }
 
     const body = h('div', { class: 'gr-body' }, [calendars])
+    const summary = this.renderSummary()
+    if (summary) body.append(summary)
     const footer = this.renderFooter()
     if (footer) body.append(footer)
 
@@ -1181,6 +1184,41 @@ export class Gregory {
     }
     footer.append(actions)
     return footer
+  }
+
+  /**
+   * Wording of the summary line. Describes the working selection, so it keeps
+   * up with clicking rather than waiting for Apply.
+   */
+  summaryText(): string {
+    const { locale, mode, summary } = this.options
+    const value = this.selectedValue()
+    if (typeof summary === 'function') return summary(value, locale)
+
+    const time = hasTime(mode)
+    const { from, to } = this.selection
+    if (!from && !to) return locale.labels.nothingSelected
+    if (!isRangeMode(mode)) return from ? locale.formatDate(from, time) : locale.labels.nothingSelected
+    if (!from) return `${locale.labels.until} ${locale.formatDate(to!, time)}`
+    if (!to) {
+      return this.options.allowOpenRange
+        ? `${locale.labels.since} ${locale.formatDate(from, time)}`
+        : locale.formatDate(from, time)
+    }
+
+    const days = Math.round((+startOfDay(to) - +startOfDay(from)) / 86_400_000) + 1
+    const range = `${locale.formatDate(from, time)}${locale.rangeSeparator}${locale.formatDate(to, time)}`
+    return `${range} · ${locale.formatDayCount(days)}`
+  }
+
+  private renderSummary(): HTMLElement | null {
+    if (!this.options.summary) return null
+    const empty = !this.selection.from && !this.selection.to
+    return h(
+      'div',
+      { class: empty ? 'gr-summary is-empty' : 'gr-summary', role: 'status', 'aria-live': 'polite' },
+      [this.summaryText()],
+    )
   }
 
   /** One labelled time control per range bound. */

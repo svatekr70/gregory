@@ -35,8 +35,23 @@ function supportedCode(code: string): string {
   }
 }
 
+/**
+ * Plural forms of "day". Czech needs three (1 den / 2 dny / 5 dní), so the
+ * count goes through `Intl.PluralRules` rather than a naive `n === 1` check.
+ */
+const DAY_FORMS: Record<string, Partial<Record<Intl.LDMLPluralRule, string>>> = {
+  cs: { one: 'den', few: 'dny', many: 'dne', other: 'dní' },
+  sk: { one: 'deň', few: 'dni', many: 'dňa', other: 'dní' },
+  pl: { one: 'dzień', few: 'dni', many: 'dni', other: 'dni' },
+  de: { one: 'Tag', other: 'Tage' },
+  en: { one: 'day', other: 'days' },
+}
+
 function createIntlLocale(requested: string): Locale {
   const code = supportedCode(requested)
+  const language = code.split('-')[0]?.toLowerCase() ?? 'en'
+  const forms = DAY_FORMS[language] ?? DAY_FORMS.en!
+  const plural = new Intl.PluralRules(code)
   const monthYearFormat = new Intl.DateTimeFormat(code, { month: 'long', year: 'numeric' })
   const monthFormat = new Intl.DateTimeFormat(code, { month: 'long' })
   const weekdayFormat = new Intl.DateTimeFormat(code, { weekday: 'short' })
@@ -59,6 +74,7 @@ function createIntlLocale(requested: string): Locale {
       }),
     formatDate: (date, withTime) =>
       withTime ? `${dateFormat.format(date)} ${formatISOTime(date)}` : dateFormat.format(date),
+    formatDayCount: (count) => `${count} ${forms[plural.select(count)] ?? forms.other ?? ''}`.trim(),
     rangeSeparator: ' – ',
     labels: czech
       ? {
@@ -78,6 +94,7 @@ function createIntlLocale(requested: string): Locale {
           openEnd: 'Bez konce',
           since: 'od',
           until: 'do',
+          nothingSelected: 'Nic nevybráno',
         }
       : {
           previousMonth: 'Previous month',
@@ -96,6 +113,7 @@ function createIntlLocale(requested: string): Locale {
           openEnd: 'No end',
           since: 'from',
           until: 'until',
+          nothingSelected: 'Nothing selected',
         },
   }
 }

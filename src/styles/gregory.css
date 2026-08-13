@@ -389,6 +389,20 @@
   cursor: not-allowed;
 }
 
+/* -------------------------------------------------------------- souhrn */
+
+.gr-summary {
+  padding: 8px 12px;
+  border-top: 1px solid var(--gr-border);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.gr-summary.is-empty {
+  color: var(--gr-muted);
+}
+
 /* --------------------------------------------------------------- footer */
 
 .gr-foot {

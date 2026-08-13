@@ -163,6 +163,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>isDisabled</code></td><td><code>(date: Date) =&gt; boolean</code></td><td>—</td><td>Zakáže konkrétní dny.</td></tr>
           <tr><td><code>dayClass</code></td><td><code>(date: Date) =&gt; string | null</code></td><td>—</td><td>Přidá vlastní třídu dni.</td></tr>
           <tr><td><code>format</code></td><td><code>(value, locale) =&gt; string</code></td><td>—</td><td>Vlastní text do inputu.</td></tr>
+          <tr><td><code>summary</code></td><td><code>boolean | (value, locale) =&gt; string</code></td><td><code>false</code></td><td>Řádek v panelu s právě vybranými daty.</td></tr>
         </tbody>
       </table>
       </div>
@@ -408,6 +409,32 @@ picker.<span class="t">getValue</span>()
           pozdější než <code>maxTime</code>) picker prohodí místo toho, aby
           znepřístupnil celý den.</p>
       </div>
+
+      <h3><code>summary</code></h3>
+
+      <p>Přidá do panelu řádek, který slovy říká, co je právě vybrané. Hodí se
+        hlavně u inline pickeru, kde není input, do kterého by se hodnota psala.</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#kalendar'</span>, {
+  mode: <span class="s">'range'</span>,
+  inline: <span class="k">true</span>,
+  summary: <span class="k">true</span>,
+})
+<span class="c">// „10. 8. 2026 – 16. 8. 2026 · 7 dní"</span></pre>
+
+      <p>Řádek sleduje <strong>rozpracovaný výběr</strong>, ne potvrzenou hodnotu —
+        mění se hned při klikání. Prázdný stav hlásí „Nic nevybráno" a nese třídu
+        <code>.gr-summary.is-empty</code>. Otevřený rozsah se píše jako
+        <code>od 10. 8. 2026</code>.</p>
+
+      <p>Počet dní se skloňuje přes <code>Intl.PluralRules</code>, takže česky
+        vyjde <em>1 den</em>, <em>2 dny</em> i <em>7 dní</em> správně. Skloňování
+        vlastního jazyka jde dodat přes <code>locale.formatDayCount</code>.</p>
+
+      <p>Vlastní znění nahradí to vestavěné:</p>
+      <pre class="code">summary: (value) =&gt; value?.to ? <span class="s">`Rezervace na ${dny(value)} dní`</span> : <span class="s">'Vyber odjezd'</span></pre>
+
+      <p>Text je dostupný i programově přes <code>picker.summaryText()</code>.</p>
 
       <h3><code>format</code></h3>
       <p>Přebíjí text zapsaný do inputu. Dostane potvrzenou hodnotu a rozřešené locale.</p>

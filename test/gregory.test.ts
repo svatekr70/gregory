@@ -134,6 +134,91 @@ describe('range mode', () => {
   })
 })
 
+describe('summary line', () => {
+  const summary = (): string => picker.element.querySelector('.gr-summary')?.textContent ?? ''
+
+  it('is off by default', () => {
+    mount({ mode: 'range', presets: false })
+    expect(picker.element.querySelector('.gr-summary')).toBeNull()
+  })
+
+  it('says so while nothing is picked', () => {
+    mount({ mode: 'range', presets: false, summary: true })
+    expect(summary()).toBe('Nic nevybráno')
+    expect(picker.element.querySelector('.gr-summary')?.classList.contains('is-empty')).toBe(true)
+  })
+
+  it('follows the working selection, not the committed value', () => {
+    mount({ mode: 'range', presets: false, summary: true })
+
+    day('2026-08-10').click()
+    expect(summary()).toContain('10')
+    expect((picker.getValue() as DateRange).from).toBeNull()
+
+    day('2026-08-16').click()
+    expect(summary()).toContain('16')
+  })
+
+  it('counts the days with the right plural form', () => {
+    mount({ mode: 'range', presets: false, summary: true })
+
+    day('2026-08-10').click()
+    day('2026-08-16').click()
+    expect(summary()).toContain('7 dní')
+
+    day('2026-08-10').click()
+    day('2026-08-11').click()
+    expect(summary()).toContain('2 dny')
+
+    day('2026-08-10').click()
+    day('2026-08-10').click()
+    expect(summary()).toContain('1 den')
+  })
+
+  it('uses English plurals for an English locale', () => {
+    mount({ mode: 'range', presets: false, summary: true, locale: 'en-GB' })
+
+    day('2026-08-10').click()
+    day('2026-08-11').click()
+    expect(summary()).toContain('2 days')
+
+    day('2026-08-10').click()
+    day('2026-08-10').click()
+    expect(summary()).toContain('1 day')
+  })
+
+  it('spells out an open range', () => {
+    mount({ mode: 'range', presets: false, summary: true, allowOpenRange: true })
+
+    day('2026-08-10').click()
+    expect(summary()).toMatch(/^od /)
+
+    picker.element.querySelector<HTMLButtonElement>('[data-action="open-start"]')!.click()
+    expect(summary()).toMatch(/^do /)
+  })
+
+  it('shows a single date in date mode', () => {
+    mount({ mode: 'date', summary: true })
+    day('2026-08-13').click()
+    picker.openPanel()
+
+    expect(summary()).toContain('13')
+    expect(summary()).not.toContain('dní')
+  })
+
+  it('accepts a custom formatter', () => {
+    mount({
+      mode: 'range',
+      presets: false,
+      summary: (value) => (value && !(value instanceof Date) && value.from ? 'něco vybráno' : 'zatím nic'),
+    })
+
+    expect(summary()).toBe('zatím nic')
+    day('2026-08-10').click()
+    expect(summary()).toBe('něco vybráno')
+  })
+})
+
 describe('outside days', () => {
   const cells = (): Element[] => [...picker.element.querySelectorAll('.gr-grid > .gr-day, .gr-grid > .gr-day-empty')]
 
