@@ -3,6 +3,12 @@ export type DateLike = Date | string | number | null | undefined
 
 export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range' | 'multiple' | 'month' | 'year'
 
+/** Meze času pro jeden den, jak je vrací `GregoryOptions.timeWindow`. */
+export interface TimeWindow {
+  min?: string | number | null
+  max?: string | number | null
+}
+
 /** Proč picker hodnotu odmítl. */
 export type InvalidReason = 'min' | 'max' | 'disabled' | 'maxSpan' | 'minSpan' | 'unreadable'
 
@@ -187,6 +193,13 @@ export interface GregoryOptions {
   /** Latest selectable time of day, `'HH:MM'`. Inclusive. */
   maxTime?: string | number | null
   /**
+   * Časové okno pro konkrétní den — v sobotu se otevírá jindy než v úterý.
+   * Co funkce neuvede (`undefined`), zůstává na `minTime`/`maxTime`; `null`
+   * naopak mez pro ten den ruší. `null` místo celého okna znamená „nic
+   * zvláštního".
+   */
+  timeWindow?: ((date: Date) => TimeWindow | null | undefined) | undefined
+  /**
    * Pod touto šířkou okna se panel místo popoveru otevře přes celou obrazovku
    * i s podkladem. `null` to vypne.
    */
@@ -242,6 +255,7 @@ export interface ResolvedOptions {
   /** Minutes since midnight, or null for no bound. */
   minTime: number | null
   maxTime: number | null
+  timeWindow: ((date: Date) => TimeWindow | null | undefined) | undefined
   fullscreenBelow: number | null
   opens: 'left' | 'right' | 'center'
   drops: 'down' | 'up' | 'auto'

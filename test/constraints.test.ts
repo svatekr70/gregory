@@ -233,3 +233,62 @@ describe('stopAtDisabled', () => {
     expect(day('2026-08-14').disabled).toBe(true)
   })
 })
+
+describe('timeWindow', () => {
+  // 2026-08-13 je čtvrtek, 2026-08-15 sobota.
+  const shorterOnSaturday = (date: Date) =>
+    date.getDay() === 6 ? { min: '09:00', max: '12:00' } : { min: '08:00', max: '18:00' }
+
+  const select = (action: string): HTMLSelectElement =>
+    picker.element.querySelector<HTMLSelectElement>(`[data-action="${action}"]`)!
+
+  it('nabídne hodiny podle vybraného dne', () => {
+    open({ mode: 'datetime', timeWindow: shorterOnSaturday })
+
+    day('2026-08-13').click()
+    expect([...select('hour-from').options].map((option) => option.value)).toEqual(
+      ['8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'],
+    )
+
+    day('2026-08-15').click()
+    expect([...select('hour-from').options].map((option) => option.value)).toEqual(['9', '10', '11', '12'])
+  })
+
+  it('srovná čas, když se přesune do dne s užším oknem', () => {
+    open({ mode: 'datetime', timeWindow: shorterOnSaturday })
+
+    day('2026-08-13').click()
+    const hours = select('hour-from')
+    hours.value = '17'
+    hours.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(picker.getSelection().from?.getHours()).toBe(17)
+
+    day('2026-08-15').click()
+    expect(picker.getSelection().from?.getHours()).toBe(12)
+  })
+
+  it('dá každému konci rozsahu jeho vlastní okno', () => {
+    open({ mode: 'datetime-range', timeWindow: shorterOnSaturday })
+
+    day('2026-08-13').click()
+    day('2026-08-15').click()
+
+    expect([...select('hour-from').options].map((option) => option.value)[0]).toBe('8')
+    expect([...select('hour-to').options].map((option) => option.value)).toEqual(['9', '10', '11', '12'])
+  })
+
+  it('nechá neuvedenou mez na globální hodnotě', () => {
+    open({
+      mode: 'datetime',
+      minTime: '08:00',
+      maxTime: '18:00',
+      timeWindow: (date) => (date.getDate() === 13 ? { max: '10:00' } : null),
+    })
+
+    day('2026-08-13').click()
+    expect([...select('hour-from').options].map((option) => option.value)).toEqual(['8', '9', '10'])
+
+    day('2026-08-14').click()
+    expect([...select('hour-from').options].map((option) => option.value).at(-1)).toBe('18')
+  })
+})

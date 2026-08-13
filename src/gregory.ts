@@ -227,6 +227,7 @@ export class Gregory {
       timeStep: options.timeStep ?? 5,
       timeUi: options.timeUi ?? 'select',
       ...resolveTimeBounds(options.minTime, options.maxTime),
+      timeWindow: options.timeWindow,
       fullscreenBelow: options.fullscreenBelow === undefined ? 480 : options.fullscreenBelow,
       opens: options.opens ?? 'right',
       drops: options.drops ?? 'auto',
@@ -1189,12 +1190,30 @@ export class Gregory {
   }
 
   /**
-   * Time carried over to a freshly picked day. An existing bound keeps its own
-   * time; a new one starts at the beginning of the allowed window.
+   * Časové meze pro jeden konkrétní den. Bez `timeWindow` jsou všude stejné,
+   * s ním si každý den řekne o své — pondělní ordinace končí jindy než
+   * sobotní. Co funkce neuvede, zůstává na globálních mezích.
    */
-  private timeFor(bound: Date | null): Date | null {
+  private timeBounds(date: Date | null): { minTime: number | null; maxTime: number | null } {
+    const { timeWindow, minTime, maxTime } = this.options
+    if (!timeWindow || !date) return { minTime, maxTime }
+    const window = timeWindow(date)
+    if (!window) return { minTime, maxTime }
+    return resolveTimeBounds(
+      window.min === undefined ? minTime : window.min,
+      window.max === undefined ? maxTime : window.max,
+    )
+  }
+
+  /**
+   * Time carried over to a freshly picked day. An existing bound keeps its own
+   * time; a new one starts at the beginning of the allowed window. `day` je den,
+   * na který se čas přenáší — jeho okno rozhoduje.
+   */
+  private timeFor(bound: Date | null, day: Date | null = bound): Date | null {
     if (!hasTime(this.options.mode)) return bound
-    const { timeStep, minTime, maxTime } = this.options
+    const { timeStep } = this.options
+    const { minTime, maxTime } = this.timeBounds(day ?? bound)
     const minutes = normaliseTimeOfDay(bound ? minutesOfDay(bound) : (minTime ?? 0), timeStep, minTime, maxTime)
     return withTimeOfDay(bound ?? today(), minutes)
   }
@@ -1204,7 +1223,8 @@ export class Gregory {
     const current = this.selection[bound]
     if (!current) return
 
-    const { timeStep, minTime, maxTime } = this.options
+    const { timeStep } = this.options
+    const { minTime, maxTime } = this.timeBounds(current)
     const normalised = normaliseTimeOfDay(minutes, timeStep, minTime, maxTime)
     const next: DateRange = { ...this.selection, [bound]: withTimeOfDay(current, normalised) }
 
@@ -1235,13 +1255,13 @@ export class Gregory {
     }
 
     if (!isRangeMode(this.options.mode)) {
-      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: null }
+      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: null }
     } else if (!this.selection.from || this.selection.to) {
-      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: null }
+      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: null }
     } else if (compareDay(date, this.selection.from) < 0) {
-      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: this.selection.from }
+      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: this.selection.from }
     } else {
-      this.selection = { ...this.selection, to: withTimeOf(date, this.timeFor(this.selection.to)) }
+      this.selection = { ...this.selection, to: withTimeOf(date, this.timeFor(this.selection.to, date)) }
     }
 
     this.focusedDay = date
@@ -1275,8 +1295,8 @@ export class Gregory {
     if (!week) return
 
     this.selection = {
-      from: withTimeOf(week.from!, this.timeFor(this.selection.from)),
-      to: withTimeOf(week.to!, this.timeFor(this.selection.to)),
+      from: withTimeOf(week.from!, this.timeFor(this.selection.from, week.from)),
+      to: withTimeOf(week.to!, this.timeFor(this.selection.to, week.to)),
     }
     this.focusedDay = week.from!
     this.preview = null
@@ -1877,8 +1897,9 @@ export class Gregory {
   }
 
   private renderTimeInput(bound: 'from' | 'to'): HTMLElement {
-    const { timeStep, minTime, maxTime } = this.options
+    const { timeStep } = this.options
     const value = this.selection[bound]
+    const { minTime, maxTime } = this.timeBounds(value)
     return h('input', {
       type: 'time',
       class: 'gr-time',
@@ -1897,8 +1918,9 @@ export class Gregory {
    * would drop the drag — so the values are patched in place instead.
    */
   private renderTimeSliders(bound: 'from' | 'to'): HTMLElement {
-    const { locale, timeStep, minTime, maxTime } = this.options
+    const { locale, timeStep } = this.options
     const value = this.selection[bound]
+    const { minTime, maxTime } = this.timeBounds(value)
     const current = value ? minutesOfDay(value) : (minTime ?? 0)
     const hours = hourOptions(timeStep, minTime, maxTime, current)
     const activeHour = Math.floor(current / 60)
@@ -1935,10 +1957,11 @@ export class Gregory {
 
   /** Writes the current time back into the sliders without rebuilding them. */
   private syncTimeSliders(bound: 'from' | 'to'): void {
-    const { timeStep, minTime, maxTime } = this.options
+    const { timeStep } = this.options
     const value = this.selection[bound]
     if (!value) return
 
+    const { minTime, maxTime } = this.timeBounds(value)
     const current = minutesOfDay(value)
     const hour = Math.floor(current / 60)
     const minutes = minuteOptions(hour, timeStep, minTime, maxTime, current)
@@ -1960,8 +1983,9 @@ export class Gregory {
   }
 
   private renderTimeSelects(bound: 'from' | 'to'): HTMLElement {
-    const { locale, timeStep, minTime, maxTime } = this.options
+    const { locale, timeStep } = this.options
     const value = this.selection[bound]
+    const { minTime, maxTime } = this.timeBounds(value)
     const current = value ? minutesOfDay(value) : null
     const pad = (n: number): string => String(n).padStart(2, '0')
 
