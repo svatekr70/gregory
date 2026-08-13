@@ -101,14 +101,29 @@ const CSS_VARS = [
 const cssInputs = CSS_VARS.map((variable) => ({ ...variable, input: $<HTMLInputElement>(`#${variable.id}`) }))
 const cssSnippet = $('#css-snippet')
 
+// Rozbalený kalendář rovnou u ovládání, aby změny šly vidět bez otevírání
+// popoveru. Jeden měsíc, ať se vejde do panelu.
+const cssPreview = new Gregory($('#css-preview'), {
+  mode: 'date',
+  locale: 'cs',
+  inline: true,
+  presets: false,
+  autoApply: true,
+  // Souhrn ukáže vliv --gr-pad a --gr-font-size i mimo mřížku.
+  summary: true,
+  value: today(),
+})
+
 function applyAppearance(): void {
-  const target = current?.element
   const changed: string[] = []
 
   for (const { name, unit, fallback, input } of cssInputs) {
     const value = input.value.trim()
-    if (value === '') target?.style.removeProperty(name)
-    else target?.style.setProperty(name, value + unit)
+    for (const panel of [current?.element, cssPreview.element]) {
+      if (!panel) continue
+      if (value === '') panel.style.removeProperty(name)
+      else panel.style.setProperty(name, value + unit)
+    }
     if (value !== fallback) changed.push(`  ${name}: ${value === '' ? 'dle panelu' : value + unit};`)
   }
 

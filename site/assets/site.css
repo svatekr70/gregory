@@ -609,6 +609,19 @@ footer {
   font-size: 13.5px;
 }
 
+/* Živý náhled uvnitř panelu s proměnnými — u velkých hodnot se roluje. */
+.css-preview {
+  overflow-x: auto;
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+}
+
+/* Bez tohohle by se panel srazil na šířku sloupce a poslední dny by se
+   ořízly, místo aby šlo odrolovat. */
+.css-preview .gr {
+  max-width: none;
+}
+
 .switch {
   display: flex;
   align-items: flex-start;
