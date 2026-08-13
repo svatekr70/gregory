@@ -70,6 +70,10 @@ function createIntlLocale(requested: string): Locale {
           cancel: 'Zrušit',
           customRange: 'Vlastní rozsah',
           weekNumber: 'Týden',
+          from: 'Od',
+          to: 'Do',
+          hours: 'Hodiny',
+          minutes: 'Minuty',
         }
       : {
           previousMonth: 'Previous month',
@@ -80,6 +84,10 @@ function createIntlLocale(requested: string): Locale {
           cancel: 'Cancel',
           customRange: 'Custom range',
           weekNumber: 'Week',
+          from: 'From',
+          to: 'To',
+          hours: 'Hours',
+          minutes: 'Minutes',
         },
   }
 }

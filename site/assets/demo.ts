@@ -47,6 +47,9 @@ const controls = {
   months: $<HTMLInputElement>('#opt-months'),
   maxSpan: $<HTMLInputElement>('#opt-maxspan'),
   timeStep: $<HTMLInputElement>('#opt-timestep'),
+  timeUi: $<HTMLSelectElement>('#opt-timeui'),
+  minTime: $<HTMLInputElement>('#opt-mintime'),
+  maxTime: $<HTMLInputElement>('#opt-maxtime'),
   opens: $<HTMLSelectElement>('#opt-opens'),
   presets: $<HTMLInputElement>('#opt-presets'),
   weekNumbers: $<HTMLInputElement>('#opt-weeknumbers'),
@@ -71,6 +74,9 @@ function readOptions(): GregoryOptions & { mode: Mode } {
     months: Number(controls.months.value),
     maxSpan: maxSpan > 0 ? maxSpan : null,
     timeStep: Number(controls.timeStep.value),
+    timeUi: controls.timeUi.value as 'select' | 'input',
+    minTime: controls.minTime.value.trim() || null,
+    maxTime: controls.maxTime.value.trim() || null,
     opens: controls.opens.value as 'left' | 'right' | 'center',
     presets: controls.presets.checked,
     weekNumbers: controls.weekNumbers.checked,
@@ -90,12 +96,17 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
 
   if (options.months !== (isRange ? 2 : 1)) lines.push(`months: ${options.months}`)
   if (options.maxSpan) lines.push(`maxSpan: ${options.maxSpan}`)
-  if (hasTime(options.mode) && options.timeStep !== 5) lines.push(`timeStep: ${options.timeStep}`)
+  if (hasTime(options.mode)) {
+    if (options.timeStep !== 5) lines.push(`timeStep: ${options.timeStep}`)
+    if (options.timeUi !== 'select') lines.push(`timeUi: '${options.timeUi}'`)
+    if (options.minTime) lines.push(`minTime: '${options.minTime}'`)
+    if (options.maxTime) lines.push(`maxTime: '${options.maxTime}'`)
+  }
   if (options.opens !== 'right') lines.push(`opens: '${options.opens}'`)
   if (options.presets !== isRange) lines.push(`presets: ${options.presets}`)
   if (options.weekNumbers) lines.push('weekNumbers: true')
   if (options.dropdowns) lines.push('dropdowns: true')
-  if (options.autoApply !== !isRange) lines.push(`autoApply: ${options.autoApply}`)
+  if (options.autoApply !== (options.mode === 'date')) lines.push(`autoApply: ${options.autoApply}`)
   if (options.inline) lines.push('inline: true')
   if (controls.weekends.checked) lines.push('isDisabled: (d) => d.getDay() === 0 || d.getDay() === 6')
 
@@ -156,8 +167,10 @@ function rebuild(): void {
 
   snippet.innerHTML = paint(buildSnippet(options))
 
-  // timeStep dává smysl jen u časových režimů.
-  controls.timeStep.disabled = !hasTime(options.mode)
+  // Časové volby dávají smysl jen u časových režimů.
+  for (const control of [controls.timeStep, controls.timeUi, controls.minTime, controls.maxTime]) {
+    control.disabled = !hasTime(options.mode)
+  }
   controls.opens.disabled = options.inline ?? false
 }
 
@@ -173,6 +186,16 @@ example('ex-single', { mode: 'date', locale: 'cs', dropdowns: true, weekNumbers:
 example('ex-range', { mode: 'range', locale: 'cs', weekNumbers: true })
 
 example('ex-datetime', { mode: 'datetime', locale: 'cs', timeStep: 15 })
+
+example('ex-hours', {
+  mode: 'datetime-range',
+  locale: 'cs',
+  timeStep: 30,
+  minTime: '08:00',
+  maxTime: '18:00',
+  presets: false,
+  months: 1,
+})
 
 example('ex-limited', {
   mode: 'range',

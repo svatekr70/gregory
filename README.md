@@ -66,10 +66,12 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `weekNumbers` | `false` | sloupec s ISO čísly týdnů |
 | `dropdowns` | `false` | `<select>` pro měsíc a rok |
 | `inline` | `false` | vykreslit na místo místo popoveru |
-| `autoApply` | `true` mimo range módy | potvrdit hned, bez tlačítek Apply/Cancel |
+| `autoApply` | `true` jen v módu `date` | potvrdit hned, bez tlačítek Apply/Cancel |
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |
 | `maxSpan` | `null` | nejdelší povolený rozsah ve dnech |
-| `timeStep` | `5` | krok času v minutách |
+| `timeStep` | `5` | krok minut v časových režimech |
+| `timeUi` | `'select'` | selecty hodin a minut, nebo nativní `input[type=time]` |
+| `minTime` / `maxTime` | `null` | okno dne, `'HH:MM'`, včetně obou hranic |
 | `opens` / `drops` | `'right'` / `'auto'` | umístění popoveru |
 | `isDisabled` | — | `(date) => boolean` |
 | `dayClass` | — | `(date) => string \| null`, např. svátky |

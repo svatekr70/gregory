@@ -20,6 +20,17 @@ export {
   startOfWeek,
   today,
 } from './core/date.js'
+export {
+  clampTimeOfDay,
+  DAY_MINUTES,
+  formatTimeOfDay,
+  hourOptions,
+  minuteOptions,
+  minutesOfDay,
+  normaliseTimeOfDay,
+  parseTimeOfDay,
+  withTimeOfDay,
+} from './core/time.js'
 
 export type { DayCell, MonthContext, MonthView, WeekRow } from './core/calendar.js'
 export type {

@@ -254,16 +254,56 @@
 
 .gr-times {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gr-time-group {
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.gr-time {
+.gr-time-label {
+  color: var(--gr-muted);
+  font-size: 12px;
+}
+
+/* Native input variant (timeUi: 'input'). */
+input.gr-time {
   padding: 4px 6px;
   border: 1px solid var(--gr-border);
   border-radius: var(--gr-radius-day);
   background: var(--gr-bg);
   color: inherit;
   font: inherit;
+}
+
+/* Select variant (default). */
+div.gr-time {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.gr-time-select {
+  padding: 4px 4px 4px 6px;
+  border: 1px solid var(--gr-border);
+  border-radius: var(--gr-radius-day);
+  background: var(--gr-bg);
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-time-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gr-time-sep {
+  color: var(--gr-muted);
+  font-weight: 600;
 }
 
 .gr-actions {

@@ -15,6 +15,15 @@ import {
 import { Emitter } from './core/emitter.js'
 import { resolveLocale } from './core/locale.js'
 import { defaultPresets } from './core/presets.js'
+import {
+  formatTimeOfDay,
+  hourOptions,
+  minuteOptions,
+  minutesOfDay,
+  normaliseTimeOfDay,
+  parseTimeOfDay,
+  withTimeOfDay,
+} from './core/time.js'
 import type {
   DateLike,
   DateRange,
@@ -48,6 +57,17 @@ function isRangeMode(mode: ResolvedOptions['mode']): boolean {
 
 function hasTime(mode: ResolvedOptions['mode']): boolean {
   return mode === 'datetime' || mode === 'datetime-range'
+}
+
+/** Parses the time window and tolerates the bounds being handed over swapped. */
+function resolveTimeBounds(
+  min: GregoryOptions['minTime'],
+  max: GregoryOptions['maxTime'],
+): { minTime: number | null; maxTime: number | null } {
+  const minTime = parseTimeOfDay(min)
+  const maxTime = parseTimeOfDay(max)
+  if (minTime !== null && maxTime !== null && minTime > maxTime) return { minTime: maxTime, maxTime: minTime }
+  return { minTime, maxTime }
 }
 
 export class Gregory {
@@ -123,10 +143,14 @@ export class Gregory {
       weekNumbers: options.weekNumbers ?? false,
       dropdowns: options.dropdowns ?? false,
       inline: options.inline ?? false,
-      autoApply: options.autoApply ?? !isRangeMode(mode),
+      // Only a plain date is complete on the first click. A range still needs its
+      // second bound and a datetime still needs its time, so both keep Apply.
+      autoApply: options.autoApply ?? mode === 'date',
       presets,
       maxSpan: options.maxSpan ?? null,
       timeStep: options.timeStep ?? 5,
+      timeUi: options.timeUi ?? 'select',
+      ...resolveTimeBounds(options.minTime, options.maxTime),
       opens: options.opens ?? 'right',
       drops: options.drops ?? 'auto',
       isDisabled: options.isDisabled,
@@ -403,9 +427,10 @@ export class Gregory {
 
   private onPanelChange = (event: Event): void => {
     const target = event.target as HTMLSelectElement | HTMLInputElement | null
-    if (!target?.dataset.action) return
+    const action = target?.dataset.action
+    if (!target || !action) return
 
-    switch (target.dataset.action) {
+    switch (action) {
       case 'select-month':
         this.viewDate = createDate(this.viewDate.getFullYear(), Number(target.value), 1)
         this.render()
@@ -416,16 +441,27 @@ export class Gregory {
         break
       case 'time-from':
       case 'time-to': {
-        const bound = target.dataset.action === 'time-from' ? 'from' : 'to'
-        const current = this.selection[bound]
+        const bound = action === 'time-from' ? 'from' : 'to'
+        const minutes = parseTimeOfDay(target.value)
+        if (minutes === null) break
+        this.setTimeOfDay(bound, minutes)
+        break
+      }
+      case 'hour-from':
+      case 'hour-to':
+      case 'minute-from':
+      case 'minute-to': {
+        const [unit, side] = action.split('-') as ['hour' | 'minute', 'from' | 'to']
+        const current = this.selection[side]
         if (!current) break
-        const [hours = 0, minutes = 0] = target.value.split(':').map(Number)
-        this.selection = {
-          ...this.selection,
-          [bound]: createDate(current.getFullYear(), current.getMonth(), current.getDate(), hours, minutes),
-        }
-        if (this.options.autoApply) this.committed = { ...this.selection }
-        this.emitter.emit('change', { value: this.getValue(), complete: this.isComplete() })
+
+        const picked = Number(target.value)
+        const minutes =
+          unit === 'hour' ? picked * 60 + current.getMinutes() : current.getHours() * 60 + picked
+
+        // Re-render, because switching to a boundary hour narrows the minutes.
+        this.setTimeOfDay(side, minutes, { rerender: true })
+        this.element.querySelector<HTMLSelectElement>(`[data-action="${action}"]`)?.focus()
         break
       }
       default:
@@ -483,17 +519,52 @@ export class Gregory {
     this.render()
   }
 
+  /**
+   * Time carried over to a freshly picked day. An existing bound keeps its own
+   * time; a new one starts at the beginning of the allowed window.
+   */
+  private timeFor(bound: Date | null): Date | null {
+    if (!hasTime(this.options.mode)) return bound
+    const { timeStep, minTime, maxTime } = this.options
+    const minutes = normaliseTimeOfDay(bound ? minutesOfDay(bound) : (minTime ?? 0), timeStep, minTime, maxTime)
+    return withTimeOfDay(bound ?? today(), minutes)
+  }
+
+  /** Writes a time of day onto one range bound, snapped into the allowed window. */
+  private setTimeOfDay(bound: 'from' | 'to', minutes: number, { rerender = false } = {}): void {
+    const current = this.selection[bound]
+    if (!current) return
+
+    const { timeStep, minTime, maxTime } = this.options
+    const normalised = normaliseTimeOfDay(minutes, timeStep, minTime, maxTime)
+    const next: DateRange = { ...this.selection, [bound]: withTimeOfDay(current, normalised) }
+
+    // A one-day range must not end before it starts; the untouched bound follows.
+    if (next.from && next.to && next.from.getTime() > next.to.getTime()) {
+      if (bound === 'from') next.to = withTimeOfDay(next.to, normalised)
+      else next.from = withTimeOfDay(next.from, normalised)
+    }
+    this.selection = next
+
+    if (this.options.autoApply) {
+      this.committed = { ...this.selection }
+      this.syncInput()
+    }
+    this.emitter.emit('change', { value: this.getValue(), complete: this.isComplete() })
+    if (rerender) this.render()
+  }
+
   private pick(date: Date | null): void {
     if (!date || isDayDisabled(date, this.monthContext())) return
 
     if (!isRangeMode(this.options.mode)) {
-      this.selection = { from: withTimeOf(date, this.selection.from), to: null }
+      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: null }
     } else if (!this.selection.from || this.selection.to) {
-      this.selection = { from: withTimeOf(date, this.selection.from), to: null }
+      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: null }
     } else if (compareDay(date, this.selection.from) < 0) {
-      this.selection = { from: withTimeOf(date, this.selection.from), to: this.selection.from }
+      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: this.selection.from }
     } else {
-      this.selection = { ...this.selection, to: withTimeOf(date, this.selection.to) }
+      this.selection = { ...this.selection, to: withTimeOf(date, this.timeFor(this.selection.to)) }
     }
 
     this.focusedDay = date
@@ -637,8 +708,8 @@ export class Gregory {
 
     if (showTime) {
       const times = h('div', { class: 'gr-times' })
-      times.append(this.renderTimeInput('from'))
-      if (isRangeMode(mode)) times.append(this.renderTimeInput('to'))
+      times.append(this.renderTimeControls('from'))
+      if (isRangeMode(mode)) times.append(this.renderTimeControls('to'))
       footer.append(times)
     }
 
@@ -656,16 +727,65 @@ export class Gregory {
     return footer
   }
 
+  /** One labelled time control per range bound. */
+  private renderTimeControls(bound: 'from' | 'to'): HTMLElement {
+    const { locale, mode } = this.options
+    const group = h('div', { class: 'gr-time-group', 'data-bound': bound })
+
+    if (isRangeMode(mode)) {
+      group.append(h('span', { class: 'gr-time-label' }, [bound === 'from' ? locale.labels.from : locale.labels.to]))
+    }
+    group.append(this.options.timeUi === 'input' ? this.renderTimeInput(bound) : this.renderTimeSelects(bound))
+    return group
+  }
+
   private renderTimeInput(bound: 'from' | 'to'): HTMLElement {
+    const { timeStep, minTime, maxTime } = this.options
     const value = this.selection[bound]
     return h('input', {
       type: 'time',
       class: 'gr-time',
       'data-action': bound === 'from' ? 'time-from' : 'time-to',
-      step: this.options.timeStep * 60,
+      step: timeStep * 60,
+      min: minTime === null ? null : formatTimeOfDay(minTime),
+      max: maxTime === null ? null : formatTimeOfDay(maxTime),
       value: value ? formatISOTime(value) : '',
       disabled: !value,
     })
+  }
+
+  private renderTimeSelects(bound: 'from' | 'to'): HTMLElement {
+    const { locale, timeStep, minTime, maxTime } = this.options
+    const value = this.selection[bound]
+    const current = value ? minutesOfDay(value) : null
+    const pad = (n: number): string => String(n).padStart(2, '0')
+
+    const hours = hourOptions(timeStep, minTime, maxTime, current)
+    const hourSelect = h('select', {
+      class: 'gr-time-select',
+      'data-action': bound === 'from' ? 'hour-from' : 'hour-to',
+      'aria-label': locale.labels.hours,
+      disabled: !value,
+    })
+    for (const hour of hours) {
+      hourSelect.append(h('option', { value: hour, selected: current !== null && Math.floor(current / 60) === hour }, [pad(hour)]))
+    }
+
+    // Minutes are listed for the selected hour only, so a boundary hour such as
+    // 18:00 with maxTime 18:00 offers exactly one option.
+    const activeHour = current !== null ? Math.floor(current / 60) : (hours[0] ?? 0)
+    const minutes = minuteOptions(activeHour, timeStep, minTime, maxTime, current)
+    const minuteSelect = h('select', {
+      class: 'gr-time-select',
+      'data-action': bound === 'from' ? 'minute-from' : 'minute-to',
+      'aria-label': locale.labels.minutes,
+      disabled: !value,
+    })
+    for (const minute of minutes) {
+      minuteSelect.append(h('option', { value: minute, selected: current !== null && current % 60 === minute }, [pad(minute)]))
+    }
+
+    return h('div', { class: 'gr-time' }, [hourSelect, h('span', { class: 'gr-time-sep' }, [':']), minuteSelect])
   }
 
   // ---------------------------------------------------------------- cleanup

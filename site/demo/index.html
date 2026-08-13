@@ -81,6 +81,24 @@
             </label>
 
             <label class="field">
+              <span>timeUi</span>
+              <select id="opt-timeui">
+                <option value="select" selected>select</option>
+                <option value="input">input</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>minTime (prázdné = bez limitu)</span>
+              <input type="text" id="opt-mintime" placeholder="08:00">
+            </label>
+
+            <label class="field">
+              <span>maxTime</span>
+              <input type="text" id="opt-maxtime" placeholder="18:00">
+            </label>
+
+            <label class="field">
               <span>opens</span>
               <select id="opt-opens">
                 <option value="right" selected>right</option>
@@ -140,7 +158,8 @@
 
         <div class="card example">
           <h3>Datum a čas</h3>
-          <p><code>mode: 'datetime'</code> s krokem 15 minut. Změna dne si čas ponechá.</p>
+          <p><code>mode: 'datetime'</code> s krokem 15 minut. Panel po výběru dne zůstane
+            otevřený, aby šel nastavit čas; potvrzuje se tlačítkem.</p>
           <input class="stage-input" id="ex-datetime" placeholder="Vyber termín…">
           <div class="readout" data-for="ex-datetime">—</div>
         </div>
@@ -164,6 +183,14 @@
           <p>Fiskální čtvrtletí místo výchozích zkratek a vlastní <code>format</code> do inputu.</p>
           <input class="stage-input" id="ex-custom" placeholder="Vyber čtvrtletí…">
           <div class="readout" data-for="ex-custom">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Pracovní doba</h3>
+          <p><code>minTime: '08:00'</code>, <code>maxTime: '18:00'</code> a krok 30 minut.
+            Selecty nabídnou jen hodiny 8–18, v osmnácté už jen <code>:00</code>.</p>
+          <input class="stage-input" id="ex-hours" placeholder="Rezervace 8–18…">
+          <div class="readout" data-for="ex-hours">—</div>
         </div>
 
         <div class="card example">

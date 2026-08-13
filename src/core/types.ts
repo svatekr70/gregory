@@ -42,6 +42,11 @@ export interface Locale {
     cancel: string
     customRange: string
     weekNumber: string
+    /** Labels of the two time controls in range modes. */
+    from: string
+    to: string
+    hours: string
+    minutes: string
   }
 }
 
@@ -75,6 +80,12 @@ export interface GregoryOptions {
   maxSpan?: number | null
   /** Minutes between selectable times in `datetime*` modes. */
   timeStep?: number
+  /** Time controls: two `<select>`s, or one native `<input type="time">`. */
+  timeUi?: 'select' | 'input'
+  /** Earliest selectable time of day, `'HH:MM'`. Inclusive. */
+  minTime?: string | number | null
+  /** Latest selectable time of day, `'HH:MM'`. Inclusive. */
+  maxTime?: string | number | null
   /** Popover alignment relative to the input. */
   opens?: 'left' | 'right' | 'center'
   drops?: 'down' | 'up' | 'auto'
@@ -100,6 +111,10 @@ export interface ResolvedOptions {
   presets: RangePreset[]
   maxSpan: number | null
   timeStep: number
+  timeUi: 'select' | 'input'
+  /** Minutes since midnight, or null for no bound. */
+  minTime: number | null
+  maxTime: number | null
   opens: 'left' | 'right' | 'center'
   drops: 'down' | 'up' | 'auto'
   isDisabled: ((date: Date) => boolean) | undefined

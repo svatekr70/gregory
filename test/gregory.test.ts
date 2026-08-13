@@ -271,32 +271,177 @@ describe('footer actions', () => {
 })
 
 describe('datetime mode', () => {
+  const select = (action: string): HTMLSelectElement =>
+    picker.element.querySelector<HTMLSelectElement>(`[data-action="${action}"]`)!
+
+  const choose = (action: string, value: string): void => {
+    const control = select(action)
+    control.value = value
+    control.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  it('stays open after the day is picked, so the time can still be set', () => {
+    mount({ mode: 'datetime' })
+    day('2026-08-13').click()
+
+    expect(picker.element.hidden).toBe(false)
+    expect(select('hour-from').disabled).toBe(false)
+    expect(picker.getValue()).toBeNull()
+  })
+
   it('keeps the time when the day changes', () => {
     mount({ mode: 'datetime' })
     day('2026-08-13').click()
 
-    const time = picker.element.querySelector<HTMLInputElement>('[data-action="time-from"]')!
-    expect(time.disabled).toBe(false)
-    time.value = '14:30'
-    time.dispatchEvent(new Event('change', { bubbles: true }))
+    choose('hour-from', '14')
+    choose('minute-from', '30')
 
-    expect((picker.getValue() as Date).getHours()).toBe(14)
-    expect((picker.getValue() as Date).getMinutes()).toBe(30)
+    expect(picker.getSelection().from?.getHours()).toBe(14)
+    expect(picker.getSelection().from?.getMinutes()).toBe(30)
 
-    picker.openPanel()
     day('2026-08-20').click()
-    expect((picker.getValue() as Date).getDate()).toBe(20)
+    expect(picker.getSelection().from?.getDate()).toBe(20)
+    expect(picker.getSelection().from?.getHours()).toBe(14)
+    expect(picker.getSelection().from?.getMinutes()).toBe(30)
+
+    picker.apply()
     expect((picker.getValue() as Date).getHours()).toBe(14)
   })
 
-  it('disables the time input until a day is picked', () => {
+  it('disables the time selects until a day is picked', () => {
     mount({ mode: 'datetime' })
-    expect(picker.element.querySelector<HTMLInputElement>('[data-action="time-from"]')!.disabled).toBe(true)
+    expect(select('hour-from').disabled).toBe(true)
+    expect(select('minute-from').disabled).toBe(true)
   })
 
-  it('offers a time input per bound in a datetime range', () => {
+  it('offers a time control per bound in a datetime range', () => {
     mount({ mode: 'datetime-range' })
-    expect(picker.element.querySelectorAll('.gr-time')).toHaveLength(2)
+    expect(picker.element.querySelectorAll('.gr-time-group')).toHaveLength(2)
+    expect(select('hour-to')).not.toBeNull()
+    expect(select('minute-to')).not.toBeNull()
+  })
+
+  it('lists minutes by timeStep', () => {
+    mount({ mode: 'datetime', timeStep: 15 })
+    day('2026-08-13').click()
+
+    expect([...select('minute-from').options].map((option) => option.value)).toEqual(['0', '15', '30', '45'])
+    expect([...select('hour-from').options]).toHaveLength(24)
+  })
+
+  it('falls back to a native input when asked', () => {
+    mount({ mode: 'datetime', timeUi: 'input' })
+    expect(picker.element.querySelector('[data-action="time-from"]')).not.toBeNull()
+    expect(picker.element.querySelector('[data-action="hour-from"]')).toBeNull()
+  })
+
+  it('never lets a one-day range end before it starts', () => {
+    mount({ mode: 'datetime-range', presets: false, timeStep: 60 })
+    day('2026-08-10').click()
+    day('2026-08-10').click()
+
+    choose('hour-to', '9')
+    choose('hour-from', '17')
+
+    // Moving the start past the end drags the end along.
+    expect(picker.getSelection().from?.getHours()).toBe(17)
+    expect(picker.getSelection().to?.getHours()).toBe(17)
+
+    choose('hour-to', '8')
+    expect(picker.getSelection().from?.getHours()).toBe(8)
+    expect(picker.getSelection().to?.getHours()).toBe(8)
+  })
+
+  it('leaves a multi-day range alone', () => {
+    mount({ mode: 'datetime-range', presets: false, timeStep: 60 })
+    day('2026-08-10').click()
+    day('2026-08-12').click()
+
+    choose('hour-from', '17')
+    choose('hour-to', '9')
+
+    // 10th 17:00 → 12th 09:00 is a perfectly good range.
+    expect(picker.getSelection().from?.getHours()).toBe(17)
+    expect(picker.getSelection().to?.getHours()).toBe(9)
+  })
+
+  it('sets both bounds of a datetime range independently', () => {
+    mount({ mode: 'datetime-range', presets: false })
+    day('2026-08-10').click()
+    day('2026-08-12').click()
+
+    choose('hour-from', '9')
+    choose('hour-to', '17')
+    picker.apply()
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getHours()).toBe(9)
+    expect(value.to?.getHours()).toBe(17)
+  })
+})
+
+describe('time bounds', () => {
+  const select = (action: string): HTMLSelectElement =>
+    picker.element.querySelector<HTMLSelectElement>(`[data-action="${action}"]`)!
+
+  const hours = (): string[] => [...select('hour-from').options].map((option) => option.value)
+
+  it('offers only hours inside the window', () => {
+    mount({ mode: 'datetime', minTime: '08:00', maxTime: '18:00', timeStep: 30 })
+    day('2026-08-13').click()
+
+    expect(hours()).toEqual(['8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'])
+  })
+
+  it('trims the minutes of the closing hour', () => {
+    mount({ mode: 'datetime', minTime: '08:00', maxTime: '18:00', timeStep: 15 })
+    day('2026-08-13').click()
+
+    select('hour-from').value = '18'
+    select('hour-from').dispatchEvent(new Event('change', { bubbles: true }))
+
+    expect([...select('minute-from').options].map((option) => option.value)).toEqual(['0'])
+    expect(picker.getSelection().from?.getHours()).toBe(18)
+    expect(picker.getSelection().from?.getMinutes()).toBe(0)
+  })
+
+  it('trims the minutes of the opening hour', () => {
+    mount({ mode: 'datetime', minTime: '08:30', maxTime: '18:00', timeStep: 15 })
+    day('2026-08-13').click()
+
+    expect([...select('minute-from').options].map((option) => option.value)).toEqual(['30', '45'])
+  })
+
+  it('starts a fresh pick at the beginning of the window', () => {
+    mount({ mode: 'datetime', minTime: '08:00', maxTime: '18:00' })
+    day('2026-08-13').click()
+
+    expect(picker.getSelection().from?.getHours()).toBe(8)
+    expect(picker.getSelection().from?.getMinutes()).toBe(0)
+  })
+
+  it('pulls a value handed in from outside into the window', () => {
+    mount({ mode: 'datetime', minTime: '08:00', maxTime: '18:00', timeStep: 30 })
+    picker.setValue('2026-08-13T06:10')
+    day('2026-08-14').click()
+
+    expect(picker.getSelection().from?.getHours()).toBe(8)
+  })
+
+  it('accepts the bounds handed over swapped', () => {
+    mount({ mode: 'datetime', minTime: '18:00', maxTime: '08:00' })
+    day('2026-08-13').click()
+
+    expect(hours()[0]).toBe('8')
+    expect(hours().at(-1)).toBe('18')
+  })
+
+  it('mirrors the window onto the native input', () => {
+    mount({ mode: 'datetime', timeUi: 'input', minTime: '08:00', maxTime: '18:00' })
+    const input = picker.element.querySelector<HTMLInputElement>('[data-action="time-from"]')!
+
+    expect(input.getAttribute('min')).toBe('08:00')
+    expect(input.getAttribute('max')).toBe('18:00')
   })
 })
 
