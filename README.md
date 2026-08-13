@@ -96,6 +96,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `timeStep` | `5` | krok minut v časových režimech |
 | `timeUi` | `'select'` | ovládání času: `'select'` selecty, `'slider'` posuvníky, `'input'` nativní pole |
 | `minTime` / `maxTime` | `null` | okno dne, `'HH:MM'`, včetně obou hranic |
+| `fullscreenBelow` | `480` | pod touto šířkou okna se panel otevře přes celou obrazovku |
 | `opens` / `drops` | `'right'` / `'auto'` | umístění popoveru |
 | `isDisabled` | — | `(date) => boolean` |
 | `dayClass` | — | `(date) => string \| null`, např. svátky |

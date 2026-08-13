@@ -158,6 +158,11 @@ export interface GregoryOptions {
   minTime?: string | number | null
   /** Latest selectable time of day, `'HH:MM'`. Inclusive. */
   maxTime?: string | number | null
+  /**
+   * Pod touto šířkou okna se panel místo popoveru otevře přes celou obrazovku
+   * i s podkladem. `null` to vypne.
+   */
+  fullscreenBelow?: number | null
   /** Popover alignment relative to the input. */
   opens?: 'left' | 'right' | 'center'
   drops?: 'down' | 'up' | 'auto'
@@ -200,6 +205,7 @@ export interface ResolvedOptions {
   /** Minutes since midnight, or null for no bound. */
   minTime: number | null
   maxTime: number | null
+  fullscreenBelow: number | null
   opens: 'left' | 'right' | 'center'
   drops: 'down' | 'up' | 'auto'
   isDisabled: ((date: Date) => boolean) | undefined

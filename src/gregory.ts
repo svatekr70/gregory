@@ -100,6 +100,7 @@ export class Gregory {
   private readonly triggerAdded = { tabindex: false, role: false }
   /** Skrytá pole s ISO hodnotou pro odeslání formuláře. */
   private readonly hidden: HTMLInputElement[] = []
+  private backdrop: HTMLElement | null = null
   /** Které z polí panel otevřelo — podle něj se pozicuje a vrací fokus. */
   private activeInput: HTMLInputElement | null = null
   private readonly host: HTMLElement
@@ -199,6 +200,7 @@ export class Gregory {
       timeStep: options.timeStep ?? 5,
       timeUi: options.timeUi ?? 'select',
       ...resolveTimeBounds(options.minTime, options.maxTime),
+      fullscreenBelow: options.fullscreenBelow === undefined ? 480 : options.fullscreenBelow,
       opens: options.opens ?? 'right',
       drops: options.drops ?? 'auto',
       isDisabled: options.isDisabled,
@@ -461,8 +463,11 @@ export class Gregory {
     if (anchor) this.resetViews(anchor)
     this.render()
     this.position()
+    this.toggleBackdrop(true)
     document.addEventListener('mousedown', this.onDocumentDown, true)
     document.addEventListener('keydown', this.onDocumentKeydown, true)
+    window.addEventListener('resize', this.onViewportChange)
+    window.addEventListener('scroll', this.onViewportChange, true)
     this.emitter.emit('open', { value: this.getValue() })
   }
 
@@ -473,8 +478,11 @@ export class Gregory {
     this.preview = null
     this.previewWeek = null
     this.openMenu = null
+    this.toggleBackdrop(false)
     document.removeEventListener('mousedown', this.onDocumentDown, true)
     document.removeEventListener('keydown', this.onDocumentKeydown, true)
+    window.removeEventListener('resize', this.onViewportChange)
+    window.removeEventListener('scroll', this.onViewportChange, true)
     this.emitter.emit('close', { value: this.getValue() })
   }
 
@@ -504,7 +512,41 @@ export class Gregory {
     this.render()
   }
 
+  /** Otočení telefonu nebo scroll nesmí panel nechat viset mimo pole. */
+  private onViewportChange = (): void => {
+    if (this.open) this.position()
+  }
+
+  /** Podklad pod celoobrazovkovým panelem; jinde se nevykresluje. */
+  private toggleBackdrop(show: boolean): void {
+    const wanted = show && this.isFullscreen()
+    if (wanted && !this.backdrop) {
+      this.backdrop = h('div', { class: 'gr-backdrop' })
+      this.backdrop.addEventListener('click', () => (this.options.autoApply ? this.close() : this.cancel()))
+      document.body.append(this.backdrop)
+      return
+    }
+    if (!wanted && this.backdrop) {
+      this.backdrop.remove()
+      this.backdrop = null
+    }
+  }
+
+  /** Na úzkém okně se popover chová jako dialog přes celou obrazovku. */
+  private isFullscreen(): boolean {
+    const { fullscreenBelow, inline } = this.options
+    return !inline && fullscreenBelow !== null && window.innerWidth < fullscreenBelow
+  }
+
   private position(): void {
+    if (this.isFullscreen()) {
+      this.element.setAttribute('data-fullscreen', '')
+      this.element.style.top = ''
+      this.element.style.left = ''
+      return
+    }
+    this.element.removeAttribute('data-fullscreen')
+
     // Panel se pověsí pod to pole (nebo spouštěč), kterým se otevřel.
     const anchor = this.activeInput ?? this.input ?? this.trigger
     if (!anchor) return
@@ -522,7 +564,12 @@ export class Gregory {
     if (this.options.opens === 'left') left = rect.right + window.scrollX - panel.width
     else if (this.options.opens === 'center') left = rect.left + window.scrollX + (rect.width - panel.width) / 2
 
-    this.element.style.top = `${Math.round(top)}px`
+    // Hlídá se i pravý okraj — bez toho panel u pole na kraji obrazovky vytekl
+    // z viewportu a nešel doscrollovat.
+    const maxLeft = window.scrollX + document.documentElement.clientWidth - panel.width - gap
+    left = Math.min(left, maxLeft)
+
+    this.element.style.top = `${Math.round(Math.max(gap, top))}px`
     this.element.style.left = `${Math.round(Math.max(gap, left))}px`
   }
 

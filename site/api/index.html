@@ -191,6 +191,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>timeUi</code></td><td><code>'select' | 'slider' | 'input'</code></td><td><code>'select'</code></td><td>Podoba ovládání času.</td></tr>
           <tr><td><code>minTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejdřívější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
           <tr><td><code>maxTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejpozdější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
+          <tr><td><code>fullscreenBelow</code></td><td><code>number | null</code></td><td><code>480</code></td><td>Pod touto šířkou okna se panel otevře přes celou obrazovku.</td></tr>
           <tr><td><code>opens</code></td><td><code>'left' | 'right' | 'center'</code></td><td><code>'right'</code></td><td>Vodorovné zarovnání popoveru.</td></tr>
           <tr><td><code>drops</code></td><td><code>'down' | 'up' | 'auto'</code></td><td><code>'auto'</code></td><td>Směr otevření popoveru.</td></tr>
           <tr><td><code>isDisabled</code></td><td><code>(date: Date) =&gt; boolean</code></td><td>—</td><td>Zakáže konkrétní dny.</td></tr>
@@ -309,6 +310,22 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>fullscreenBelow</code></h3>
+
+      <p>Na telefonu je popover u pole nepohodlný a u pole při kraji obrazovky
+        se navíc nemá kam vejít. Pod zadanou šířkou okna se proto panel otevře
+        jako dialog uprostřed obrazovky i s podkladem, na který jde kliknout.</p>
+
+      <pre class="code"><span class="c">// výchozí je 480; vypnout jde null</span>
+<span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, { fullscreenBelow: <span class="k">null</span> })</pre>
+
+      <p>Panel v tomhle režimu nese <code>data-fullscreen</code>, podklad má
+        třídu <code>.gr-backdrop</code>. Přepíná se i za chodu, takže otočení
+        telefonu ho přehodí bez zavření.</p>
+
+      <p>Nezávisle na tom se popover drží uvnitř okna — hlídá se levý i pravý
+        okraj, takže u pole na kraji obrazovky panel nevyteče ven.</p>
 
       <h3><code>submitName</code></h3>
 

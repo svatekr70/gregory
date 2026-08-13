@@ -97,6 +97,26 @@
   box-shadow: var(--gr-shadow);
 }
 
+/* Na úzkém okně dialog uprostřed obrazovky místo popoveru u pole. */
+.gr[data-fullscreen] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 10000;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+}
+
+.gr-backdrop {
+  position: fixed;
+  z-index: 9998;
+  inset: 0;
+  background: rgb(12 16 24 / 45%);
+}
+
 /* ------------------------------------------------------------- presets */
 
 .gr-presets {

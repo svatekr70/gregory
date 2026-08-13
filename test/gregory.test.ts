@@ -134,6 +134,66 @@ describe('range mode', () => {
   })
 })
 
+describe('narrow viewport', () => {
+  const setWidth = (width: number): void => {
+    Object.defineProperty(window, 'innerWidth', { value: width, configurable: true })
+    Object.defineProperty(document.documentElement, 'clientWidth', { value: width, configurable: true })
+  }
+
+  afterEach(() => setWidth(1024))
+
+  it('turns into a dialog with a backdrop below the threshold', () => {
+    setWidth(390)
+    mount({ mode: 'date' })
+
+    expect(picker.element.hasAttribute('data-fullscreen')).toBe(true)
+    expect(document.querySelector('.gr-backdrop')).not.toBeNull()
+  })
+
+  it('stays a popover on a wide window', () => {
+    setWidth(1024)
+    mount({ mode: 'date' })
+
+    expect(picker.element.hasAttribute('data-fullscreen')).toBe(false)
+    expect(document.querySelector('.gr-backdrop')).toBeNull()
+  })
+
+  it('takes the backdrop away on close', () => {
+    setWidth(390)
+    mount({ mode: 'date' })
+    picker.close()
+
+    expect(document.querySelector('.gr-backdrop')).toBeNull()
+  })
+
+  it('closes when the backdrop is clicked', () => {
+    setWidth(390)
+    mount({ mode: 'date' })
+
+    document.querySelector<HTMLElement>('.gr-backdrop')!.click()
+
+    expect(picker.element.hidden).toBe(true)
+  })
+
+  it('can be switched off', () => {
+    setWidth(390)
+    mount({ mode: 'date', fullscreenBelow: null })
+
+    expect(picker.element.hasAttribute('data-fullscreen')).toBe(false)
+  })
+
+  it('reacts to the window being resized while open', () => {
+    setWidth(1024)
+    mount({ mode: 'date' })
+    expect(picker.element.hasAttribute('data-fullscreen')).toBe(false)
+
+    setWidth(390)
+    window.dispatchEvent(new Event('resize'))
+
+    expect(picker.element.hasAttribute('data-fullscreen')).toBe(true)
+  })
+})
+
 describe('hidden fields for forms', () => {
   const hidden = (name: string): HTMLInputElement | null =>
     document.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`)
