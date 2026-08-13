@@ -1,4 +1,5 @@
 import { createDate, formatISOTime } from './date.js'
+import { translationFor } from './i18n.js'
 import type { Locale, LocaleInput, WeekDay } from './types.js'
 
 /**
@@ -35,28 +36,17 @@ function supportedCode(code: string): string {
   }
 }
 
-/**
- * Plural forms of "day". Czech needs three (1 den / 2 dny / 5 dní), so the
- * count goes through `Intl.PluralRules` rather than a naive `n === 1` check.
- */
-const DAY_FORMS: Record<string, Partial<Record<Intl.LDMLPluralRule, string>>> = {
-  cs: { one: 'den', few: 'dny', many: 'dne', other: 'dní' },
-  sk: { one: 'deň', few: 'dni', many: 'dňa', other: 'dní' },
-  pl: { one: 'dzień', few: 'dni', many: 'dni', other: 'dni' },
-  de: { one: 'Tag', other: 'Tage' },
-  en: { one: 'day', other: 'days' },
-}
-
 function createIntlLocale(requested: string): Locale {
   const code = supportedCode(requested)
-  const language = code.split('-')[0]?.toLowerCase() ?? 'en'
-  const forms = DAY_FORMS[language] ?? DAY_FORMS.en!
+  // Popisky jdou z tabulky překladů, zbytek řeší Intl.
+  const { labels, days } = translationFor(code)
+  // Čeština potřebuje tři tvary (1 den / 2 dny / 5 dní), takže se počet žene
+  // přes Intl.PluralRules místo naivního n === 1.
   const plural = new Intl.PluralRules(code)
   const monthYearFormat = new Intl.DateTimeFormat(code, { month: 'long', year: 'numeric' })
   const monthFormat = new Intl.DateTimeFormat(code, { month: 'long' })
   const weekdayFormat = new Intl.DateTimeFormat(code, { weekday: 'short' })
   const dateFormat = new Intl.DateTimeFormat(code, { day: 'numeric', month: 'numeric', year: 'numeric' })
-  const czech = /^cs/i.test(code)
 
   return {
     code,
@@ -74,47 +64,9 @@ function createIntlLocale(requested: string): Locale {
       }),
     formatDate: (date, withTime) =>
       withTime ? `${dateFormat.format(date)} ${formatISOTime(date)}` : dateFormat.format(date),
-    formatDayCount: (count) => `${count} ${forms[plural.select(count)] ?? forms.other ?? ''}`.trim(),
+    formatDayCount: (count) => `${count} ${days[plural.select(count)] ?? days.other ?? ''}`.trim(),
     rangeSeparator: ' – ',
-    labels: czech
-      ? {
-          previousMonth: 'Předchozí měsíc',
-          nextMonth: 'Následující měsíc',
-          today: 'Dnes',
-          clear: 'Vymazat',
-          apply: 'Použít',
-          cancel: 'Zrušit',
-          customRange: 'Vlastní rozsah',
-          weekNumber: 'Týden',
-          from: 'Od',
-          to: 'Do',
-          hours: 'Hodiny',
-          minutes: 'Minuty',
-          openStart: 'Bez začátku',
-          openEnd: 'Bez konce',
-          since: 'od',
-          until: 'do',
-          nothingSelected: 'Nic nevybráno',
-        }
-      : {
-          previousMonth: 'Previous month',
-          nextMonth: 'Next month',
-          today: 'Today',
-          clear: 'Clear',
-          apply: 'Apply',
-          cancel: 'Cancel',
-          customRange: 'Custom range',
-          weekNumber: 'Week',
-          from: 'From',
-          to: 'To',
-          hours: 'Hours',
-          minutes: 'Minutes',
-          openStart: 'No start',
-          openEnd: 'No end',
-          since: 'from',
-          until: 'until',
-          nothingSelected: 'Nothing selected',
-        },
+    labels,
   }
 }
 

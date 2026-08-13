@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gregory — picker data, rozsahu a času ve vanilla TS</title>
-<meta name="description" content="Gregory je framework-agnostický picker data, rozsahu dat a času. Bez runtime závislostí, ~8 kB gzip. Presety, maxSpan, lokalizace přes Intl, Web Component, motiv přes CSS proměnné.">
+<meta name="description" content="Gregory je framework-agnostický picker data, rozsahu dat a času. Bez runtime závislostí, ~16 kB gzip. Presety, maxSpan, lokalizace přes Intl, Web Component, motiv přes CSS proměnné.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f7ff5'/%3E%3Cg fill='none' stroke='white' stroke-width='2'%3E%3Crect x='6' y='9' width='20' height='17' rx='2'/%3E%3Cpath d='M6 14h20M11 6v5M21 6v5'/%3E%3C/g%3E%3Crect x='10' y='17' width='12' height='4' rx='2' fill='white'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="./assets/site.css">
 </head>
@@ -42,7 +42,7 @@
       <div class="tags">
         <span class="tag">vanilla TS · ESM + UMD</span>
         <span class="tag">0 závislostí</span>
-        <span class="tag">~8 kB gzip</span>
+        <span class="tag">~16 kB gzip</span>
         <span class="tag">Web Component</span>
         <span class="tag">MIT</span>
       </div>
@@ -116,9 +116,10 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
 
         <div class="card">
           <div class="ic">🌍</div>
-          <h3>Lokalizace přes Intl</h3>
-          <p>Názvy měsíců, dnů i formát data řeší prohlížeč. Žádné jazykové
-            balíčky k udržování. První den v týdnu se bere z locale, jde přebít.</p>
+          <h3>Lokalizace</h3>
+          <p>Názvy měsíců, dnů, první den v týdnu i formát data řeší
+            <code>Intl</code>, takže fungují všude. Popisky tlačítek má knihovna
+            pro osm jazyků a další jde doplnit jedním voláním.</p>
         </div>
 
         <div class="card">

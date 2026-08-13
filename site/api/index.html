@@ -708,6 +708,46 @@ odhlasit()</pre>
 
       <p>Neplatný tag picker neshodí — degraduje na angličtinu.</p>
 
+      <h3>Co jde z Intl a co ne</h3>
+
+      <p>Názvy měsíců, zkratky dnů, první den v týdnu i formát data řeší
+        prohlížeč, takže fungují pro <strong>jakýkoli</strong> jazyk. Slova jako
+        „Použít" nebo „Posledních 7 dní" ale odnikud vzít nejdou — ty knihovna
+        nese sama a má je pro:</p>
+
+      <div class="chips" style="margin: 10px 0 14px">
+        <span class="chip">cs</span><span class="chip">sk</span><span class="chip">de</span>
+        <span class="chip">pl</span><span class="chip">en</span><span class="chip">es</span>
+        <span class="chip">fr</span><span class="chip">it</span>
+      </div>
+
+      <p>Rozhoduje jazyk, ne region — <code>de-AT</code> i <code>de-CH</code>
+        dostanou němčinu. Pro ostatní jazyky se měsíce a formát data lokalizují
+        dál, ale popisky spadnou na angličtinu. Seznam vrací
+        <code>availableTranslations()</code>.</p>
+
+      <h3>Doplnění jazyka</h3>
+
+      <p>Chybějící jazyk se dodá zvenčí, není potřeba forkovat:</p>
+
+      <pre class="code"><span class="k">import</span> { registerTranslation } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+
+<span class="t">registerTranslation</span>(<span class="s">'ja'</span>, {
+  labels: { apply: <span class="s">'適用'</span>, cancel: <span class="s">'キャンセル'</span>, today: <span class="s">'今日'</span>, <span class="c">/* … */</span> },
+  presets: { today: <span class="s">'今日'</span>, yesterday: <span class="s">'昨日'</span>, <span class="c">/* … */</span> },
+  days: { other: <span class="s">'日'</span> },
+})</pre>
+
+      <p>Volá se před vytvořením pickeru a přepíše i jazyk, který knihovna nese.
+        Tvary v <code>days</code> se vybírají přes <code>Intl.PluralRules</code>,
+        takže čeština potřebuje <code>one</code>, <code>few</code>,
+        <code>many</code> i <code>other</code>, kdežto němčině stačí
+        <code>one</code> a <code>other</code>.</p>
+
+      <p>Na jednorázovou úpravu jednoho popisku stačí objekt v
+        <code>locale</code>, viz níž — <code>registerTranslation</code> je pro
+        celý jazyk napříč aplikací.</p>
+
       <h3>Přebití částí locale</h3>
       <p>Objekt se sloučí přes rozřešené locale, takže můžeš změnit jedinou položku:</p>
       <pre class="code">locale: {

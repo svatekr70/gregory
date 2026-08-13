@@ -3,11 +3,12 @@
 Rychlý date / range / datetime picker bez závislostí. Jedno jádro, dvě API:
 obyčejná JS třída pro imperativní použití a `<gregory-picker>` pro deklarativní.
 
-- **~8 kB gzip** včetně stylů, žádné runtime závislosti
+- **~16 kB gzip** včetně stylů, žádné runtime závislosti
 - **framework-agnostický** — funguje ve staré jQuery aplikaci i v Reactu
 - **rozsahy dat** s presety, `maxSpan`, náhledem při přejíždění myší
 - **čas** (`datetime`, `datetime-range`), čísla týdnů, dropdowny měsíc/rok
-- **lokalizace přes `Intl`** — žádné jazykové balíčky k udržování
+- **lokalizace přes `Intl`** — měsíce a formáty pro jakýkoli jazyk,
+  popisky pro cs, sk, de, pl, en, es, fr, it (další jde doplnit)
 - **klávesnice** — šipky, PageUp/PageDown, Enter, Escape
 - **témata přes CSS proměnné**, světlé i tmavé
 
@@ -116,6 +117,26 @@ picker.destroy()
 
 Události: `change` (s příznakem `complete`), `apply`, `cancel`, `open`,
 `close`, `month-change`.
+
+## Lokalizace
+
+Názvy měsíců, zkratky dnů, první den v týdnu i formát data řeší `Intl`,
+takže fungují pro jakýkoli jazyk. Popisky tlačítek a presetů knihovna nese
+sama — pro `cs`, `sk`, `de`, `pl`, `en`, `es`, `fr`, `it`. Rozhoduje jazyk,
+ne region, takže `de-AT` dostane němčinu. Ostatní jazyky mají popisky
+anglicky.
+
+Chybějící jazyk se dodá zvenčí:
+
+```js
+import { registerTranslation } from '@svatekr70/gregory'
+
+registerTranslation('ja', {
+  labels: { apply: '適用', cancel: 'キャンセル', today: '今日', /* … */ },
+  presets: { today: '今日', yesterday: '昨日', /* … */ },
+  days: { other: '日' },
+})
+```
 
 ## Vzhled
 

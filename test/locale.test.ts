@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { resolveLocale } from '../src/core/locale.js'
+import { availableTranslations, registerTranslation } from '../src/core/i18n.js'
 import { createDate } from '../src/core/date.js'
 
 describe('resolveLocale', () => {
@@ -38,6 +39,66 @@ describe('resolveLocale', () => {
   it('translates the built-in labels for Czech', () => {
     expect(resolveLocale('cs').labels.apply).toBe('Použít')
     expect(resolveLocale('en').labels.apply).toBe('Apply')
+  })
+
+  it('carries labels for every advertised language', () => {
+    const expected: Record<string, string> = {
+      cs: 'Použít',
+      sk: 'Použiť',
+      de: 'Übernehmen',
+      pl: 'Zastosuj',
+      es: 'Aplicar',
+      fr: 'Appliquer',
+      it: 'Applica',
+      en: 'Apply',
+    }
+
+    expect(availableTranslations()).toEqual(Object.keys(expected).sort())
+    for (const [code, apply] of Object.entries(expected)) {
+      expect(resolveLocale(code).labels.apply).toBe(apply)
+    }
+  })
+
+  it('picks the language regardless of the region subtag', () => {
+    expect(resolveLocale('de-AT').labels.today).toBe('Heute')
+    expect(resolveLocale('fr-CA').labels.today).toBe("Aujourd'hui")
+    expect(resolveLocale('es-MX').labels.cancel).toBe('Cancelar')
+  })
+
+  it('falls back to English for a language it does not carry', () => {
+    // Japonština má měsíce z Intl, ale popisky knihovna nenese.
+    const ja = resolveLocale('ja')
+    expect(ja.labels.apply).toBe('Apply')
+    expect(ja.monthNames()[0]).not.toBe('January')
+  })
+
+  it('counts days in the right language', () => {
+    expect(resolveLocale('de').formatDayCount(3)).toBe('3 Tage')
+    expect(resolveLocale('de').formatDayCount(1)).toBe('1 Tag')
+    expect(resolveLocale('pl').formatDayCount(1)).toBe('1 dzień')
+    expect(resolveLocale('pl').formatDayCount(3)).toBe('3 dni')
+    expect(resolveLocale('fr').formatDayCount(7)).toBe('7 jours')
+    expect(resolveLocale('sk').formatDayCount(1)).toBe('1 deň')
+  })
+
+  it('takes a language the library does not carry', () => {
+    registerTranslation('ja', {
+      labels: { ...resolveLocale('en').labels, apply: '適用', today: '今日' },
+      presets: {
+        today: '今日',
+        yesterday: '昨日',
+        last7: '過去7日間',
+        last30: '過去30日間',
+        thisMonth: '今月',
+        lastMonth: '先月',
+        thisYear: '今年',
+      },
+      days: { other: '日' },
+    })
+
+    expect(resolveLocale('ja').labels.apply).toBe('適用')
+    expect(resolveLocale('ja-JP').labels.today).toBe('今日')
+    expect(resolveLocale('ja').formatDayCount(5)).toBe('5 日')
   })
 
   it('merges a partial override on top of the resolved locale', () => {

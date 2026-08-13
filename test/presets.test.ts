@@ -22,8 +22,16 @@ function resolve(label: string, locale = resolveLocale('en')): [string, string] 
 
 describe('defaultPresets', () => {
   it('localises the labels', () => {
-    expect(defaultPresets(resolveLocale('cs')).map((preset) => preset.label)).toContain('Posledních 7 dní')
-    expect(defaultPresets(resolveLocale('en')).map((preset) => preset.label)).toContain('Last 7 days')
+    const labelsFor = (code: string): string[] => defaultPresets(resolveLocale(code)).map((preset) => preset.label)
+
+    expect(labelsFor('cs')).toContain('Posledních 7 dní')
+    expect(labelsFor('en')).toContain('Last 7 days')
+    expect(labelsFor('sk')).toContain('Posledných 7 dní')
+    expect(labelsFor('de')).toContain('Letzte 7 Tage')
+    expect(labelsFor('pl')).toContain('Ostatnie 7 dni')
+    expect(labelsFor('es')).toContain('Últimos 7 días')
+    expect(labelsFor('fr')).toContain('7 derniers jours')
+    expect(labelsFor('it')).toContain('Ultimi 7 giorni')
   })
 
   it('counts "last 7 days" inclusively, ending today', () => {
