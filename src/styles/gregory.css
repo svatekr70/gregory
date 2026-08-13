@@ -337,6 +337,11 @@
   min-width: calc(var(--gr-day-size) * 7);
 }
 
+/* Čtyři čtvrtletí sedí líp ve dvou řadách než v jedné dlouhé. */
+.gr-periods[data-period='quarter'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .gr-period {
   padding: 10px 6px;
   border: 0;

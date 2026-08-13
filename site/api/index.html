@@ -182,15 +182,19 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>endInput</code></td><td><code>string | HTMLInputElement</code></td><td>—</td><td>Druhé pole pro konec rozsahu.</td></tr>
           <tr><td><code>allowTyping</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Číst datum napsané rukou do pole.</td></tr>
           <tr><td><code>submitName</code></td><td><code>string | { from, to }</code></td><td>—</td><td>Skrytá pole s ISO hodnotou pro odeslání formuláře.</td></tr>
+          <tr><td><code>disabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Zamkne picker bez ohledu na stav pole.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
           <tr><td><code>maxSpan</code></td><td><code>number | null</code></td><td><code>null</code></td><td>Nejdelší rozsah ve dnech (včetně obou konců).</td></tr>
+          <tr><td><code>minSpan</code></td><td><code>number | null</code></td><td><code>null</code></td><td>Nejkratší rozsah ve dnech (včetně obou konců).</td></tr>
+          <tr><td><code>stopAtDisabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Rozsah nesmí přeskočit den zakázaný přes <code>isDisabled</code>.</td></tr>
           <tr><td><code>allowOpenRange</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Povolí rozsah otevřený na jednom konci.</td></tr>
           <tr><td><code>timeStep</code></td><td><code>number</code></td><td><code>5</code></td><td>Krok minut v časových režimech.</td></tr>
           <tr><td><code>timeUi</code></td><td><code>'select' | 'slider' | 'input'</code></td><td><code>'select'</code></td><td>Podoba ovládání času.</td></tr>
           <tr><td><code>minTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejdřívější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
           <tr><td><code>maxTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejpozdější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
+          <tr><td><code>timeWindow</code></td><td><code>(date: Date) =&gt; { min?, max? } | null</code></td><td>—</td><td>Časové okno pro konkrétní den; přebíjí <code>minTime</code> a <code>maxTime</code>.</td></tr>
           <tr><td><code>fullscreenBelow</code></td><td><code>number | null</code></td><td><code>480</code></td><td>Pod touto šířkou okna se panel otevře přes celou obrazovku.</td></tr>
           <tr><td><code>opens</code></td><td><code>'left' | 'right' | 'center'</code></td><td><code>'right'</code></td><td>Vodorovné zarovnání popoveru.</td></tr>
           <tr><td><code>drops</code></td><td><code>'down' | 'up' | 'auto'</code></td><td><code>'auto'</code></td><td>Směr otevření popoveru.</td></tr>
@@ -218,6 +222,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>'datetime-range'</code></td><td><code>DateRange</code></td><td>2</td><td><code>false</code></td></tr>
           <tr><td><code>'multiple'</code></td><td><code>Date[]</code></td><td>1</td><td><code>false</code></td></tr>
           <tr><td><code>'month'</code></td><td><code>Date | null</code></td><td>1</td><td><code>true</code></td></tr>
+          <tr><td><code>'quarter'</code></td><td><code>Date | null</code></td><td>1</td><td><code>true</code></td></tr>
           <tr><td><code>'year'</code></td><td><code>Date | null</code></td><td>1</td><td><code>true</code></td></tr>
         </tbody>
       </table>
@@ -359,6 +364,38 @@ picker.<span class="t">getValue</span>()  <span class="c">// [Date, Date, Date] 
         <code>maxSpan: 7</code> dovolí sedmidenní rozsah, ne osmidenní. Jakmile je
         vybraný první konec, dny mimo okno se automaticky zakážou — a to na obě
         strany, protože druhý klik může jít i dozadu.</p>
+
+      <h3><code>minSpan</code></h3>
+      <p>Protějšek <code>maxSpan</code>, měří se stejně — včetně obou konců.
+        Po prvním kliknutí zešednou dny, které jsou blíž, než kolik je potřeba.
+        Samotný počáteční den zůstává klikatelný: je to způsob, jak výběr začít
+        jinde, ne pokus o nulový rozsah.</p>
+
+      <h3><code>stopAtDisabled</code></h3>
+      <p>Bez něj může rozsah zakázané dny přeskočit — kdo zašedil víkendy, chce
+        přes ně dovolenou normálně vybrat. Zapnutý naopak hlídá, že mezi konci
+        rozsahu není ani jeden zakázaný den: po prvním kliknutí se výběr zastaví
+        na nejbližším zakázaném dni na obě strany. To je chování rezervačních
+        kalendářů, kde obsazený den rozsah přerušuje.</p>
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  mode: <span class="s">'range'</span>,
+  isDisabled: (d) =&gt; jeObsazeno(d),
+  stopAtDisabled: <span class="k">true</span>,
+})</pre>
+
+      <h3><code>disabled</code>, <code>readonly</code></h3>
+      <p>Picker respektuje obojí na poli, na kterém visí: panel se neotevře a
+        napsaný text se nečte. Volba <code>disabled</code> udělá totéž bez ohledu
+        na pole — hodí se na inline panel, který žádné pole nemá. Programové
+        <code>setValue()</code> funguje dál, zamčené je jen ovládání.</p>
+      <div class="callout">
+        <strong>Pole bez psaní, ale s pickerem</strong>
+        <p>Klasický trik <code>readonly</code>, aby uživatel do pole nemohl psát,
+          tady kalendář zamkne taky — <code>readonly</code> znamená „uživatel
+          hodnotu nemění" a výběr v kalendáři je změna jako každá jiná. Na tenhle
+          případ je <code>allowTyping: false</code>: pole se nedá přepsat rukou,
+          ale kalendář se otevře.</p>
+      </div>
 
       <h3><code>isDisabled</code> a <code>dayClass</code></h3>
       <p>Obě dostanou <code>Date</code> nastavené na půlnoc daného dne. <code>isDisabled</code>
@@ -631,6 +668,26 @@ picker.<span class="t">getValue</span>()
           znepřístupnil celý den.</p>
       </div>
 
+      <h3><code>timeWindow</code></h3>
+
+      <p><code>minTime</code> a <code>maxTime</code> platí pro celý picker, což
+        nestačí tam, kde se v sobotu otevírá jinak než ve všední den.
+        <code>timeWindow</code> dostane den a vrátí meze pro něj:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  mode: <span class="s">'datetime'</span>,
+  minTime: <span class="s">'08:00'</span>,
+  maxTime: <span class="s">'18:00'</span>,
+  timeWindow: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">6</span> ? { min: <span class="s">'09:00'</span>, max: <span class="s">'12:00'</span> } : <span class="k">null</span>,
+})</pre>
+
+      <p>Co funkce neuvede, zůstává na globálních mezích: <code>{ max: '12:00' }</code>
+        zkrátí jen konec dne, začátek si drží <code>minTime</code>. Explicitní
+        <code>null</code> naopak mez pro ten den ruší, <code>null</code> místo
+        celého okna znamená „nic zvláštního". Každý konec rozsahu se řídí oknem
+        svého vlastního dne a čas, který se přesunem dostane mimo okno, se
+        srovná dovnitř.</p>
+
       <h3><code>summary</code></h3>
 
       <p>Přidá do panelu řádek, který slovy říká, co je právě vybrané. Hodí se
@@ -788,6 +845,7 @@ odhlasit()</pre>
           <tr><td><code>cancel</code></td><td><code>{ value }</code></td><td>Zrušit, Escape nebo kliknutí mimo panel.</td></tr>
           <tr><td><code>open</code></td><td><code>{ value }</code></td><td>Otevření popoveru.</td></tr>
           <tr><td><code>close</code></td><td><code>{ value }</code></td><td>Zavření popoveru.</td></tr>
+          <tr><td><code>invalid</code></td><td><code>{ value, reason }</code></td><td>Hodnota neprošla omezeními a picker ji nepřijal. <code>reason</code> je <code>'min' | 'max' | 'disabled' | 'maxSpan' | 'minSpan' | 'unreadable'</code>.</td></tr>
           <tr><td><code>month-change</code></td><td><code>{ year, month, index }</code></td><td>Změna zobrazeného měsíce. <code>month</code> je 0–11, <code>index</code> je pořadí panelu.</td></tr>
         </tbody>
       </table>
@@ -825,6 +883,9 @@ odhlasit()</pre>
           <tr><td><code>min</code>, <code>max</code></td><td><code>min</code>, <code>max</code></td></tr>
           <tr><td><code>months</code></td><td><code>months</code></td></tr>
           <tr><td><code>max-span</code></td><td><code>maxSpan</code></td></tr>
+          <tr><td><code>min-span</code></td><td><code>minSpan</code></td></tr>
+          <tr><td><code>stop-at-disabled</code></td><td><code>stopAtDisabled</code></td></tr>
+          <tr><td><code>disabled</code></td><td><code>disabled</code></td></tr>
           <tr><td><code>first-day-of-week</code></td><td><code>firstDayOfWeek</code></td></tr>
           <tr><td><code>placeholder</code></td><td>placeholder vnitřního inputu</td></tr>
           <tr><td><code>inline</code></td><td><code>inline</code> (přítomnost atributu)</td></tr>

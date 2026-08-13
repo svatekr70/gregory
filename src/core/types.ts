@@ -1,7 +1,15 @@
 /** Anything Gregory accepts where a date is expected. */
 export type DateLike = Date | string | number | null | undefined
 
-export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range' | 'multiple' | 'month' | 'year'
+export type Mode =
+  | 'date'
+  | 'range'
+  | 'datetime'
+  | 'datetime-range'
+  | 'multiple'
+  | 'month'
+  | 'quarter'
+  | 'year'
 
 /** Meze času pro jeden den, jak je vrací `GregoryOptions.timeWindow`. */
 export interface TimeWindow {

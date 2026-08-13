@@ -64,9 +64,14 @@ function isMultiMode(mode: ResolvedOptions['mode']): boolean {
   return mode === 'multiple'
 }
 
-/** Režimy, které nevybírají den, ale celý měsíc nebo rok. */
-function isPeriodMode(mode: ResolvedOptions['mode']): mode is 'month' | 'year' {
-  return mode === 'month' || mode === 'year'
+/** Režimy, které nevybírají den, ale celé období — měsíc, čtvrtletí, rok. */
+function isPeriodMode(mode: ResolvedOptions['mode']): mode is 'month' | 'quarter' | 'year' {
+  return mode === 'month' || mode === 'quarter' || mode === 'year'
+}
+
+/** Čtvrtletí, ve kterém datum leží: 0–3. */
+function quarterOf(date: Date): number {
+  return Math.floor(date.getMonth() / 3)
 }
 
 /** Kolik let se vejde na jednu stránku výběru roku. */
@@ -463,12 +468,7 @@ export class Gregory {
     const { from, to } = this.committed
     const time = hasTime(mode)
 
-    if (isPeriodMode(mode)) {
-      if (!from) return ''
-      return mode === 'month'
-        ? locale.monthLabel(from)
-        : String(from.getFullYear())
-    }
+    if (isPeriodMode(mode)) return from ? this.periodLabel(from) : ''
 
     if (isMultiMode(mode)) {
       // Dlouhý seznam by se do pole nevešel, takže se za třetím dnem zkrátí.
@@ -941,10 +941,7 @@ export class Gregory {
         this.goTo(now)
         // Ve výběru období není co vybírat po dnech — bere se dnešní měsíc/rok.
         if (isPeriodMode(this.options.mode)) {
-          const start =
-            this.options.mode === 'month'
-              ? createDate(now.getFullYear(), now.getMonth(), 1)
-              : createDate(now.getFullYear(), 0, 1)
+          const start = createDate(now.getFullYear(), this.periodStartMonth(now), 1)
           this.pickPeriod(start)
         } else {
           this.pick(now)
@@ -1170,7 +1167,7 @@ export class Gregory {
 
     // Výběr měsíce listuje po rocích, výběr roku po stránkách let.
     if (isPeriodMode(this.options.mode)) {
-      const years = this.options.mode === 'month' ? amount : amount * YEARS_PER_PAGE
+      const years = this.options.mode === 'year' ? amount * YEARS_PER_PAGE : amount
       this.views = [addMonths(view, years * 12)]
       this.emitter.emit('month-change', { year: this.views[0]!.getFullYear(), month: 0, index: 0 })
       this.render()
@@ -1349,7 +1346,23 @@ export class Gregory {
     return startOfWeek(date, this.options.firstDayOfWeek)
   }
 
-  /** Vybere celý měsíc nebo rok — hodnotou je jeho první den. */
+  /** Měsíc, kterým začíná období obsahující `date` — podle režimu. */
+  private periodStartMonth(date: Date): number {
+    if (this.options.mode === 'month') return date.getMonth()
+    if (this.options.mode === 'quarter') return quarterOf(date) * 3
+    return 0
+  }
+
+  /** Popis vybraného období do pole i do shrnutí. */
+  private periodLabel(date: Date): string {
+    const { locale, mode } = this.options
+    if (mode === 'month') return locale.monthLabel(date)
+    // „Q3" projde napříč jazyky a nepotřebuje překlad.
+    if (mode === 'quarter') return `Q${quarterOf(date) + 1} ${date.getFullYear()}`
+    return String(date.getFullYear())
+  }
+
+  /** Vybere celé období — hodnotou je jeho první den. */
   private pickPeriod(start: Date | null): void {
     if (!start) return
     this.selection = { from: start, to: null }
@@ -1464,7 +1477,7 @@ export class Gregory {
   private renderPeriodPanel(): HTMLElement {
     const { locale, mode, min, max } = this.options
     const year = this.firstView().getFullYear()
-    const months = mode === 'month'
+    const years = mode === 'year'
     const picked = this.selection.from
 
     const head = h('header', { class: 'gr-head' })
@@ -1481,25 +1494,29 @@ export class Gregory {
         [direction === 'prev' ? '‹' : '›'],
       )
 
-    // U roků se listuje po celých stránkách, u měsíců po rocích.
+    // U roků se listuje po celých stránkách, u měsíců a čtvrtletí po rocích.
     const pageStart = year - ((year % YEARS_PER_PAGE) + YEARS_PER_PAGE) % YEARS_PER_PAGE
-    const caption = months ? String(year) : `${pageStart} – ${pageStart + YEARS_PER_PAGE - 1}`
+    const caption = years ? `${pageStart} – ${pageStart + YEARS_PER_PAGE - 1}` : String(year)
     head.append(arrow('prev'), h('div', { class: 'gr-caption' }, [caption]), arrow('next'))
 
-    const grid = h('div', { class: 'gr-periods', role: 'grid' })
+    const grid = h('div', { class: 'gr-periods', role: 'grid', 'data-period': mode })
     const names = locale.monthNames()
+    const count = mode === 'month' ? 12 : mode === 'quarter' ? 4 : YEARS_PER_PAGE
 
-    for (let index = 0; index < (months ? 12 : YEARS_PER_PAGE); index += 1) {
-      const date = months ? createDate(year, index, 1) : createDate(pageStart + index, 0, 1)
-      const label = months ? (names[index] ?? '') : String(pageStart + index)
+    for (let index = 0; index < count; index += 1) {
+      // Období vždy začíná svým prvním dnem; délku určuje režim.
+      const span = mode === 'month' ? 1 : mode === 'quarter' ? 3 : 12
+      const date = years ? createDate(pageStart + index, 0, 1) : createDate(year, index * span, 1)
+      const label =
+        mode === 'month' ? (names[index] ?? '') : mode === 'quarter' ? `Q${index + 1}` : String(pageStart + index)
 
       // Zakázané je celé období, které nezasahuje do min/max.
-      const last = months ? createDate(date.getFullYear(), date.getMonth() + 1, 0) : createDate(date.getFullYear(), 11, 31)
+      const last = createDate(date.getFullYear(), date.getMonth() + span, 0)
       const disabled = (min !== null && compareDay(last, min) < 0) || (max !== null && compareDay(date, max) > 0)
       const isCurrent =
         picked !== null &&
         picked.getFullYear() === date.getFullYear() &&
-        (!months || picked.getMonth() === date.getMonth())
+        (years || Math.floor(picked.getMonth() / span) === index)
 
       grid.append(
         h(
@@ -1860,6 +1877,7 @@ export class Gregory {
     }
 
     if (!from && !to) return locale.labels.nothingSelected
+    if (isPeriodMode(mode)) return from ? this.periodLabel(from) : locale.labels.nothingSelected
     if (!isRangeMode(mode)) return from ? locale.formatDate(from, time) : locale.labels.nothingSelected
     if (!from) return `${locale.labels.until} ${locale.formatDate(to!, time)}`
     if (!to) {

@@ -52,6 +52,7 @@
                 <option value="datetime-range">datetime-range — rozsah s časem</option>
                 <option value="multiple">multiple — více samostatných dnů</option>
                 <option value="month">month — výběr měsíce</option>
+                <option value="quarter">quarter — výběr čtvrtletí</option>
                 <option value="year">year — výběr roku</option>
               </select>
             </label>
@@ -80,6 +81,11 @@
             <label class="field">
               <span>Nejdelší rozsah ve dnech <code>maxSpan</code> <em>(0 = bez limitu)</em></span>
               <input type="number" id="opt-maxspan" min="0" max="365" value="0">
+            </label>
+
+            <label class="field">
+              <span>Nejkratší rozsah ve dnech <code>minSpan</code> <em>(0 = bez limitu)</em></span>
+              <input type="number" id="opt-minspan" min="0" max="365" value="0">
             </label>
 
             <label class="field">
@@ -150,6 +156,10 @@
               <span>Vykreslit na místo, ne jako popover <code>inline</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-weekends">
               <span>Zakázat víkendy <code>isDisabled</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-stopatdisabled">
+              <span>Nepřeskakovat zakázané dny <code>stopAtDisabled</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-disabled">
+              <span>Zamknout picker <code>disabled</code></span></label>
           </div>
 
           <div class="panel">
@@ -299,11 +309,12 @@
         </div>
 
         <div class="card example">
-          <h3>Výběr měsíce a roku</h3>
-          <p><code>mode: 'month'</code> a <code>'year'</code> — na filtry v přehledech,
-            kde je denní kalendář zbytečný.</p>
+          <h3>Výběr období</h3>
+          <p><code>mode: 'month'</code>, <code>'quarter'</code> a <code>'year'</code> — na filtry
+            v přehledech, kde je denní kalendář zbytečný.</p>
           <div class="two-fields">
             <input class="stage-input" id="ex-month" placeholder="Měsíc…">
+            <input class="stage-input" id="ex-quarter" placeholder="Čtvrtletí…">
             <input class="stage-input" id="ex-year" placeholder="Rok…">
           </div>
           <div class="readout" data-for="ex-month">—</div>

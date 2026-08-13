@@ -5,7 +5,7 @@ obyčejná JS třída pro imperativní použití a `<gregory-picker>` pro deklar
 
 - **~16 kB gzip** včetně stylů, žádné runtime závislosti
 - **framework-agnostický** — funguje ve staré jQuery aplikaci i v Reactu
-- **rozsahy dat** s presety, `maxSpan`, náhledem při přejíždění myší
+- **rozsahy dat** s presety, `minSpan`/`maxSpan`, náhledem při přejíždění myší
 - **čas** (`datetime`, `datetime-range`), čísla týdnů, dropdowny měsíc/rok
 - **lokalizace přes `Intl`** — měsíce a formáty pro jakýkoli jazyk,
   popisky pro cs, sk, de, pl, en, es, fr, it (další jde doplnit)
@@ -73,7 +73,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 
 | volba | výchozí | popis |
 | --- | --- | --- |
-| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range`, `multiple`, `month`, `year` |
+| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range`, `multiple`, `month`, `quarter`, `year` |
 | `className` | — | vlastní třídy pro kořen panelu (takhle se aplikují motivy) |
 | `value` | `null` | `Date`, ISO string, `{from,to}` nebo `[from, to]` |
 | `locale` | jazyk prohlížeče | BCP 47 tag nebo částečný objekt `Locale` |
@@ -88,15 +88,19 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `endInput` | — | druhé pole pro konec rozsahu (`from` do prvního, `to` do druhého) |
 | `allowTyping` | `true` | číst datum napsané rukou do pole |
 | `submitName` | — | skrytá pole s ISO hodnotou pro odeslání formuláře |
+| `disabled` | `false` | zamkne picker; totéž udělá `disabled` i `readonly` na poli |
 | `inline` | `false` | vykreslit na místo místo popoveru |
 | `autoApply` | `true` jen v módu `date` | potvrdit hned, bez tlačítek Apply/Cancel |
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |
 | `maxSpan` | `null` | nejdelší povolený rozsah ve dnech |
+| `minSpan` | `null` | nejkratší povolený rozsah ve dnech |
+| `stopAtDisabled` | `false` | rozsah nesmí přeskočit den zakázaný přes `isDisabled` |
 | `allowOpenRange` | `false` | povolí rozsah otevřený na jednom konci (`{ from, to: null }`) |
 | `maxSelected` | `null` | nejvíc dnů v režimu `multiple` |
 | `timeStep` | `5` | krok minut v časových režimech |
 | `timeUi` | `'select'` | ovládání času: `'select'` selecty, `'slider'` posuvníky, `'input'` nativní pole |
 | `minTime` / `maxTime` | `null` | okno dne, `'HH:MM'`, včetně obou hranic |
+| `timeWindow` | — | `(date) => { min, max }` — okno dne pro konkrétní den |
 | `fullscreenBelow` | `480` | pod touto šířkou okna se panel otevře přes celou obrazovku |
 | `opens` / `drops` | `'right'` / `'auto'` | umístění popoveru |
 | `isDisabled` | — | `(date) => boolean` |
@@ -121,7 +125,7 @@ picker.destroy()
 ```
 
 Události: `change` (s příznakem `complete`), `apply`, `cancel`, `open`,
-`close`, `month-change`.
+`close`, `invalid` (hodnota neprošla omezeními), `month-change`.
 
 ## Lokalizace
 

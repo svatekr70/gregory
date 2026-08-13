@@ -167,3 +167,60 @@ describe('year mode', () => {
     expect(labels()[0]).toBe(first)
   })
 })
+
+describe('quarter mode', () => {
+  it('shows four quarters of one year', () => {
+    mount({ mode: 'quarter' })
+
+    expect(labels()).toEqual(['Q1', 'Q2', 'Q3', 'Q4'])
+    expect(caption()).toBe('2026')
+  })
+
+  it('picks the first day of the quarter', () => {
+    mount({ mode: 'quarter' })
+
+    period('Q3').click()
+
+    expect(formatISODate(picker.getValue() as Date)).toBe('2026-07-01')
+    expect(input.value).toBe('Q3 2026')
+  })
+
+  it('pages by whole years', () => {
+    mount({ mode: 'quarter' })
+
+    picker.element.querySelector<HTMLButtonElement>('[data-action="next"]')!.click()
+    expect(caption()).toBe('2027')
+  })
+
+  it('marks the quarter that is picked', () => {
+    mount({ mode: 'quarter', value: '2026-08-13' })
+
+    expect(period('Q3').classList.contains('is-selected')).toBe(true)
+    expect(period('Q2').classList.contains('is-selected')).toBe(false)
+  })
+
+  it('disables quarters entirely outside min/max', () => {
+    mount({ mode: 'quarter', min: '2026-05-15', max: '2026-08-10' })
+
+    expect(period('Q1').disabled).toBe(true)
+    expect(period('Q2').disabled).toBe(false)
+    expect(period('Q3').disabled).toBe(false)
+    expect(period('Q4').disabled).toBe(true)
+  })
+
+  it('takes the current quarter from the Today button', () => {
+    mount({ mode: 'quarter' })
+    picker.element.querySelector<HTMLButtonElement>('[data-action="today"]')!.click()
+
+    const value = picker.getValue() as Date
+    expect(value.getMonth()).toBe(Math.floor(new Date().getMonth() / 3) * 3)
+    expect(value.getDate()).toBe(1)
+  })
+
+  it('describes the quarter in the summary line', () => {
+    mount({ mode: 'quarter', summary: true })
+    period('Q2').click()
+
+    expect(picker.summaryText()).toBe('Q2 2026')
+  })
+})

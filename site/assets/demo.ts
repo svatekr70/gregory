@@ -26,6 +26,11 @@ const hasTime = (mode: Mode): boolean => mode === 'datetime' || mode === 'dateti
 
 const isRange = (mode: Mode): boolean => mode === 'range' || mode === 'datetime-range'
 
+const isPeriod = (mode: Mode): boolean => mode === 'month' || mode === 'quarter' || mode === 'year'
+
+/** Stejné pravidlo jako v knihovně — jinak by konfigurátor psal jiný kód, než co ukazuje. */
+const defaultAutoApply = (mode: Mode): boolean => mode === 'date' || isPeriod(mode)
+
 function describe(value: GregoryValue, mode: Mode): string {
   if (!value) return 'null'
   const stamp = (date: Date): string =>
@@ -64,6 +69,7 @@ const controls = {
   locale: $<HTMLSelectElement>('#opt-locale'),
   months: $<HTMLInputElement>('#opt-months'),
   maxSpan: $<HTMLInputElement>('#opt-maxspan'),
+  minSpan: $<HTMLInputElement>('#opt-minspan'),
   timeStep: $<HTMLInputElement>('#opt-timestep'),
   timeUi: $<HTMLSelectElement>('#opt-timeui'),
   minTime: $<HTMLInputElement>('#opt-mintime'),
@@ -80,6 +86,8 @@ const controls = {
   autoApply: $<HTMLInputElement>('#opt-autoapply'),
   inline: $<HTMLInputElement>('#opt-inline'),
   weekends: $<HTMLInputElement>('#opt-weekends'),
+  stopAtDisabled: $<HTMLInputElement>('#opt-stopatdisabled'),
+  disabled: $<HTMLInputElement>('#opt-disabled'),
 }
 
 const stage = $('#stage')
@@ -151,11 +159,13 @@ let current: Gregory | null = null
 
 function readOptions(): GregoryOptions & { mode: Mode } {
   const maxSpan = Number(controls.maxSpan.value)
+  const minSpan = Number(controls.minSpan.value)
   return {
     mode: controls.mode.value as Mode,
     locale: controls.locale.value,
     months: Number(controls.months.value),
     maxSpan: maxSpan > 0 ? maxSpan : null,
+    minSpan: minSpan > 0 ? minSpan : null,
     timeStep: Number(controls.timeStep.value),
     timeUi: controls.timeUi.value as 'select' | 'input' | 'slider',
     minTime: controls.minTime.value.trim() || null,
@@ -172,6 +182,8 @@ function readOptions(): GregoryOptions & { mode: Mode } {
       controls.dropdowns.value === 'menu' ? 'menu' : controls.dropdowns.value === 'select' ? true : false,
     autoApply: controls.autoApply.checked,
     inline: controls.inline.checked,
+    disabled: controls.disabled.checked,
+    stopAtDisabled: controls.stopAtDisabled.checked,
     ...(controls.weekends.checked
       ? { isDisabled: (date: Date) => date.getDay() === 0 || date.getDay() === 6 }
       : {}),
@@ -185,6 +197,7 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
 
   if (options.months !== (range ? 2 : 1)) lines.push(`months: ${options.months}`)
   if (options.maxSpan) lines.push(`maxSpan: ${options.maxSpan}`)
+  if (options.minSpan) lines.push(`minSpan: ${options.minSpan}`)
   if (options.maxSelected) lines.push(`maxSelected: ${options.maxSelected}`)
   if (hasTime(options.mode)) {
     if (options.timeStep !== 5) lines.push(`timeStep: ${options.timeStep}`)
@@ -202,9 +215,11 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
   if (options.weekSelection && options.weekSelection !== 'off') lines.push(`weekSelection: '${options.weekSelection}'`)
   if (options.dropdowns === 'menu') lines.push("dropdowns: 'menu'")
   else if (options.dropdowns) lines.push('dropdowns: true')
-  if (options.autoApply !== (options.mode === 'date')) lines.push(`autoApply: ${options.autoApply}`)
+  if (options.autoApply !== defaultAutoApply(options.mode)) lines.push(`autoApply: ${options.autoApply}`)
   if (options.inline) lines.push('inline: true')
+  if (options.disabled) lines.push('disabled: true')
   if (controls.weekends.checked) lines.push('isDisabled: (d) => d.getDay() === 0 || d.getDay() === 6')
+  if (options.stopAtDisabled) lines.push('stopAtDisabled: true')
 
   const body = lines.map((line) => `  ${line},`).join('\n')
   const target = options.inline ? "'#kalendar'" : "'#vstup'"
@@ -274,9 +289,10 @@ function rebuild(): void {
     control.disabled = !hasTime(options.mode)
   }
   // Tyhle se týkají jen rozsahů.
-  for (const control of [controls.maxSpan, controls.allowOpenRange, controls.weekSelection]) {
+  for (const control of [controls.maxSpan, controls.minSpan, controls.allowOpenRange, controls.weekSelection]) {
     control.disabled = !isRange(options.mode)
   }
+  controls.stopAtDisabled.disabled = !controls.weekends.checked || !isRange(options.mode)
   controls.linkedCalendars.disabled = Number(controls.months.value) < 2
   controls.opens.disabled = options.inline ?? false
 }
@@ -290,11 +306,12 @@ function applyModeDefaults(mode: Mode): void {
   const range = isRange(mode)
   controls.months.value = String(range ? 2 : 1)
   controls.presets.checked = range
-  controls.autoApply.checked = mode === 'date'
+  controls.autoApply.checked = defaultAutoApply(mode)
   if (!range) {
     controls.allowOpenRange.checked = false
     controls.weekSelection.value = 'off'
     controls.maxSpan.value = '0'
+    controls.minSpan.value = '0'
   }
 }
 
@@ -428,6 +445,7 @@ example('ex-badge', { mode: 'date', locale: 'cs' })
 example('ex-multiple', { mode: 'multiple', locale: 'cs', summary: true, months: 1 })
 
 example('ex-month', { mode: 'month', locale: 'cs' })
+example('ex-quarter', { mode: 'quarter', locale: 'cs' })
 example('ex-year', { mode: 'year', locale: 'cs' })
 
 // Předstíraná data: „kolik je ten den rezervací".
