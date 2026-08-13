@@ -535,9 +535,14 @@ export class Gregory {
       case 'open-end':
         this.openRange('end')
         break
-      case 'today':
-        this.goTo(today())
+      case 'today': {
+        // Doskočí na dnešek a rovnou ho vybere — stejně, jako by se kliklo
+        // na jeho buňku. Když je dnešek mimo min/max, jen se tam přesune.
+        const now = today()
+        this.goTo(now)
+        this.pick(now)
         break
+      }
       case 'clear':
         this.clear()
         this.close()
@@ -1172,6 +1177,8 @@ export class Gregory {
     }
 
     const actions = h('div', { class: 'gr-actions' })
+    // Vlevo pomocné akce, vpravo potvrzení — jako v nativním kalendáři.
+    const helpers = h('div', { class: 'gr-actions gr-actions-secondary' })
 
     if (isRangeMode(mode) && this.options.allowOpenRange) {
       // Toggles, not one-shot actions: both stay live from the first picked day
@@ -1195,10 +1202,35 @@ export class Gregory {
           [side === 'start' ? locale.labels.openStart : locale.labels.openEnd],
         )
 
-      actions.append(openButton('start'), openButton('end'))
+      helpers.append(openButton('start'), openButton('end'))
     }
 
-    actions.append(h('button', { type: 'button', class: 'gr-btn gr-btn-ghost', 'data-action': 'clear' }, [locale.labels.clear]))
+    const now = today()
+    helpers.append(
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'gr-btn gr-btn-ghost',
+          'data-action': 'today',
+          disabled: isDayDisabled(now, this.monthContext()),
+          title: locale.labels.today,
+        },
+        [locale.labels.today],
+      ),
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'gr-btn gr-btn-ghost',
+          'data-action': 'clear',
+          // Mazat prázdno by jen zbytečně vyslalo apply s null.
+          disabled: !this.selection.from && !this.selection.to,
+        },
+        [locale.labels.clear],
+      ),
+    )
+
     if (!autoApply) {
       actions.append(
         h('button', { type: 'button', class: 'gr-btn gr-btn-ghost', 'data-action': 'cancel' }, [locale.labels.cancel]),
@@ -1207,7 +1239,9 @@ export class Gregory {
         ]),
       )
     }
-    footer.append(actions)
+
+    footer.append(helpers)
+    if (actions.childElementCount) footer.append(actions)
     return footer
   }
 

@@ -185,6 +185,26 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
       </table>
       </div>
 
+      <h3>Tlačítka v patičce</h3>
+
+      <p>Vlevo jsou pomocné akce, vpravo potvrzení — stejné rozdělení jako
+        v nativním kalendáři prohlížeče.</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tlačítko</th><th>Co udělá</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Dnes</strong></td><td>Přeskočí na dnešek a vybere ho — stejně, jako by se kliklo na jeho buňku. Když je dnešek mimo <code>min</code>/<code>max</code>, je zašedlé.</td></tr>
+          <tr><td><strong>Vymazat</strong></td><td>Vyprázdní hodnotu a <strong>rovnou ji potvrdí</strong>: vyšle <code>apply</code> s <code>null</code>, vyprázdní input a zavře panel. Takhle se odesílá „nic". Zašedlé, dokud není co mazat.</td></tr>
+          <tr><td><strong>Zrušit</strong></td><td>Zahodí rozpracovaný výběr a vrátí poslední potvrzenou hodnotu. Jen mimo <code>autoApply</code>.</td></tr>
+          <tr><td><strong>Použít</strong></td><td>Povýší výběr na hodnotu. Jen mimo <code>autoApply</code>.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Prázdná hodnota má tvar <code>null</code> v single režimech a
+        <code>{ from: null, to: null }</code> v rozsazích.</p>
+
       <h3><code>autoApply</code></h3>
       <p>Rozhoduje o tom, kdy se rozpracovaný výběr stane hodnotou.</p>
       <ul>

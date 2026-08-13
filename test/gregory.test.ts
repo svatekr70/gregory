@@ -839,6 +839,54 @@ describe('footer actions', () => {
     expect(input.value).toBe('')
   })
 
+  it('jumps to today and selects it', () => {
+    mount({ mode: 'date' })
+    picker.goTo('2020-01-01')
+
+    click('today')
+
+    const value = picker.getValue() as Date
+    const now = new Date()
+    expect(value.getFullYear()).toBe(now.getFullYear())
+    expect(value.getMonth()).toBe(now.getMonth())
+    expect(value.getDate()).toBe(now.getDate())
+  })
+
+  it('only navigates when today is out of bounds', () => {
+    mount({ mode: 'date', min: '2030-01-01', max: '2030-12-31' })
+
+    const today = picker.element.querySelector<HTMLButtonElement>('[data-action="today"]')!
+    expect(today.disabled).toBe(true)
+
+    today.click()
+    expect(picker.getValue()).toBeNull()
+  })
+
+  it('disables Clear while there is nothing to clear', () => {
+    mount({ mode: 'date' })
+    const clear = () => picker.element.querySelector<HTMLButtonElement>('[data-action="clear"]')!
+    expect(clear().disabled).toBe(true)
+
+    picker.setValue('2026-08-13')
+    picker.openPanel()
+    expect(clear().disabled).toBe(false)
+  })
+
+  it('commits an empty value through Clear', () => {
+    mount({ mode: 'range', presets: false })
+    picker.setValue(['2026-08-10', '2026-08-12'])
+    picker.openPanel()
+    const onApply = vi.fn()
+    picker.on('apply', onApply)
+
+    click('clear')
+
+    expect(picker.getValue()).toEqual({ from: null, to: null })
+    expect(input.value).toBe('')
+    expect(onApply).toHaveBeenLastCalledWith({ value: { from: null, to: null } })
+    expect(picker.element.hidden).toBe(true)
+  })
+
   it('jumps back to the current month through Today', () => {
     mount({ mode: 'range', presets: [{ label: 'Dnes', range: () => [new Date(), new Date()] }] })
     picker.goTo('2020-01-01')
