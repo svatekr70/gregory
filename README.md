@@ -37,9 +37,12 @@ momenty, žádné řetězce, které se pak musí luštit.
   které dostaneš. Časové zóny knihovna vědomě neřeší.
 - **300+ testů** ve Vitestu nad jádrem i nad DOM, pokrytí přes 90 % příkazů.
 
-Dokumentace se staví ze složky `site/` (`npm run site:dev`): úvod, demo
-s konfigurátorem, [uživatelská příručka](site/guide/index.html) na nasazení
-krok za krokem a [API reference](site/api/index.html) s úplným výčtem voleb.
+**Dokumentace: [svatekr70.github.io/gregory](https://svatekr70.github.io/gregory/)** —
+[demo s konfigurátorem](https://svatekr70.github.io/gregory/demo/),
+[uživatelská příručka](https://svatekr70.github.io/gregory/guide/) na nasazení
+krok za krokem a [API reference](https://svatekr70.github.io/gregory/api/)
+s úplným výčtem voleb, metod, událostí a CSS proměnných. Web se dá spustit
+i lokálně přes `npm run site:dev`.
 
 ## Instalace
 
