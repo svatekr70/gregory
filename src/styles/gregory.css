@@ -91,6 +91,17 @@
   display: none;
 }
 
+/* Zamčený picker: vidět je, ale nic se v něm neděje. Popover se stejně
+   neotevře, tohle je hlavně pro inline panel. */
+.gr[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.gr[data-disabled] * {
+  pointer-events: none;
+}
+
 .gr[data-popover] {
   position: absolute;
   z-index: 9999;

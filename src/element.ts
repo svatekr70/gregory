@@ -2,7 +2,15 @@ import { Gregory } from './gregory.js'
 import { formatISODate } from './core/date.js'
 import type { GregoryOptions, Mode, WeekDay } from './core/types.js'
 
-const BOOLEAN_ATTRS = ['inline', 'week-numbers', 'dropdowns', 'auto-apply', 'presets'] as const
+const BOOLEAN_ATTRS = [
+  'inline',
+  'week-numbers',
+  'dropdowns',
+  'auto-apply',
+  'presets',
+  'disabled',
+  'stop-at-disabled',
+] as const
 
 /**
  * `<gregory-picker>` — a thin declarative wrapper over {@link Gregory}.
@@ -20,6 +28,7 @@ export class GregoryElement extends HTMLElement {
       'max',
       'months',
       'max-span',
+      'min-span',
       'first-day-of-week',
       'placeholder',
       ...BOOLEAN_ATTRS,
@@ -81,7 +90,10 @@ export class GregoryElement extends HTMLElement {
       max: this.getAttribute('max'),
       months: number('months'),
       maxSpan: number('max-span') ?? null,
+      minSpan: number('min-span') ?? null,
       firstDayOfWeek: number('first-day-of-week') as WeekDay | undefined,
+      disabled: this.hasAttribute('disabled'),
+      stopAtDisabled: this.hasAttribute('stop-at-disabled'),
       inline: this.hasAttribute('inline'),
       weekNumbers: this.hasAttribute('week-numbers'),
       dropdowns: this.hasAttribute('dropdowns'),

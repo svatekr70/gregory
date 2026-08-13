@@ -3,6 +3,9 @@ export type DateLike = Date | string | number | null | undefined
 
 export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range' | 'multiple' | 'month' | 'year'
 
+/** Proč picker hodnotu odmítl. */
+export type InvalidReason = 'min' | 'max' | 'disabled' | 'maxSpan' | 'minSpan' | 'unreadable'
+
 /** How a whole week can be picked. See `GregoryOptions.weekSelection`. */
 export type WeekSelection = 'off' | 'number' | 'day' | 'both'
 
@@ -137,6 +140,13 @@ export interface GregoryOptions {
    * dvě pole; dvojice `{ from, to }` jim dá vlastní jména.
    */
   submitName?: string | { from: string; to: string } | null
+  /**
+   * Zamkne picker bez ohledu na pole. Panel se neotevře a klikání v něm nic
+   * nevybere. Bez tohoto přepínače se stejně chová `disabled` i `readonly`
+   * na samotném poli — pole, do kterého uživatel nesmí psát, ale datum si
+   * vybrat má, se dělá přes `allowTyping: false`.
+   */
+  disabled?: boolean
   /** Render the panel in place instead of a popover attached to an input. */
   inline?: boolean
   /** Commit on the last click instead of showing Apply/Cancel. */
@@ -145,6 +155,15 @@ export interface GregoryOptions {
   presets?: RangePreset[] | boolean
   /** Longest selectable range, in days. Ignored outside range modes. */
   maxSpan?: number | null
+  /** Nejkratší vybratelný rozsah ve dnech, včetně obou konců. */
+  minSpan?: number | null
+  /**
+   * Rozsah nesmí přeskočit den zakázaný přes `isDisabled`. Druhý klik se pak dá
+   * udělat jen po nejbližší blokovaný den, což je chování rezervačních
+   * kalendářů. Výchozí `false`: kdo zašedil jen víkendy, chce přes ně dovolenou
+   * normálně vybrat.
+   */
+  stopAtDisabled?: boolean
   /**
    * Lets a range stay open at one end — `{ from, to: null }` means "from this
    * day onwards". Only meaningful in range modes.
@@ -202,10 +221,13 @@ export interface ResolvedOptions {
   showOutsideDays: boolean
   weekSelection: WeekSelection
   dropdowns: false | 'select' | 'menu'
+  disabled: boolean
   inline: boolean
   autoApply: boolean
   presets: RangePreset[]
   maxSpan: number | null
+  minSpan: number | null
+  stopAtDisabled: boolean
   allowOpenRange: boolean
   maxSelected: number | null
   timeStep: number
@@ -235,6 +257,8 @@ export type GregoryEvents = {
   cancel: { value: GregoryValue }
   open: { value: GregoryValue }
   close: { value: GregoryValue }
+  /** Hodnota neprošla omezeními a picker ji nepřijal. */
+  invalid: { value: GregoryValue; reason: InvalidReason }
   /** `index` is the panel that moved; 0 when there is only one. */
   'month-change': { year: number; month: number; index: number }
 }

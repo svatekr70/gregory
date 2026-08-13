@@ -5,6 +5,7 @@ import {
   clampDate,
   compareDay,
   createDate,
+  daysBetween,
   formatISODate,
   formatISOTime,
   isSameDay,
@@ -32,6 +33,7 @@ import type {
   GregoryEvents,
   GregoryOptions,
   GregoryValue,
+  InvalidReason,
   RangeValueInput,
   ResolvedOptions,
 } from './core/types.js'
@@ -157,7 +159,12 @@ export class Gregory {
     const fromDom = this.endField
       ? ([this.input?.value || null, this.endField.value || null] as [DateLike, DateLike])
       : (this.trigger?.dataset.value ?? this.input?.value ?? null) || null
-    this.assign(this.toRange(options.value ?? fromDom), { commit: true, silent: true })
+    // Počáteční hodnota prochází stejnou kontrolou jako pozdější `setValue()`;
+    // co neprojde, se zahodí, ať picker nezačíná v zakázaném stavu.
+    const initial = this.toRange(options.value ?? fromDom)
+    const rejected = this.checkRange(initial) !== null
+    if (rejected) this.picked.clear()
+    this.assign(rejected ? { from: null, to: null } : initial, { commit: true, silent: true })
 
     if (this.options.inline) {
       this.host.append(this.element)
@@ -206,12 +213,15 @@ export class Gregory {
       showOutsideDays: options.showOutsideDays ?? true,
       weekSelection: options.weekSelection ?? 'off',
       dropdowns: options.dropdowns === true ? 'select' : (options.dropdowns ?? false),
+      disabled: options.disabled ?? false,
       inline: options.inline ?? false,
       // Only a plain date is complete on the first click. A range still needs its
       // second bound and a datetime still needs its time, so both keep Apply.
       autoApply: options.autoApply ?? (mode === 'date' || isPeriodMode(mode)),
       presets,
       maxSpan: options.maxSpan ?? null,
+      minSpan: options.minSpan ?? null,
+      stopAtDisabled: options.stopAtDisabled ?? false,
       allowOpenRange: options.allowOpenRange ?? false,
       maxSelected: options.maxSelected ?? null,
       timeStep: options.timeStep ?? 5,
@@ -240,9 +250,23 @@ export class Gregory {
     const { className, mode, inline } = this.options
     this.element.className = className ? `gr ${className}` : 'gr'
     this.element.setAttribute('data-mode', mode)
+    this.element.toggleAttribute('data-disabled', this.isLocked())
     // The constructor sets these later on first run; afterwards they must stick.
     if (inline) this.element.setAttribute('data-inline', '')
     else this.element.setAttribute('data-popover', '')
+  }
+
+  /**
+   * Zamčený picker nic nevybírá. Kromě vlastní volby `disabled` se ptáme i
+   * prvku, na kterém picker visí: `disabled` a `readonly` na poli znamenají,
+   * že hodnotu nesmí měnit uživatel — a výběr v kalendáři je změna jako každá
+   * jiná. Programové `setValue()` se tím neblokuje.
+   */
+  private isLocked(field: HTMLElement | null = this.activeInput ?? this.input ?? this.trigger): boolean {
+    if (this.options.disabled) return true
+    if (!field) return false
+    if (field instanceof HTMLInputElement) return field.disabled || field.readOnly
+    return field.hasAttribute('disabled') || field.getAttribute('aria-disabled') === 'true'
   }
 
   /** Druhé pole dává smysl jen u rozsahu a jen když picker visí na inputu. */
@@ -315,12 +339,64 @@ export class Gregory {
   }
 
   setValue(value: RangeValueInput, { silent = false } = {}): void {
-    this.assign(this.toRange(value), { commit: true, silent })
+    // `toRange()` v režimu multiple rovnou přepisuje seznam, takže si ho pro
+    // případ odmítnutí odkládáme stranou.
+    const before = new Map(this.picked)
+    const range = this.toRange(value)
+    const reason = this.checkRange(range)
+    if (reason) {
+      this.picked = before
+      this.reject(reason, this.valueOf(range, this.picked), { silent })
+      return
+    }
+    this.markInvalid(false)
+    this.assign(range, { commit: true, silent })
     this.render()
+  }
+
+  /**
+   * Ověří hodnotu proti `min`, `max`, `isDisabled` a délce rozsahu. Vrací
+   * důvod prvního porušení, nebo `null`, když je hodnota v pořádku. Porovnává
+   * se po dnech — `min: '2026-08-01'` tedy nezakazuje ranní hodiny 1. srpna.
+   */
+  private checkRange(range: DateRange): InvalidReason | null {
+    const { min, max, isDisabled, maxSpan, minSpan } = this.options
+    const dates = isMultiMode(this.options.mode) ? [...this.picked.values()] : [range.from, range.to]
+
+    for (const date of dates) {
+      if (!date) continue
+      if (min && compareDay(date, min) < 0) return 'min'
+      if (max && compareDay(date, max) > 0) return 'max'
+      if (isDisabled?.(date)) return 'disabled'
+    }
+
+    if (isRangeMode(this.options.mode) && range.from && range.to) {
+      const days = Math.abs(daysBetween(range.from, range.to)) + 1
+      if (maxSpan !== null && days > maxSpan) return 'maxSpan'
+      if (minSpan !== null && days < minSpan) return 'minSpan'
+    }
+    return null
+  }
+
+  /** Hodnota neprošla: pole se vrátí na poslední platnou a ozve se `invalid`. */
+  private reject(reason: InvalidReason, value: GregoryValue = null, { silent = false } = {}): void {
+    this.markInvalid(true)
+    this.syncInput()
+    if (!silent) this.emitter.emit('invalid', { value, reason })
+  }
+
+  /** `aria-invalid` na poli, aby se formulář mohl zachovat jako u vlastní validace. */
+  private markInvalid(invalid: boolean): void {
+    for (const field of [...this.fields(), this.trigger]) {
+      if (!field) continue
+      if (invalid) field.setAttribute('aria-invalid', 'true')
+      else field.removeAttribute('aria-invalid')
+    }
   }
 
   clear({ silent = false } = {}): void {
     this.picked.clear()
+    this.markInvalid(false)
     this.assign({ from: null, to: null }, { commit: true, silent })
     this.render()
   }
@@ -512,7 +588,7 @@ export class Gregory {
   }
 
   openPanel(): void {
-    if (this.open || this.destroyed || this.options.inline) return
+    if (this.open || this.destroyed || this.options.inline || this.isLocked()) return
     this.open = true
     this.element.hidden = false
     this.selection = { ...this.committed }
@@ -675,6 +751,7 @@ export class Gregory {
    * zvlášť, jinak se v jednom poli hledá i oddělovač rozsahu.
    */
   private readTyped(field: HTMLInputElement): void {
+    if (this.isLocked(field)) return
     const { locale, mode } = this.options
     const text = field.value.trim()
 
@@ -685,7 +762,7 @@ export class Gregory {
 
     if (this.endField) {
       const parsed = locale.parseInput(text)
-      if (!parsed) return this.syncInput()
+      if (!parsed) return this.reject('unreadable')
       const bound = field === this.endField ? 'to' : 'from'
       this.setValue({ ...this.committed, [bound]: parsed })
       return
@@ -695,13 +772,13 @@ export class Gregory {
       const parts = text.split(/\s*(?:–|—|-{1,2}|až|to)\s*/i).filter(Boolean)
       const from = locale.parseInput(parts[0] ?? '')
       const to = parts.length > 1 ? locale.parseInput(parts[1] ?? '') : null
-      if (!from && !to) return this.syncInput()
+      if (!from && !to) return this.reject('unreadable')
       this.setValue({ from, to: to ?? (this.options.allowOpenRange ? null : from) })
       return
     }
 
     const parsed = locale.parseInput(text)
-    if (!parsed) return this.syncInput()
+    if (!parsed) return this.reject('unreadable')
     this.setValue(parsed)
   }
 
@@ -718,6 +795,7 @@ export class Gregory {
   private onInputFocus = (event: Event): void => {
     if (this.suppressReopen) return
     const field = event.currentTarget
+    if (field instanceof HTMLElement && this.isLocked(field)) return
     if (field instanceof HTMLInputElement) this.activeInput = field
     this.openPanel()
   }
@@ -787,6 +865,7 @@ export class Gregory {
   }
 
   private onPanelClick = (event: MouseEvent): void => {
+    if (this.isLocked()) return
     const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-action]')
 
     // Any click that is not on the open list itself puts it away again.
@@ -1310,6 +1389,28 @@ export class Gregory {
     this.render()
   }
 
+  /**
+   * S `stopAtDisabled` se rozsah nesmí přehoupnout přes zakázaný den. Od
+   * rozpracovaného konce se proto oběma směry hledá nejbližší zakázaný den a
+   * z něj vzniknou dodatečné meze výběru. Hledá se nejvýš rok, aby kalendář bez
+   * jediného volného dne neroztočil nekonečný cyklus.
+   */
+  private spanLimit(): DateRange | null {
+    const { stopAtDisabled, isDisabled, maxSpan, mode } = this.options
+    const { from, to } = this.selection
+    if (!stopAtDisabled || !isDisabled || !isRangeMode(mode) || !from || to) return null
+
+    const reach = maxSpan ?? 366
+    const edge = (step: 1 | -1): Date | null => {
+      for (let offset = 1; offset <= reach; offset++) {
+        const day = addDays(from, offset * step)
+        if (isDisabled(day)) return addDays(day, -step)
+      }
+      return null
+    }
+    return { from: edge(-1), to: edge(1) }
+  }
+
   // ----------------------------------------------------------------- render
 
   private monthContext(): MonthContext {
@@ -1321,6 +1422,8 @@ export class Gregory {
       min: this.options.min,
       max: this.options.max,
       maxSpan: isRangeMode(this.options.mode) ? this.options.maxSpan : null,
+      minSpan: isRangeMode(this.options.mode) ? this.options.minSpan : null,
+      spanLimit: this.spanLimit(),
       openEnded: isRangeMode(this.options.mode) && this.options.allowOpenRange,
       previewRange: this.previewWeek,
       picked: isMultiMode(this.options.mode) ? new Set(this.picked.keys()) : undefined,
@@ -1397,6 +1500,8 @@ export class Gregory {
 
   private render(): void {
     if (this.destroyed) return
+    // Pole se dá zamknout kdykoli za běhu, tak se stav čte při každém renderu.
+    this.element.toggleAttribute('data-disabled', this.isLocked())
     if (isPeriodMode(this.options.mode)) {
       const body = this.renderPeriodPanel()
       const footer = this.renderFooter()

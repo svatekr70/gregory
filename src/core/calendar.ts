@@ -2,6 +2,7 @@ import {
   addDays,
   compareDay,
   createDate,
+  daysBetween,
   formatISODate,
   isSameDay,
   isWithinDay,
@@ -50,6 +51,13 @@ export interface MonthContext {
   max: Date | null
   /** Longest selectable range in days; narrows the bounds once one end is picked. */
   maxSpan: number | null
+  /** Nejkratší rozsah ve dnech; zakáže dny příliš blízko prvnímu konci. */
+  minSpan?: number | null | undefined
+  /**
+   * Meze spočítané z nejbližšího zakázaného dne kolem rozpracovaného konce.
+   * Počítá je picker, protože kalendář nezná celou osu času.
+   */
+  spanLimit?: DateRange | null | undefined
   /** Paints a half-picked range as running to the edge of time. */
   openEnded?: boolean | undefined
   /** Overrides the painted range, e.g. the week under the cursor. */
@@ -94,12 +102,23 @@ export function isDayDisabled(date: Date, context: MonthContext): boolean {
   if (context.min && compareDay(date, context.min) < 0) return true
   if (context.max && compareDay(date, context.max) > 0) return true
 
-  // While a range is half-picked, maxSpan shrinks the selectable window.
+  // While a range is half-picked, the span rules shrink the selectable window.
   const { from, to } = context.selection
-  if (context.maxSpan && from && !to) {
-    const span = context.maxSpan - 1
-    if (compareDay(date, addDays(from, -span)) < 0) return true
-    if (compareDay(date, addDays(from, span)) > 0) return true
+  if (from && !to) {
+    if (context.maxSpan) {
+      const span = context.maxSpan - 1
+      if (compareDay(date, addDays(from, -span)) < 0) return true
+      if (compareDay(date, addDays(from, span)) > 0) return true
+    }
+    if (context.minSpan && context.minSpan > 1) {
+      // Sám počáteční den zůstává klikatelný — je to způsob, jak výběr začít
+      // jinde, ne pokus o nulový rozsah.
+      const distance = Math.abs(daysBetween(from, date))
+      if (distance > 0 && distance < context.minSpan - 1) return true
+    }
+    const limit = context.spanLimit
+    if (limit?.from && compareDay(date, limit.from) < 0) return true
+    if (limit?.to && compareDay(date, limit.to) > 0) return true
   }
 
   return context.isDisabled?.(date) ?? false

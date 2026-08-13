@@ -71,6 +71,14 @@ export function addDays(date: Date, amount: number): Date {
   return copy
 }
 
+/**
+ * Whole days from `a` to `b`; negative when `b` is earlier. Zaokrouhluje se,
+ * protože přechod na letní čas dělá ze dne 23 nebo 25 hodin.
+ */
+export function daysBetween(a: Date, b: Date): number {
+  return Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86_400_000)
+}
+
 /** Clamps the day so that Jan 31 + 1 month lands on Feb 28/29, not Mar 2/3. */
 export function addMonths(date: Date, amount: number): Date {
   const year = date.getFullYear()
