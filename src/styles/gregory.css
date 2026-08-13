@@ -419,7 +419,14 @@
 
 /* -------------------------------------------------------------- souhrn */
 
+/*
+ * Šířku panelu určují kalendáře. Souhrn je jen text, takže by ji jinak
+ * přetáhl na celou délku řádku — `width: 0` ho vyřadí z výpočtu vlastní
+ * šířky a `min-width: 100 %` ho pak roztáhne na tu výslednou.
+ */
 .gr-summary {
+  width: 0;
+  min-width: 100%;
   padding: calc(var(--gr-pad) * 0.6) var(--gr-pad);
   border-top: 1px solid var(--gr-border);
   font-size: calc(var(--gr-font-size) - 1px);
@@ -433,10 +440,16 @@
 
 /* --------------------------------------------------------------- footer */
 
-/* Čas na svém řádku, tlačítka pod ním — jinak se panel roztahuje do šířky. */
+/*
+ * Čas na svém řádku, tlačítka pod ním — jinak se panel roztahuje do šířky.
+ * Stejně jako souhrn se patička nepodílí na výpočtu šířky panelu; když se
+ * do ní ovládání nevejde, zalomí se místo aby panel roztáhla.
+ */
 .gr-foot {
   display: flex;
   flex-direction: column;
+  width: 0;
+  min-width: 100%;
   gap: 8px;
   padding: calc(var(--gr-pad) * 0.8) var(--gr-pad);
   border-top: 1px solid var(--gr-border);
@@ -453,12 +466,22 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  width: 100%;
 }
 
 .gr-time-group {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/*
+ * Posuvníky se roztáhnou na šířku, kterou dávají kalendáře — bez toho by si
+ * vynutily vlastní minimální šířku a roztáhly celý panel nad rámec měsíců.
+ */
+.gr-time-group[data-ui="slider"] {
+  flex: 1 1 150px;
+  min-width: 0;
 }
 
 .gr-time-label {
@@ -506,8 +529,9 @@ div.gr-time {
 /* Slider variant (timeUi: 'slider'). Musí přebít `div.gr-time` výš. */
 div.gr-time.gr-time-sliders {
   display: grid;
+  flex: 1;
   gap: 4px;
-  min-width: 190px;
+  min-width: 0;
 }
 
 .gr-time-readout {
@@ -518,7 +542,7 @@ div.gr-time.gr-time-sliders {
 
 .gr-slider-row {
   display: grid;
-  grid-template-columns: auto minmax(90px, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
   align-items: center;
 }

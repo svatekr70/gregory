@@ -1331,7 +1331,7 @@ export class Gregory {
   /** One labelled time control per range bound. */
   private renderTimeControls(bound: 'from' | 'to'): HTMLElement {
     const { locale, mode } = this.options
-    const group = h('div', { class: 'gr-time-group', 'data-bound': bound })
+    const group = h('div', { class: 'gr-time-group', 'data-bound': bound, 'data-ui': this.options.timeUi })
 
     if (isRangeMode(mode)) {
       group.append(h('span', { class: 'gr-time-label' }, [bound === 'from' ? locale.labels.from : locale.labels.to]))
