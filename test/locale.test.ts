@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { resolveLocale } from '../src/core/locale.js'
 import { availableTranslations, registerTranslation } from '../src/core/i18n.js'
-import { createDate } from '../src/core/date.js'
+import { createDate, formatISODate } from '../src/core/date.js'
+
+/** Místní čas, ne UTC — `new Date('2026-08-10')` je půlnoc v Greenwichi. */
+function date(iso: string): Date {
+  const [year, month, day] = iso.split('-').map(Number)
+  return createDate(year!, month! - 1, day!)
+}
 
 describe('resolveLocale', () => {
   it('starts the week on Monday for cs and on Sunday for en-US', () => {
@@ -114,5 +120,44 @@ describe('resolveLocale', () => {
     const locale = resolveLocale('xx-fake-tag')
     expect(locale.weekdayNames(1)).toHaveLength(7)
     expect([0, 1]).toContain(locale.firstDayOfWeek)
+  })
+})
+
+describe('formatRange', () => {
+  it('vytkne společný měsíc a rok', () => {
+    const locale = resolveLocale('cs')
+    expect(locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)).toBe('10.–14. 8. 2026')
+  })
+
+  it('jednodenní rozsah píše jako jedno datum', () => {
+    const locale = resolveLocale('cs')
+    expect(locale.formatRange(date('2026-08-10'), date('2026-08-10'), false)).toBe('10. 8. 2026')
+  })
+
+  it('přes hranici měsíce vypíše obě data', () => {
+    const locale = resolveLocale('cs')
+    expect(locale.formatRange(date('2026-08-30'), date('2026-09-02'), false)).toBe('30. 8. 2026 – 2. 9. 2026')
+  })
+
+  it('nezkracuje tam, kde den nestojí první', () => {
+    const locale = resolveLocale('en-US')
+    expect(locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)).toBe('8/10/2026 – 8/14/2026')
+  })
+
+  it('s časem skládá oba konce v plné podobě', () => {
+    const locale = resolveLocale('cs')
+    const from = date('2026-08-10')
+    const to = date('2026-08-10')
+    from.setHours(8, 30)
+    to.setHours(17, 0)
+    expect(locale.formatRange(from, to, true)).toBe('10. 8. 2026 08:30 – 10. 8. 2026 17:00')
+  })
+})
+
+describe('parseInput s referencí', () => {
+  it('doplní měsíc a rok z reference', () => {
+    const locale = resolveLocale('cs')
+    const parsed = locale.parseInput('10.', date('2026-08-14'))
+    expect(formatISODate(parsed!)).toBe('2026-08-10')
   })
 })

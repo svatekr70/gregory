@@ -47,11 +47,18 @@ export interface Locale {
   /** Human-facing rendering of one date, used in the input. */
   formatDate(date: Date, withTime: boolean): string
   /**
+   * Rozsah jedním dechem. `Intl` umí vytknout, co mají oba konce společné —
+   * „10.–14. 8. 2026" místo dvou plných dat. S časem se konce skládají po
+   * staru, aby zůstal jednotný 24hodinový zápis.
+   */
+  formatRange(from: Date, to: Date, withTime: boolean): string
+  /**
    * Opak `formatDate` — přečte, co uživatel do pole napsal. Pořadí dne,
    * měsíce a roku se bere z `Intl`, takže „8/13/2026" projde v en-US a
-   * „13. 8. 2026" v češtině.
+   * „13. 8. 2026" v češtině. Chybějící měsíc nebo rok se doplní z `reference`,
+   * jinak z dneška.
    */
-  parseInput(text: string): Date | null
+  parseInput(text: string, reference?: Date): Date | null
   /** Separator between range bounds in the input. */
   rangeSeparator: string
   labels: {

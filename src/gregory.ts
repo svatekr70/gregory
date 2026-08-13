@@ -485,7 +485,7 @@ export class Gregory {
         ? `${locale.labels.since} ${locale.formatDate(from, time)}`
         : locale.formatDate(from, time)
     }
-    return `${locale.formatDate(from, time)}${locale.rangeSeparator}${locale.formatDate(to, time)}`
+    return locale.formatRange(from, to, time)
   }
 
   private syncInput(): void {
@@ -770,8 +770,10 @@ export class Gregory {
 
     if (isRangeMode(mode)) {
       const parts = text.split(/\s*(?:–|—|-{1,2}|až|to)\s*/i).filter(Boolean)
-      const from = locale.parseInput(parts[0] ?? '')
+      // Konec se čte první, aby zkrácený začátek („10.–14. 8. 2026") věděl,
+      // do jakého měsíce a roku patří.
       const to = parts.length > 1 ? locale.parseInput(parts[1] ?? '') : null
+      const from = locale.parseInput(parts[0] ?? '', to ?? undefined)
       if (!from && !to) return this.reject('unreadable')
       this.setValue({ from, to: to ?? (this.options.allowOpenRange ? null : from) })
       return
@@ -1846,9 +1848,8 @@ export class Gregory {
         : locale.formatDate(from, time)
     }
 
-    const days = Math.round((+startOfDay(to) - +startOfDay(from)) / 86_400_000) + 1
-    const range = `${locale.formatDate(from, time)}${locale.rangeSeparator}${locale.formatDate(to, time)}`
-    return `${range} · ${locale.formatDayCount(days)}`
+    const days = daysBetween(from, to) + 1
+    return `${locale.formatRange(from, to, time)} · ${locale.formatDayCount(days)}`
   }
 
   private renderSummary(): HTMLElement | null {

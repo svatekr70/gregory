@@ -1,4 +1,4 @@
-import { createDate, formatISOTime, parseDate as parseISO, today } from './date.js'
+import { createDate, formatISOTime, isSameDay, parseDate as parseISO, today } from './date.js'
 import { translationFor } from './i18n.js'
 import type { Locale, LocaleInput, WeekDay } from './types.js'
 
@@ -41,7 +41,7 @@ function supportedCode(code: string): string {
  * pořadí polí v locale, i zkratky „13. 8." nebo „13" (doplní se aktuální
  * měsíc a rok). Volitelný čas na konci se použije, pokud tam je.
  */
-function parseWritten(text: string, order: Array<'day' | 'month' | 'year'>): Date | null {
+function parseWritten(text: string, order: Array<'day' | 'month' | 'year'>, reference: Date = today()): Date | null {
   const trimmed = text.trim()
   if (!trimmed) return null
 
@@ -63,10 +63,9 @@ function parseWritten(text: string, order: Array<'day' | 'month' | 'year'>): Dat
   const numbers = rest.match(/\d+/g)?.map(Number)
   if (!numbers?.length || numbers.length > 3) return null
 
-  const now = today()
-  let day = now.getDate()
-  let month = now.getMonth()
-  let year = now.getFullYear()
+  let day = reference.getDate()
+  let month = reference.getMonth()
+  let year = reference.getFullYear()
 
   if (numbers.length === 3) {
     order.forEach((field, index) => {
@@ -101,6 +100,7 @@ function createIntlLocale(requested: string): Locale {
   const monthFormat = new Intl.DateTimeFormat(code, { month: 'long' })
   const weekdayFormat = new Intl.DateTimeFormat(code, { weekday: 'short' })
   const dateFormat = new Intl.DateTimeFormat(code, { day: 'numeric', month: 'numeric', year: 'numeric' })
+  const rangeSeparator = ' – '
 
   // Pořadí polí v datu: en-US má měsíc první, většina Evropy den.
   const order = dateFormat
@@ -113,7 +113,7 @@ function createIntlLocale(requested: string): Locale {
   return {
     code,
     firstDayOfWeek: detectFirstDayOfWeek(code),
-    parseInput: (text) => parseWritten(text, order),
+    parseInput: (text, reference) => parseWritten(text, order, reference),
     monthLabel: (date) => monthYearFormat.format(date),
     monthNames: () => Array.from({ length: 12 }, (_, month) => monthFormat.format(createDate(2026, month, 1))),
     weekdayNames: (firstDayOfWeek) =>
@@ -127,8 +127,27 @@ function createIntlLocale(requested: string): Locale {
       }),
     formatDate: (date, withTime) =>
       withTime ? `${dateFormat.format(date)} ${formatISOTime(date)}` : dateFormat.format(date),
+    formatRange: (from, to, withTime) => {
+      const plain = (): string =>
+        `${dateFormat.format(from)}${withTime ? ` ${formatISOTime(from)}` : ''}${rangeSeparator}` +
+        `${dateFormat.format(to)}${withTime ? ` ${formatISOTime(to)}` : ''}`
+
+      if (withTime) return plain()
+      if (isSameDay(from, to)) return dateFormat.format(from)
+      // Zkracuje se ručně, ne přes Intl.formatRange: ten má pro číselné datum
+      // vlastní vzor („10.08.2026 – 14.08.2026" v češtině), který by v poli
+      // vypadal jinak než jedno datum. Vytknout se dá jen den, a to v locale,
+      // kde stojí první — v „8/10/2026" by z toho vyšel nesmysl.
+      const sameMonth = from.getFullYear() === to.getFullYear() && from.getMonth() === to.getMonth()
+      if (!sameMonth || order[0] !== 'day' || from > to) return plain()
+
+      const parts = dateFormat.formatToParts(from)
+      const index = parts.findIndex((part) => part.type === 'day')
+      const suffix = parts[index + 1]?.type === 'literal' ? parts[index + 1]!.value.trimEnd() : ''
+      return `${parts[index]!.value}${suffix}–${dateFormat.format(to)}`
+    },
     formatDayCount: (count) => `${count} ${days[plural.select(count)] ?? days.other ?? ''}`.trim(),
-    rangeSeparator: ' – ',
+    rangeSeparator,
     labels,
   }
 }
