@@ -124,7 +124,7 @@ function applyAppearance(): void {
       if (value === '') panel.style.removeProperty(name)
       else panel.style.setProperty(name, value + unit)
     }
-    if (value !== fallback) changed.push(`  ${name}: ${value === '' ? 'dle panelu' : value + unit};`)
+    if (value !== fallback) changed.push(`  ${name}: ${value === '' ? 'dle hrany dne' : value + unit};`)
   }
 
   cssSnippet.hidden = changed.length === 0

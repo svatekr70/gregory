@@ -749,7 +749,7 @@ odhlasit()</pre>
           <tr><td><code>--gr-day-size</code></td><td><code>32px</code></td><td>Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
           <tr><td><code>--gr-pad</code></td><td><code>10px</code></td><td>Odsazení uvnitř panelu. Odvozuje se z něj i odsazení patičky, zkratek a tlačítek.</td></tr>
           <tr><td><code>--gr-font-size</code></td><td><code>14px</code></td><td>Základní velikost písma panelu.</td></tr>
-          <tr><td><code>--gr-day-font-size</code></td><td>dle základní</td><td>Velikost čísel dnů.</td></tr>
+          <tr><td><code>--gr-day-font-size</code></td><td><code>47 %</code> hrany dne</td><td>Velikost čísel dnů. Odvozuje se z buňky, ne ze základního písma.</td></tr>
           <tr><td><code>--gr-weekday-font-size</code></td><td><code>11.5px</code></td><td>Záhlaví dnů v týdnu a čísla týdnů.</td></tr>
           <tr><td><code>--gr-bg</code></td><td><code>#fff</code></td><td>Pozadí panelu.</td></tr>
           <tr><td><code>--gr-fg</code></td><td><code>#1c1f23</code></td><td>Text.</td></tr>
@@ -802,9 +802,25 @@ odhlasit()</pre>
         má 556 × 268 px, v <code>compact</code> 464 × 225 px a v
         <code>comfortable</code> 706 × 338 px.</p>
 
-      <p>Velikost dne a velikost písma spolu nedrží krok automaticky — buňka má
-        pevný rozměr, takže výrazně větší písmo v malé buňce přeteče. Když měníš
-        jedno, koukni i na druhé.</p>
+      <div class="callout">
+        <strong>Prázdno okolo číslic je poměr, ne odsazení</strong>
+        <p>Den nemá žádný vnitřní padding — číslice je vycentrovaná ve čtverci
+          o hraně <code>--gr-day-size</code>. Kolik okolo ní zbude místa, tedy
+          určuje poměr písma k buňce. Zmenšit buňku a zároveň zmenšit písmo
+          proto prázdno <em>nezmenší</em>.</p>
+        <p style="margin-top:8px">Proto se <code>--gr-day-font-size</code> odvozuje
+          z hrany dne (47 %) a ne ze základního písma. Plnější dojem se dělá vyšším
+          poměrem, vzdušnější nižším:</p>
+      </div>
+
+      <pre class="code"><span class="c">/* plnější */</span>
+.gr { --gr-day-font-size: <span class="t">calc</span>(<span class="k">var</span>(--gr-day-size) * <span class="n">0.55</span>); }
+
+<span class="c">/* vzdušnější */</span>
+.gr { --gr-day-font-size: <span class="t">calc</span>(<span class="k">var</span>(--gr-day-size) * <span class="n">0.38</span>); }</pre>
+
+      <p>Pozor jen na to, že buňka má pevný rozměr — poměr nad zhruba 0,6 už
+        z ní dvojciferná čísla vytlačí.</p>
 
       <h3>Hotové motivy</h3>
 

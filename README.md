@@ -122,7 +122,9 @@ Ostatní odsazení se z `--gr-pad` dopočítává:
   --gr-gap: 0;
   --gr-pad: 7px;
   --gr-font-size: 13px;
-  --gr-day-font-size: 13px;   /* jen čísla dnů */
+  /* Čísla dnů se odvozují z hrany dne (výchozí 47 %), ne ze základního
+     písma — prázdno okolo číslice je poměr, ne odsazení. */
+  --gr-day-font-size: calc(var(--gr-day-size) * 0.55);
 }
 ```
 

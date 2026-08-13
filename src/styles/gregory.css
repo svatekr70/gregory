@@ -17,8 +17,12 @@
   --gr-pad: 10px;
 
   --gr-font-size: 14px;
-  /* Čísla dnů. Ve výchozím stavu sleduje základní velikost. */
-  --gr-day-font-size: var(--gr-font-size);
+  /*
+   * Čísla dnů se odvozují z velikosti buňky, ne ze základního písma — jinak
+   * zmenšení buňky jen zvětší prázdno okolo číslice. Vyšší poměr = plnější
+   * dojem, nižší = vzdušnější.
+   */
+  --gr-day-font-size: calc(var(--gr-day-size) * 0.47);
   /* Záhlaví dnů v týdnu a čísla týdnů. */
   --gr-weekday-font-size: 11.5px;
 
