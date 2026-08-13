@@ -115,6 +115,11 @@ export interface GregoryOptions {
    * month or the year is clicked.
    */
   dropdowns?: boolean | 'menu'
+  /**
+   * Druhé pole pro konec rozsahu. Cíl konstruktoru pak drží „od", tohle „do";
+   * panel otevře kterékoli z nich. Jen v range režimech.
+   */
+  endInput?: string | HTMLInputElement | null
   /** Render the panel in place instead of a popover attached to an input. */
   inline?: boolean
   /** Commit on the last click instead of showing Apply/Cancel. */
@@ -161,6 +166,7 @@ export interface ResolvedOptions {
   firstDayOfWeek: WeekDay
   months: number
   linkedCalendars: boolean
+  endInput: string | HTMLInputElement | null
   weekNumbers: boolean
   showOutsideDays: boolean
   weekSelection: WeekSelection

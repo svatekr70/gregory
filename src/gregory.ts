@@ -88,6 +88,10 @@ export class Gregory {
 
   private readonly emitter = new Emitter<GregoryEvents>()
   private readonly input: HTMLInputElement | null
+  /** Druhé pole s koncem rozsahu, když je picker rozdělený do dvou. */
+  private readonly endField: HTMLInputElement | null
+  /** Které z polí panel otevřelo — podle něj se pozicuje a vrací fokus. */
+  private activeInput: HTMLInputElement | null = null
   private readonly host: HTMLElement
   private options: ResolvedOptions
 
@@ -117,11 +121,15 @@ export class Gregory {
     this.input = element instanceof HTMLInputElement ? element : null
     this.host = element
     this.options = this.resolveOptions(options)
+    this.endField = this.resolveEndField()
     this.element = h('div', {})
     this.applyRootAttributes()
 
-    const initial = options.value ?? (this.input?.value || null)
-    this.assign(this.toRange(initial), { commit: true, silent: true })
+    // Rozdělený picker si počáteční hodnotu přečte z obou polí.
+    const fromFields = this.endField
+      ? ([this.input?.value || null, this.endField.value || null] as [DateLike, DateLike])
+      : this.input?.value || null
+    this.assign(this.toRange(options.value ?? fromFields), { commit: true, silent: true })
 
     if (this.options.inline) {
       this.host.append(this.element)
@@ -161,6 +169,7 @@ export class Gregory {
       firstDayOfWeek: options.firstDayOfWeek ?? locale.firstDayOfWeek,
       months: options.months ?? (isRangeMode(mode) ? 2 : 1),
       linkedCalendars: options.linkedCalendars ?? false,
+      endInput: options.endInput ?? null,
       weekNumbers: options.weekNumbers ?? false,
       showOutsideDays: options.showOutsideDays ?? true,
       weekSelection: options.weekSelection ?? 'off',
@@ -199,6 +208,14 @@ export class Gregory {
     // The constructor sets these later on first run; afterwards they must stick.
     if (inline) this.element.setAttribute('data-inline', '')
     else this.element.setAttribute('data-popover', '')
+  }
+
+  /** Druhé pole dává smysl jen u rozsahu a jen když picker visí na inputu. */
+  private resolveEndField(): HTMLInputElement | null {
+    const { endInput, mode, inline } = this.options
+    if (!endInput || inline || !this.input || !isRangeMode(mode)) return null
+    const element = typeof endInput === 'string' ? document.querySelector(endInput) : endInput
+    return element instanceof HTMLInputElement ? element : null
   }
 
   private optionsAsInput(): GregoryOptions {
@@ -323,9 +340,25 @@ export class Gregory {
 
   private syncInput(): void {
     if (!this.input) return
-    this.input.value = this.formatValue()
-    this.input.dispatchEvent(new Event('input', { bubbles: true }))
-    this.input.dispatchEvent(new Event('change', { bubbles: true }))
+
+    if (this.endField) {
+      // Rozdělený picker: každé pole dostane svůj konec, ne celý rozsah.
+      const { locale, mode, format } = this.options
+      const time = hasTime(mode)
+      const text = (date: Date | null): string =>
+        date ? (format ? (format(date, locale) ?? '') : locale.formatDate(date, time)) : ''
+      this.writeField(this.input, text(this.committed.from))
+      this.writeField(this.endField, text(this.committed.to))
+      return
+    }
+
+    this.writeField(this.input, this.formatValue())
+  }
+
+  private writeField(field: HTMLInputElement, value: string): void {
+    field.value = value
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+    field.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
   // ----------------------------------------------------------- open / close
@@ -388,8 +421,10 @@ export class Gregory {
   }
 
   private position(): void {
-    if (!this.input) return
-    const rect = this.input.getBoundingClientRect()
+    // Panel se pověsí pod to pole, kterým se otevřel.
+    const anchor = this.activeInput ?? this.input
+    if (!anchor) return
+    const rect = anchor.getBoundingClientRect()
     const panel = this.element.getBoundingClientRect()
     const gap = 4
 
@@ -420,13 +455,22 @@ export class Gregory {
 
   private bindHost(): void {
     if (this.options.inline || !this.input) return
-    this.input.addEventListener('focus', this.onInputFocus)
-    this.input.addEventListener('click', this.onInputFocus)
-    this.input.addEventListener('keydown', this.onInputKeydown)
+    for (const field of this.fields()) {
+      field.addEventListener('focus', this.onInputFocus)
+      field.addEventListener('click', this.onInputFocus)
+      field.addEventListener('keydown', this.onInputKeydown)
+    }
   }
 
-  private onInputFocus = (): void => {
+  /** Pole, na kterých picker visí — jedno, nebo dvojice od/do. */
+  private fields(): HTMLInputElement[] {
+    return [this.input, this.endField].filter((field): field is HTMLInputElement => field !== null)
+  }
+
+  private onInputFocus = (event: Event): void => {
     if (this.suppressReopen) return
+    const field = event.currentTarget
+    if (field instanceof HTMLInputElement) this.activeInput = field
     this.openPanel()
   }
 
@@ -435,9 +479,10 @@ export class Gregory {
    * bounce off the focus handler and re-open the panel we just closed.
    */
   private returnFocus(): void {
-    if (!this.input) return
+    const field = this.activeInput ?? this.input
+    if (!field) return
     this.suppressReopen = true
-    this.input.focus()
+    field.focus()
     this.suppressReopen = false
   }
 
@@ -452,7 +497,8 @@ export class Gregory {
   private onDocumentDown = (event: MouseEvent): void => {
     const target = event.target as Node | null
     if (!target) return
-    if (this.element.contains(target) || this.input?.contains(target) || target === this.input) return
+    if (this.element.contains(target)) return
+    if (this.fields().some((field) => field === target || field.contains(target))) return
     // Clicking away keeps an auto-applied value but discards an uncommitted one.
     if (this.options.autoApply) this.close()
     else this.cancel()
@@ -1416,9 +1462,11 @@ export class Gregory {
   destroy(): void {
     if (this.destroyed) return
     this.close()
-    this.input?.removeEventListener('focus', this.onInputFocus)
-    this.input?.removeEventListener('click', this.onInputFocus)
-    this.input?.removeEventListener('keydown', this.onInputKeydown)
+    for (const field of this.fields()) {
+      field.removeEventListener('focus', this.onInputFocus)
+      field.removeEventListener('click', this.onInputFocus)
+      field.removeEventListener('keydown', this.onInputKeydown)
+    }
     this.element.remove()
     this.emitter.clear()
     this.destroyed = true

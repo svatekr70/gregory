@@ -149,6 +149,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>showOutsideDays</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Zobrazovat dny přesahující ze sousedních měsíců.</td></tr>
           <tr><td><code>weekSelection</code></td><td><code>'off' | 'number' | 'day' | 'both'</code></td><td><code>'off'</code></td><td>Výběr celého týdne jedním klikem.</td></tr>
           <tr><td><code>dropdowns</code></td><td><code>boolean | 'menu'</code></td><td><code>false</code></td><td>Výběr měsíce a roku: nativní <code>&lt;select&gt;</code>, nebo seznam otevřený klikem na caption.</td></tr>
+          <tr><td><code>endInput</code></td><td><code>string | HTMLInputElement</code></td><td>—</td><td>Druhé pole pro konec rozsahu.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
@@ -276,6 +277,34 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>endInput</code></h3>
+
+      <p>Rozsah rozdělený do dvou polí — jedno drží „od", druhé „do". Cíl
+        konstruktoru je to první, <code>endInput</code> to druhé:</p>
+
+      <pre class="code">&lt;<span class="t">input</span> id=<span class="s">"od"</span>&gt; &lt;<span class="t">input</span> id=<span class="s">"do"</span>&gt;</pre>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#od'</span>, {
+  mode: <span class="s">'range'</span>,
+  endInput: <span class="s">'#do'</span>,
+})</pre>
+
+      <p>Panel otevře kterékoli z polí a pověsí se pod to, kterým se otevřel.
+        Vybírá se přitom <strong>jeden</strong> rozsah — teprve potvrzení ho
+        rozdělí: <code>from</code> do prvního pole, <code>to</code> do druhého.
+        Každé pole tedy nese jedno datum, ne celý rozsah s oddělovačem.</p>
+
+      <p>Počáteční hodnota se čte z obou polí, Vymazat obě vyprázdní a
+        u otevřeného rozsahu zůstane druhé pole prázdné. Kliknutí do druhého
+        pole panel nezavírá.</p>
+
+      <div class="callout">
+        <strong>Platí jen pro rozsahy nad inputem</strong>
+        <p>Mimo <code>range</code> a <code>datetime-range</code> se volba ignoruje,
+          stejně jako v kombinaci s <code>inline</code>. Volba <code>format</code>
+          se u rozděleného pickeru volá pro každý konec zvlášť, ne pro celý rozsah.</p>
+      </div>
 
       <h3><code>showOutsideDays</code></h3>
 

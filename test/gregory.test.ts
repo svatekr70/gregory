@@ -134,6 +134,110 @@ describe('range mode', () => {
   })
 })
 
+describe('split inputs', () => {
+  let endInput: HTMLInputElement
+
+  function mountSplit(options: GregoryOptions = {}): void {
+    endInput = document.createElement('input')
+    endInput.type = 'text'
+    endInput.id = 'do'
+    document.body.append(endInput)
+    mount({ mode: 'range', presets: false, endInput, ...options })
+  }
+
+  afterEach(() => endInput?.remove())
+
+  it('writes each end into its own field', () => {
+    mountSplit()
+
+    day('2026-08-10').click()
+    day('2026-08-14').click()
+    picker.apply()
+
+    expect(input.value).toContain('10')
+    expect(endInput.value).toContain('14')
+    // Ani jedno pole nenese celý rozsah.
+    expect(input.value).not.toContain('14')
+    expect(endInput.value).not.toContain('10')
+  })
+
+  it('opens from either field', () => {
+    mountSplit()
+    picker.close()
+    expect(picker.element.hidden).toBe(true)
+
+    endInput.dispatchEvent(new Event('focus'))
+    expect(picker.element.hidden).toBe(false)
+
+    picker.close()
+    input.dispatchEvent(new Event('focus'))
+    expect(picker.element.hidden).toBe(false)
+  })
+
+  it('reads its initial value from both fields', () => {
+    const from = document.createElement('input')
+    from.value = '2026-08-10'
+    const to = document.createElement('input')
+    to.value = '2026-08-14'
+    document.body.append(from, to)
+
+    const split = new Gregory(from, { mode: 'range', locale: 'cs', endInput: to })
+    const value = split.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to?.getDate()).toBe(14)
+
+    split.destroy()
+    from.remove()
+    to.remove()
+  })
+
+  it('empties both fields on Clear', () => {
+    mountSplit()
+    picker.setValue(['2026-08-10', '2026-08-14'])
+    expect(endInput.value).not.toBe('')
+
+    picker.openPanel()
+    picker.element.querySelector<HTMLButtonElement>('[data-action="clear"]')!.click()
+
+    expect(input.value).toBe('')
+    expect(endInput.value).toBe('')
+  })
+
+  it('leaves the end field alone while the range is half picked', () => {
+    mountSplit({ allowOpenRange: true })
+
+    day('2026-08-10').click()
+    picker.apply()
+
+    expect(input.value).toContain('10')
+    expect(endInput.value).toBe('')
+  })
+
+  it('does not close when the other field is clicked', () => {
+    mountSplit()
+    endInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    expect(picker.element.hidden).toBe(false)
+  })
+
+  it('is ignored outside range modes', () => {
+    mountSplit({ mode: 'date' })
+
+    day('2026-08-13').click()
+
+    expect(input.value).not.toBe('')
+    expect(endInput.value).toBe('')
+  })
+
+  it('unbinds both fields on destroy', () => {
+    mountSplit()
+    const panel = picker.element
+    picker.destroy()
+
+    endInput.dispatchEvent(new Event('focus'))
+    expect(panel.isConnected).toBe(false)
+  })
+})
+
 describe('summary line', () => {
   const summary = (): string => picker.element.querySelector('.gr-summary')?.textContent ?? ''
 

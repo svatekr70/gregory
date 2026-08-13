@@ -419,6 +419,14 @@ showTheme(THEMES[0]!)
 
 /* -------------------------------------------------------------- ukázky */
 
+example('ex-from', {
+  mode: 'range',
+  locale: 'cs',
+  endInput: '#ex-to',
+  presets: false,
+  months: 2,
+})
+
 example('ex-week', {
   mode: 'range',
   locale: 'cs',
