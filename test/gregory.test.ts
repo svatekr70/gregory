@@ -134,6 +134,46 @@ describe('range mode', () => {
   })
 })
 
+describe('day badges', () => {
+  const badge = (iso: string): HTMLElement | null => day(iso).querySelector('.gr-day-badge')
+
+  it('marks only the days the callback names', () => {
+    mount({ mode: 'date', dayBadge: (date) => (date.getDate() === 13 ? '3' : null) })
+
+    expect(badge('2026-08-13')?.textContent).toBe('3')
+    expect(badge('2026-08-14')).toBeNull()
+    expect(day('2026-08-13').classList.contains('has-badge')).toBe(true)
+  })
+
+  it('takes an empty string as a plain dot', () => {
+    mount({ mode: 'date', dayBadge: (date) => (date.getDate() === 13 ? '' : null) })
+
+    expect(badge('2026-08-13')).not.toBeNull()
+    expect(badge('2026-08-13')?.textContent).toBe('')
+  })
+
+  it('leaves the day number alone', () => {
+    mount({ mode: 'date', dayBadge: () => '9' })
+
+    // Číslo dne je pořád první uzel, značka jen visí navrch.
+    expect(day('2026-08-13').firstChild?.textContent).toBe('13')
+  })
+
+  it('skips days from the neighbouring months', () => {
+    mount({ mode: 'date', dayBadge: () => '1' })
+
+    expect(day('2026-07-27').querySelector('.gr-day-badge')).toBeNull()
+  })
+
+  it('keeps the day clickable', () => {
+    mount({ mode: 'date', dayBadge: () => '2' })
+
+    day('2026-08-13').click()
+
+    expect((picker.getValue() as Date).getDate()).toBe(13)
+  })
+})
+
 describe('narrow viewport', () => {
   const setWidth = (width: number): void => {
     Object.defineProperty(window, 'innerWidth', { value: width, configurable: true })

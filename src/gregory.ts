@@ -205,6 +205,7 @@ export class Gregory {
       drops: options.drops ?? 'auto',
       isDisabled: options.isDisabled,
       dayClass: options.dayClass,
+      dayBadge: options.dayBadge,
       format: options.format,
       summary: options.summary ?? false,
     }
@@ -1275,6 +1276,13 @@ export class Gregory {
             },
             [String(day.date.getDate())],
           )
+
+          const badge = day.outside ? null : this.options.dayBadge?.(day.date)
+          if (badge !== null && badge !== undefined) {
+            cell.classList.add('has-badge')
+            cell.append(h('span', { class: 'gr-day-badge', 'aria-hidden': 'true' }, [badge]))
+          }
+
           this.dayCells.set(`${offset}:${day.iso}`, cell)
           grid.append(cell)
         }

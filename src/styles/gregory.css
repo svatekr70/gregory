@@ -405,6 +405,54 @@
   pointer-events: none;
 }
 
+/*
+ * Značka pod číslem dne. Sedí absolutně, aby nepohnula číslem — políčko má
+ * pevnou velikost a mřížka se nesmí rozjet.
+ */
+.gr-day {
+  position: relative;
+}
+
+/* Číslo se posune nahoru, aby se se značkou nedotýkalo. */
+.gr-day.has-badge {
+  padding-bottom: 5px;
+}
+
+.gr-day-badge {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  min-width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--gr-accent);
+  color: transparent;
+  font-size: 0;
+  line-height: 4px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* S textem se z tečky stane štítek. */
+.gr-day-badge:not(:empty) {
+  height: auto;
+  padding: 0 3px;
+  background: none;
+  color: var(--gr-accent);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.gr-day.is-selected .gr-day-badge {
+  background: var(--gr-accent-fg);
+  color: var(--gr-accent-fg);
+}
+
+.gr-day.is-selected .gr-day-badge:not(:empty) {
+  background: none;
+}
+
 .gr-day.is-today {
   font-weight: 700;
   box-shadow: inset 0 0 0 1px var(--gr-today);

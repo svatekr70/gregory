@@ -170,6 +170,11 @@ export interface GregoryOptions {
   isDisabled?: ((date: Date) => boolean) | undefined
   /** Extra class names for individual days, e.g. holidays. */
   dayClass?: ((date: Date) => string | null | undefined) | undefined
+  /**
+   * Značka pod číslem dne — tečka, počet, cokoli krátkého. Prázdný řetězec
+   * vykreslí jen tečku, což se hodí na „tady něco je" bez čísla.
+   */
+  dayBadge?: ((date: Date) => string | null | undefined) | undefined
   /** Overrides `locale.formatDate` for the input text. */
   format?: ((value: GregoryValue, locale: Locale) => string) | undefined
   /**
@@ -210,6 +215,7 @@ export interface ResolvedOptions {
   drops: 'down' | 'up' | 'auto'
   isDisabled: ((date: Date) => boolean) | undefined
   dayClass: ((date: Date) => string | null | undefined) | undefined
+  dayBadge: ((date: Date) => string | null | undefined) | undefined
   format: ((value: GregoryValue, locale: Locale) => string) | undefined
   summary: boolean | ((value: GregoryValue, locale: Locale) => string)
 }

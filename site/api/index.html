@@ -196,6 +196,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>drops</code></td><td><code>'down' | 'up' | 'auto'</code></td><td><code>'auto'</code></td><td>Směr otevření popoveru.</td></tr>
           <tr><td><code>isDisabled</code></td><td><code>(date: Date) =&gt; boolean</code></td><td>—</td><td>Zakáže konkrétní dny.</td></tr>
           <tr><td><code>dayClass</code></td><td><code>(date: Date) =&gt; string | null</code></td><td>—</td><td>Přidá vlastní třídu dni.</td></tr>
+          <tr><td><code>dayBadge</code></td><td><code>(date: Date) =&gt; string | null</code></td><td>—</td><td>Značka pod číslem dne — tečka nebo počet.</td></tr>
           <tr><td><code>format</code></td><td><code>(value, locale) =&gt; string</code></td><td>—</td><td>Vlastní text do inputu.</td></tr>
           <tr><td><code>summary</code></td><td><code>boolean | (value, locale) =&gt; string</code></td><td><code>false</code></td><td>Řádek v panelu s právě vybranými daty.</td></tr>
         </tbody>
@@ -598,6 +599,23 @@ picker.<span class="t">getValue</span>()
       <pre class="code">summary: (value) =&gt; value?.to ? <span class="s">`Rezervace na ${dny(value)} dní`</span> : <span class="s">'Vyber odjezd'</span></pre>
 
       <p>Text je dostupný i programově přes <code>picker.summaryText()</code>.</p>
+
+      <h3><code>dayBadge</code></h3>
+
+      <p>Pod číslo dne se vejde krátká značka z vlastních dat — kolik je ten den
+        rezervací, jestli je někdo na směně, že tam něco je:</p>
+
+      <pre class="code">dayBadge: (date) =&gt; {
+  <span class="k">const</span> count = rezervace.<span class="t">get</span>(<span class="t">formatISODate</span>(date))
+  <span class="k">return</span> count ? <span class="t">String</span>(count) : <span class="k">null</span>
+}</pre>
+
+      <p><code>null</code> značku nevykreslí, prázdný řetězec vykreslí jen tečku —
+        na „tady něco je" bez čísla. Dny ze sousedních měsíců se přeskakují.</p>
+
+      <p>Značka sedí absolutně, takže nepohne číslem ani nerozjede mřížku,
+        a nereaguje na myš — den zůstává klikatelný celý. Stylovat jde přes
+        <code>.gr-day-badge</code>, den se značkou nese <code>.has-badge</code>.</p>
 
       <h3><code>format</code></h3>
       <p>Přebíjí text zapsaný do inputu. Dostane potvrzenou hodnotu a rozřešené locale.</p>

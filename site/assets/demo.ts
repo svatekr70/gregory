@@ -421,6 +421,24 @@ showTheme(THEMES[0]!)
 
 example('ex-badge', { mode: 'date', locale: 'cs' })
 
+// Předstíraná data: „kolik je ten den rezervací".
+const BOOKINGS = new Map<string, number>([
+  ['2026-08-11', 2],
+  ['2026-08-13', 5],
+  ['2026-08-14', 1],
+  ['2026-08-20', 3],
+  ['2026-08-27', 1],
+])
+
+example('ex-badges', {
+  mode: 'date',
+  locale: 'cs',
+  dayBadge: (date) => {
+    const count = BOOKINGS.get(formatISODate(date))
+    return count ? String(count) : null
+  },
+})
+
 example('ex-from', {
   mode: 'range',
   locale: 'cs',

@@ -100,6 +100,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `opens` / `drops` | `'right'` / `'auto'` | umístění popoveru |
 | `isDisabled` | — | `(date) => boolean` |
 | `dayClass` | — | `(date) => string \| null`, např. svátky |
+| `dayBadge` | — | `(date) => string \| null` — značka pod číslem dne |
 | `format` | — | `(value, locale) => string` pro text v inputu |
 | `summary` | `false` | řádek v panelu s právě vybranými daty (`true` nebo vlastní funkce) |
 
