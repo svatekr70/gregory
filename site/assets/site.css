@@ -609,11 +609,34 @@ footer {
   font-size: 13.5px;
 }
 
-/* Živý náhled uvnitř panelu s proměnnými — u velkých hodnot se roluje. */
+/* Panel vzhledu: vlevo živý náhled, vpravo pole s proměnnými. */
+.css-grid {
+  display: grid;
+  grid-template-columns: auto minmax(230px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
 .css-preview {
   overflow-x: auto;
-  margin-bottom: 16px;
   padding-bottom: 4px;
+}
+
+.css-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0 16px;
+}
+
+.css-fields > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
+  .css-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Bez tohohle by se panel srazil na šířku sloupce a poslední dny by se

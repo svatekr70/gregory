@@ -146,44 +146,6 @@
           </div>
 
           <div class="panel">
-            <h3>Vzhled — CSS proměnné</h3>
-
-            <div class="css-preview" id="css-preview"></div>
-
-            <label class="field">
-              <span>Hrana dne <code>--gr-day-size</code></span>
-              <input type="number" id="css-daysize" min="20" max="64" step="1" value="32">
-            </label>
-
-            <label class="field">
-              <span>Mezera v mřížce <code>--gr-gap</code></span>
-              <input type="number" id="css-gap" min="0" max="8" step="1" value="1">
-            </label>
-
-            <label class="field">
-              <span>Odsazení panelu <code>--gr-pad</code></span>
-              <input type="number" id="css-pad" min="0" max="24" step="1" value="10">
-            </label>
-
-            <label class="field">
-              <span>Písmo panelu <code>--gr-font-size</code></span>
-              <input type="number" id="css-font" min="10" max="20" step="0.5" value="14">
-            </label>
-
-            <label class="field">
-              <span>Čísla dnů <code>--gr-day-font-size</code> <em>(prázdné = dle panelu)</em></span>
-              <input type="number" id="css-dayfont" min="9" max="26" step="0.5" placeholder="dle panelu">
-            </label>
-
-            <label class="field">
-              <span>Záhlaví dnů <code>--gr-weekday-font-size</code></span>
-              <input type="number" id="css-weekdayfont" min="8" max="18" step="0.5" value="11.5">
-            </label>
-
-            <button type="button" class="btn btn-ghost btn-sm" id="css-reset">Zpět na výchozí</button>
-          </div>
-
-          <div class="panel">
             <h3>Události</h3>
             <ul class="event-log" id="event-log"></ul>
           </div>
@@ -200,6 +162,48 @@
             <h3>Kód</h3>
             <pre class="code" id="snippet" style="box-shadow:none"></pre>
             <pre class="code" id="css-snippet" style="box-shadow:none;margin-top:12px" hidden></pre>
+          </div>
+
+          <div class="panel">
+            <h3>Vzhled — CSS proměnné</h3>
+
+            <div class="css-grid">
+              <div class="css-preview" id="css-preview"></div>
+
+              <div class="css-fields">
+                <label class="field">
+                  <span>Hrana dne <code>--gr-day-size</code></span>
+                  <input type="number" id="css-daysize" min="20" max="64" step="1" value="32">
+                </label>
+
+                <label class="field">
+                  <span>Mezera v mřížce <code>--gr-gap</code></span>
+                  <input type="number" id="css-gap" min="0" max="8" step="1" value="1">
+                </label>
+
+                <label class="field">
+                  <span>Odsazení panelu <code>--gr-pad</code></span>
+                  <input type="number" id="css-pad" min="0" max="24" step="1" value="10">
+                </label>
+
+                <label class="field">
+                  <span>Písmo panelu <code>--gr-font-size</code></span>
+                  <input type="number" id="css-font" min="10" max="20" step="0.5" value="14">
+                </label>
+
+                <label class="field">
+                  <span>Čísla dnů <code>--gr-day-font-size</code> <em>(prázdné = dle panelu)</em></span>
+                  <input type="number" id="css-dayfont" min="9" max="26" step="0.5" placeholder="dle panelu">
+                </label>
+
+                <label class="field">
+                  <span>Záhlaví dnů <code>--gr-weekday-font-size</code></span>
+                  <input type="number" id="css-weekdayfont" min="8" max="18" step="0.5" value="11.5">
+                </label>
+
+                <button type="button" class="btn btn-ghost btn-sm" id="css-reset">Zpět na výchozí</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
