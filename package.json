@@ -1,0 +1,71 @@
+{
+  "name": "@svatekr70/gregory",
+  "version": "0.1.0",
+  "description": "Fast, dependency-free date, range and time picker for the web. Works as a plain class or as a <gregory-picker> custom element.",
+  "keywords": [
+    "datepicker",
+    "date-range",
+    "daterangepicker",
+    "calendar",
+    "timepicker",
+    "web-component",
+    "typescript",
+    "vanilla"
+  ],
+  "license": "MIT",
+  "author": "Rudolf Svatek",
+  "homepage": "https://github.com/svatekr70/gregory",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/svatekr70/gregory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/svatekr70/gregory/issues"
+  },
+  "type": "module",
+  "main": "./dist/gregory.umd.cjs",
+  "module": "./dist/gregory.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/gregory.js",
+      "require": "./dist/gregory.umd.cjs"
+    },
+    "./style.css": "./dist/gregory.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "tsc --noEmit",
+    "site:dev": "vite --config vite.site.config.ts",
+    "site:build": "vite build --config vite.site.config.ts",
+    "site:preview": "vite preview --config vite.site.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@typescript/typescript6": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.10",
+    "happy-dom": "^20.11.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "^4.1.10"
+  }
+}

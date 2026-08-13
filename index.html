@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gregory — playground</title>
+    <style>
+      body {
+        max-width: 60rem;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 8rem;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      h1 {
+        margin-bottom: 0.25rem;
+      }
+      p.lead {
+        margin-top: 0;
+        color: #6b7280;
+      }
+      section {
+        margin-top: 2.5rem;
+      }
+      h2 {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6b7280;
+      }
+      input[type="text"] {
+        width: 22rem;
+        max-width: 100%;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid #d5d9e0;
+        border-radius: 8px;
+        font: inherit;
+      }
+      output {
+        display: block;
+        margin-top: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        background: #f4f6f8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gregory</h1>
+    <p class="lead">Playground pro vývoj. Spusť <code>npm run dev</code>.</p>
+
+    <section>
+      <h2>Rozsah dat (presety, Apply/Cancel)</h2>
+      <input type="text" id="range" placeholder="Vyber rozsah…" />
+      <output id="range-out">—</output>
+    </section>
+
+    <section>
+      <h2>Jedno datum, čísla týdnů, dropdowny</h2>
+      <input type="text" id="single" placeholder="Vyber datum…" />
+      <output id="single-out">—</output>
+    </section>
+
+    <section>
+      <h2>Datum a čas, rozsah, maxSpan 14 dní</h2>
+      <input type="text" id="datetime" placeholder="Vyber termín…" />
+      <output id="datetime-out">—</output>
+    </section>
+
+    <section>
+      <h2>Inline</h2>
+      <div id="inline"></div>
+    </section>
+
+    <section>
+      <h2>Custom element</h2>
+      <gregory-picker mode="range" locale="cs" months="2" placeholder="&lt;gregory-picker&gt;"></gregory-picker>
+      <output id="element-out">—</output>
+    </section>
+
+    <script type="module" src="/demo/main.ts"></script>
+  </body>
+</html>

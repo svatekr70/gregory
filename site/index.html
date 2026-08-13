@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gregory — picker data, rozsahu a času ve vanilla TS</title>
+<meta name="description" content="Gregory je framework-agnostický picker data, rozsahu dat a času. Bez runtime závislostí, ~8 kB gzip. Presety, maxSpan, lokalizace přes Intl, Web Component, motiv přes CSS proměnné.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f7ff5'/%3E%3Cg fill='none' stroke='white' stroke-width='2'%3E%3Crect x='6' y='9' width='20' height='17' rx='2'/%3E%3Cpath d='M6 14h20M11 6v5M21 6v5'/%3E%3C/g%3E%3Crect x='10' y='17' width='12' height='4' rx='2' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./assets/site.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="./">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="6" fill="var(--accent)"/>
+        <g fill="none" stroke="#fff" stroke-width="2">
+          <rect x="6" y="9" width="20" height="17" rx="2"/>
+          <path d="M6 14h20M11 6v5M21 6v5"/>
+        </g>
+        <rect x="10" y="17.5" width="12" height="4" rx="2" fill="#fff"/>
+      </svg>
+      Gregory
+    </a>
+    <span class="ver">v0.1.0</span>
+    <span class="spacer"></span>
+    <a class="navlink" href="./demo/">Demo</a>
+    <a class="navlink" href="./api/">API</a>
+    <a class="navlink" href="https://github.com/svatekr70/gregory">GitHub</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section class="hero">
+      <h1>Datum, rozsah i čas<br><span class="g">v jednom pickeru.</span></h1>
+      <p class="lead">Gregory je framework-agnostický výběr data ve vanilla TypeScriptu.
+        Žádné runtime závislosti, jedno jádro — a k němu dvě API: obyčejná třída
+        pro imperativní kód a <code>&lt;gregory-picker&gt;</code> pro HTML.</p>
+      <div class="tags">
+        <span class="tag">vanilla TS · ESM + UMD</span>
+        <span class="tag">0 závislostí</span>
+        <span class="tag">~8 kB gzip</span>
+        <span class="tag">Web Component</span>
+        <span class="tag">MIT</span>
+      </div>
+      <div class="cta">
+        <a class="btn btn-primary" href="./demo/">▶ Živé demo</a>
+        <a class="btn btn-ghost" href="./api/">API dokumentace</a>
+        <a class="btn btn-ghost" href="https://github.com/svatekr70/gregory">GitHub</a>
+      </div>
+
+      <div class="codewrap">
+        <pre class="code"><span class="c">// npm i @svatekr70/gregory</span>
+<span class="k">import</span> { Gregory } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+<span class="k">import</span> <span class="s">'@svatekr70/gregory/style.css'</span>
+
+<span class="k">const</span> picker = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  mode: <span class="s">'range'</span>,
+  locale: <span class="s">'cs'</span>,
+  maxSpan: <span class="n">31</span>,
+})
+
+picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&gt; {
+  console.<span class="t">log</span>(value.from, value.to)
+})</pre>
+        <p class="caption">Nebo bez jediného řádku JS: <code>&lt;gregory-picker mode="range" locale="cs"&gt;</code></p>
+      </div>
+    </section>
+
+    <section id="zive">
+      <h2>Vyzkoušej to hned</h2>
+      <p class="sub">Skutečná komponenta, ne obrázek. Klikni na začátek a konec rozsahu.</p>
+      <div class="card" style="display:grid;gap:16px;justify-items:start">
+        <div id="hero-picker"></div>
+        <div class="readout" id="hero-readout" style="margin:0">zatím nic nevybráno</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Co umí</h2>
+      <p class="sub">Všechno, co od pickeru data v praxi potřebuješ — a nic navíc.</p>
+      <div class="grid">
+
+        <div class="card">
+          <div class="ic">🗓</div>
+          <h3>Čtyři režimy</h3>
+          <p>Jedno datum, rozsah dat, datum s časem a rozsah s časem. Stejné API,
+            přepíná se jedinou volbou <code>mode</code>.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">⚡</div>
+          <h3>Přednastavené rozsahy</h3>
+          <p>Dnes, Posledních 7 dní, Tento měsíc… Vyhodnocují se líně, takže
+            picker otevřený přes půlnoc nevrátí včerejšek. Vlastní presety
+            jedním polem.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">↔</div>
+          <h3>Rozsahy pod kontrolou</h3>
+          <p>Náhled při přejíždění myší, automatické otočení pozpátku vybraného
+            rozsahu a <code>maxSpan</code>, který zbytek kalendáře rovnou zašedne.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">🧩</div>
+          <h3>Dvě API, jedno jádro</h3>
+          <p>Třída <code>Gregory</code> pro imperativní kód, custom element
+            <code>&lt;gregory-picker&gt;</code> pro HTML. Element je jen tenká
+            obálka — žádná druhá implementace.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">🌍</div>
+          <h3>Lokalizace přes Intl</h3>
+          <p>Názvy měsíců, dnů i formát data řeší prohlížeč. Žádné jazykové
+            balíčky k udržování. První den v týdnu se bere z locale, jde přebít.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">⌨</div>
+          <h3>Klávesnice</h3>
+          <p>Šipky po dnech a týdnech, PageUp/PageDown po měsících, Enter vybírá,
+            Escape zavírá a vrací původní hodnotu. Mřížka má <code>role="grid"</code>.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">🎨</div>
+          <h3>Motiv přes proměnné</h3>
+          <p>Barvy, rádiusy i mezery jsou CSS proměnné na <code>.gr</code>.
+            Není potřeba přebíjet jediný selektor. Tmavý režim automaticky.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">🧮</div>
+          <h3>Poctivá datová aritmetika</h3>
+          <p>ISO řetězce se parsují v lokálním čase, ne jako UTC půlnoc.
+            Oba konce rozsahu jsou inkluzivní, 31. leden + měsíc je 28. února.</p>
+        </div>
+
+        <div class="card">
+          <div class="ic">✓</div>
+          <h3>Otestováno</h3>
+          <p>99 testů ve Vitestu nad jádrem i nad DOM, pokrytí přes 90 %.
+            Prahy hlídá build, takže nemůžou tiše klesnout.</p>
+        </div>
+
+      </div>
+
+      <div class="two" style="margin-top:34px">
+        <div>
+          <h3>Režimy</h3>
+          <div class="chips">
+            <span class="chip">date</span>
+            <span class="chip">range</span>
+            <span class="chip">datetime</span>
+            <span class="chip">datetime-range</span>
+          </div>
+        </div>
+        <div>
+          <h3>Události</h3>
+          <div class="chips">
+            <span class="chip">change</span>
+            <span class="chip">apply</span>
+            <span class="chip">cancel</span>
+            <span class="chip">open</span>
+            <span class="chip">close</span>
+            <span class="chip">month-change</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="text-align:center">
+      <h2>Nasadíš to za minutu</h2>
+      <p class="sub">Jeden import, jedna třída. Zbytek jsou volby, které nemusíš použít.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="./demo/">▶ Otevřít demo</a>
+        <a class="btn btn-ghost" href="./api/">API reference</a>
+        <a class="btn btn-ghost" href="https://github.com/svatekr70/gregory">Zdrojový kód</a>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap fnav">
+    <span>Gregory · MIT · © Rudolf Svátek</span>
+    <span class="spacer"></span>
+    <a href="./demo/">Demo</a>
+    <a href="./api/">API</a>
+    <a href="https://github.com/svatekr70/gregory">GitHub</a>
+  </div>
+</footer>
+
+<script type="module" src="./assets/landing.ts"></script>
+</body>
+</html>

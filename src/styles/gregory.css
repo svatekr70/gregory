@@ -1,0 +1,339 @@
+/*
+ * Gregory — default theme.
+ *
+ * Everything is driven by custom properties, so a host app can restyle the
+ * picker without overriding a single selector. Light DOM on purpose: shadow
+ * DOM would make that theming harder, not easier.
+ */
+
+.gr {
+  --gr-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gr-radius: 10px;
+  --gr-radius-day: 6px;
+  --gr-gap: 2px;
+
+  --gr-bg: #fff;
+  --gr-fg: #1c1f23;
+  --gr-muted: #8b9199;
+  --gr-border: #e3e6ea;
+  --gr-hover: #f1f3f5;
+  --gr-accent: #2f6fed;
+  --gr-accent-fg: #fff;
+  --gr-range-bg: #e7efff;
+  --gr-today: #e8590c;
+  --gr-shadow: 0 12px 32px rgb(16 24 40 / 14%), 0 2px 6px rgb(16 24 40 / 8%);
+
+  display: flex;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--gr-border);
+  border-radius: var(--gr-radius);
+  background: var(--gr-bg);
+  color: var(--gr-fg);
+  font-family: var(--gr-font);
+  font-size: 14px;
+  line-height: 1.4;
+  user-select: none;
+}
+
+.gr *,
+.gr *::before,
+.gr *::after {
+  box-sizing: inherit;
+}
+
+.gr[hidden] {
+  display: none;
+}
+
+.gr[data-popover] {
+  position: absolute;
+  z-index: 9999;
+  box-shadow: var(--gr-shadow);
+}
+
+/* ------------------------------------------------------------- presets */
+
+.gr-presets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gr-gap);
+  padding: 10px;
+  border-right: 1px solid var(--gr-border);
+  background: color-mix(in srgb, var(--gr-hover) 55%, transparent);
+}
+
+.gr-preset {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gr-preset:hover {
+  background: var(--gr-bg);
+  box-shadow: inset 0 0 0 1px var(--gr-border);
+}
+
+/* ------------------------------------------------------------ calendars */
+
+.gr-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gr-calendars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+}
+
+.gr-calendar {
+  flex: 1;
+  min-width: 240px;
+}
+
+.gr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.gr-caption {
+  flex: 1;
+  font-weight: 600;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.gr-caption-select {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.gr-select {
+  padding: 2px 4px;
+  border: 1px solid var(--gr-border);
+  border-radius: var(--gr-radius-day);
+  background: var(--gr-bg);
+  color: inherit;
+  font: inherit;
+}
+
+.gr-nav {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gr-nav:hover {
+  background: var(--gr-hover);
+}
+
+.gr-nav-placeholder {
+  pointer-events: none;
+}
+
+.gr-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--gr-gap);
+}
+
+.gr-grid[data-weeknumbers] {
+  grid-template-columns: auto repeat(7, 1fr);
+}
+
+.gr-weekday {
+  padding-bottom: 4px;
+  color: var(--gr-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.gr-weeknum {
+  display: grid;
+  place-items: center;
+  padding-right: 6px;
+  color: var(--gr-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-day {
+  aspect-ratio: 1;
+  min-width: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.gr-day:hover:not(:disabled) {
+  background: var(--gr-hover);
+}
+
+.gr-day:focus-visible {
+  outline: 2px solid var(--gr-accent);
+  outline-offset: -2px;
+}
+
+.gr-day.is-outside {
+  color: var(--gr-muted);
+  opacity: 0.55;
+}
+
+.gr-day.is-today {
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--gr-today);
+}
+
+.gr-day.is-in-range {
+  border-radius: 0;
+  background: var(--gr-range-bg);
+}
+
+.gr-day.is-selected {
+  background: var(--gr-accent);
+  color: var(--gr-accent-fg);
+  font-weight: 600;
+}
+
+.gr-day.is-start:not(.is-end) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.gr-day.is-end:not(.is-start) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.gr-day:disabled {
+  color: var(--gr-muted);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------- footer */
+
+.gr-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--gr-border);
+}
+
+.gr-times {
+  display: flex;
+  gap: 6px;
+}
+
+.gr-time {
+  padding: 4px 6px;
+  border: 1px solid var(--gr-border);
+  border-radius: var(--gr-radius-day);
+  background: var(--gr-bg);
+  color: inherit;
+  font: inherit;
+}
+
+.gr-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.gr-btn {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--gr-radius-day);
+  font: inherit;
+  cursor: pointer;
+}
+
+.gr-btn-ghost {
+  border-color: var(--gr-border);
+  background: transparent;
+  color: inherit;
+}
+
+.gr-btn-ghost:hover {
+  background: var(--gr-hover);
+}
+
+.gr-btn-primary {
+  background: var(--gr-accent);
+  color: var(--gr-accent-fg);
+}
+
+.gr-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------------- dark */
+
+@media (prefers-color-scheme: dark) {
+  .gr:not([data-theme="light"]) {
+    --gr-bg: #16181c;
+    --gr-fg: #e7e9ec;
+    --gr-muted: #7d838c;
+    --gr-border: #2b2f36;
+    --gr-hover: #22262c;
+    --gr-accent: #4b86f5;
+    --gr-accent-fg: #0b0d10;
+    --gr-range-bg: #1d2b46;
+    --gr-today: #f08c4b;
+    --gr-shadow: 0 12px 32px rgb(0 0 0 / 55%);
+  }
+}
+
+.gr[data-theme="dark"] {
+  --gr-bg: #16181c;
+  --gr-fg: #e7e9ec;
+  --gr-muted: #7d838c;
+  --gr-border: #2b2f36;
+  --gr-hover: #22262c;
+  --gr-accent: #4b86f5;
+  --gr-accent-fg: #0b0d10;
+  --gr-range-bg: #1d2b46;
+  --gr-today: #f08c4b;
+  --gr-shadow: 0 12px 32px rgb(0 0 0 / 55%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gr-day,
+  .gr-preset,
+  .gr-btn {
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+}

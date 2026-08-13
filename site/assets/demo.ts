@@ -1,0 +1,225 @@
+import { Gregory, addDays, defineElement, formatISODate, formatISOTime, today } from '../../src/index.js'
+import type { DateRange, GregoryOptions, GregoryValue, Mode, RangePreset } from '../../src/index.js'
+
+defineElement()
+
+/* ------------------------------------------------------------- pomocníci */
+
+const $ = <T extends HTMLElement>(selector: string): T => {
+  const element = document.querySelector<T>(selector)
+  if (!element) throw new Error(`chybí ${selector}`)
+  return element
+}
+
+const hasTime = (mode: Mode): boolean => mode === 'datetime' || mode === 'datetime-range'
+
+function describe(value: GregoryValue, mode: Mode): string {
+  if (!value) return 'null'
+  const stamp = (date: Date): string =>
+    hasTime(mode) ? `${formatISODate(date)} ${formatISOTime(date)}` : formatISODate(date)
+
+  if (value instanceof Date) return `'${stamp(value)}'`
+  if (!value.from) return '{ from: null, to: null }'
+  if (!value.to) return `{ from: '${stamp(value.from)}', to: null }`
+
+  const days = Math.round((+new Date(value.to.getFullYear(), value.to.getMonth(), value.to.getDate()) -
+    +new Date(value.from.getFullYear(), value.from.getMonth(), value.from.getDate())) / 86_400_000) + 1
+  return `{ from: '${stamp(value.from)}', to: '${stamp(value.to)}' }  →  ${days} dní`
+}
+
+/** Připojí picker k ukázce a zrcadlí hodnotu do jejího výpisu. */
+function example(id: string, options: GregoryOptions): Gregory {
+  const picker = new Gregory(`#${id}`, options)
+  const output = document.querySelector<HTMLElement>(`[data-for="${id}"]`)
+  const show = (value: GregoryValue): void => {
+    if (output) output.textContent = describe(value, options.mode ?? 'date')
+  }
+  picker.on('change', ({ value }) => show(value))
+  show(picker.getValue())
+  return picker
+}
+
+/* ----------------------------------------------------------- konfigurátor */
+
+const controls = {
+  mode: $<HTMLSelectElement>('#opt-mode'),
+  locale: $<HTMLSelectElement>('#opt-locale'),
+  months: $<HTMLInputElement>('#opt-months'),
+  maxSpan: $<HTMLInputElement>('#opt-maxspan'),
+  timeStep: $<HTMLInputElement>('#opt-timestep'),
+  opens: $<HTMLSelectElement>('#opt-opens'),
+  presets: $<HTMLInputElement>('#opt-presets'),
+  weekNumbers: $<HTMLInputElement>('#opt-weeknumbers'),
+  dropdowns: $<HTMLInputElement>('#opt-dropdowns'),
+  autoApply: $<HTMLInputElement>('#opt-autoapply'),
+  inline: $<HTMLInputElement>('#opt-inline'),
+  weekends: $<HTMLInputElement>('#opt-weekends'),
+}
+
+const stage = $('#stage')
+const readout = $('#readout')
+const snippet = $('#snippet')
+const log = $<HTMLUListElement>('#event-log')
+
+let current: Gregory | null = null
+
+function readOptions(): GregoryOptions & { mode: Mode } {
+  const maxSpan = Number(controls.maxSpan.value)
+  return {
+    mode: controls.mode.value as Mode,
+    locale: controls.locale.value,
+    months: Number(controls.months.value),
+    maxSpan: maxSpan > 0 ? maxSpan : null,
+    timeStep: Number(controls.timeStep.value),
+    opens: controls.opens.value as 'left' | 'right' | 'center',
+    presets: controls.presets.checked,
+    weekNumbers: controls.weekNumbers.checked,
+    dropdowns: controls.dropdowns.checked,
+    autoApply: controls.autoApply.checked,
+    inline: controls.inline.checked,
+    ...(controls.weekends.checked
+      ? { isDisabled: (date: Date) => date.getDay() === 0 || date.getDay() === 6 }
+      : {}),
+  }
+}
+
+/** Vypíše jen ty volby, které se liší od výchozích — kód má být opsatelný. */
+function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
+  const isRange = options.mode === 'range' || options.mode === 'datetime-range'
+  const lines: string[] = [`mode: '${options.mode}'`, `locale: '${options.locale}'`]
+
+  if (options.months !== (isRange ? 2 : 1)) lines.push(`months: ${options.months}`)
+  if (options.maxSpan) lines.push(`maxSpan: ${options.maxSpan}`)
+  if (hasTime(options.mode) && options.timeStep !== 5) lines.push(`timeStep: ${options.timeStep}`)
+  if (options.opens !== 'right') lines.push(`opens: '${options.opens}'`)
+  if (options.presets !== isRange) lines.push(`presets: ${options.presets}`)
+  if (options.weekNumbers) lines.push('weekNumbers: true')
+  if (options.dropdowns) lines.push('dropdowns: true')
+  if (options.autoApply !== !isRange) lines.push(`autoApply: ${options.autoApply}`)
+  if (options.inline) lines.push('inline: true')
+  if (controls.weekends.checked) lines.push('isDisabled: (d) => d.getDay() === 0 || d.getDay() === 6')
+
+  const body = lines.map((line) => `  ${line},`).join('\n')
+  const target = options.inline ? "'#kalendar'" : "'#vstup'"
+  return `const picker = new Gregory(${target}, {\n${body}\n})`
+}
+
+function paint(code: string): string {
+  return code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/'[^']*'/g, (match) => `<span class="s">${match}</span>`)
+    .replace(/\b(const|new|true|false|null)\b/g, '<span class="k">$1</span>')
+    .replace(/\b(Gregory)\b/g, '<span class="t">$1</span>')
+    .replace(/\b(\d+)\b/g, '<span class="n">$1</span>')
+}
+
+function note(event: string, detail: string): void {
+  const item = document.createElement('li')
+  item.innerHTML = `<b>${event}</b> ${detail}`
+  log.prepend(item)
+  while (log.children.length > 40) log.lastElementChild?.remove()
+}
+
+function rebuild(): void {
+  const options = readOptions()
+
+  current?.destroy()
+  stage.replaceChildren()
+  log.replaceChildren()
+
+  // V inline režimu se picker vykresluje do divu, jinak visí na inputu.
+  let target: HTMLElement
+  if (options.inline) {
+    target = document.createElement('div')
+  } else {
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.className = 'stage-input'
+    input.placeholder = 'Klikni sem…'
+    target = input
+  }
+  stage.append(target)
+
+  current = new Gregory(target, options)
+  readout.textContent = describe(current.getValue(), options.mode)
+
+  current.on('change', ({ value, complete }) => {
+    readout.textContent = describe(value, options.mode)
+    note('change', complete ? '(complete)' : '(rozpracováno)')
+  })
+  current.on('apply', ({ value }) => note('apply', describe(value, options.mode)))
+  current.on('cancel', () => note('cancel', ''))
+  current.on('open', () => note('open', ''))
+  current.on('close', () => note('close', ''))
+  current.on('month-change', ({ year, month }) => note('month-change', `${year}-${String(month + 1).padStart(2, '0')}`))
+
+  snippet.innerHTML = paint(buildSnippet(options))
+
+  // timeStep dává smysl jen u časových režimů.
+  controls.timeStep.disabled = !hasTime(options.mode)
+  controls.opens.disabled = options.inline ?? false
+}
+
+for (const control of Object.values(controls)) {
+  control.addEventListener('change', rebuild)
+}
+rebuild()
+
+/* -------------------------------------------------------------- ukázky */
+
+example('ex-single', { mode: 'date', locale: 'cs', dropdowns: true, weekNumbers: true })
+
+example('ex-range', { mode: 'range', locale: 'cs', weekNumbers: true })
+
+example('ex-datetime', { mode: 'datetime', locale: 'cs', timeStep: 15 })
+
+example('ex-limited', {
+  mode: 'range',
+  locale: 'cs',
+  min: today(),
+  max: addDays(today(), 90),
+  maxSpan: 14,
+  presets: false,
+})
+
+/** Pohyblivé i pevné české státní svátky pro zobrazený rozsah let. */
+const HOLIDAYS = new Set([
+  '01-01', '05-01', '05-08', '07-05', '07-06', '09-28', '10-28', '11-17', '12-24', '12-25', '12-26',
+])
+
+example('ex-workdays', {
+  mode: 'date',
+  locale: 'cs',
+  isDisabled: (date) => date.getDay() === 0 || date.getDay() === 6,
+  dayClass: (date) => (HOLIDAYS.has(formatISODate(date).slice(5)) ? 'is-holiday' : null),
+})
+
+const QUARTERS: RangePreset[] = [1, 2, 3, 4].map((quarter) => ({
+  label: `Q${quarter}`,
+  range: () => {
+    const year = today().getFullYear()
+    const firstMonth = (quarter - 1) * 3
+    return [new Date(year, firstMonth, 1), new Date(year, firstMonth + 3, 0)]
+  },
+}))
+
+example('ex-custom', {
+  mode: 'range',
+  locale: 'cs',
+  presets: QUARTERS,
+  format: (value) => {
+    if (!value || value instanceof Date || !value.from || !value.to) return ''
+    const quarter = Math.floor(value.from.getMonth() / 3) + 1
+    return `Q${quarter} ${value.from.getFullYear()} (${formatISODate(value.from)} – ${formatISODate(value.to)})`
+  },
+})
+
+new Gregory('#ex-theme', { mode: 'range', locale: 'cs', inline: true, months: 1, presets: false, autoApply: true })
+
+const element = document.getElementById('ex-element')
+const elementOut = document.querySelector<HTMLElement>('[data-for="ex-element"]')
+element?.addEventListener('gregory:apply', (event) => {
+  const { value } = (event as CustomEvent<{ value: DateRange }>).detail
+  if (elementOut) elementOut.textContent = `value="${element.getAttribute('value')}"  →  ${describe(value, 'range')}`
+})

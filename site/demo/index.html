@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo — Gregory</title>
+<meta name="description" content="Živé demo Gregory: konfigurátor všech voleb, ukázky režimů, omezení, vlastních presetů a motivů.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f7ff5'/%3E%3Cg fill='none' stroke='white' stroke-width='2'%3E%3Crect x='6' y='9' width='20' height='17' rx='2'/%3E%3Cpath d='M6 14h20M11 6v5M21 6v5'/%3E%3C/g%3E%3Crect x='10' y='17' width='12' height='4' rx='2' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap wrap-wide nav">
+    <a class="brand" href="../">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="6" fill="var(--accent)"/>
+        <g fill="none" stroke="#fff" stroke-width="2">
+          <rect x="6" y="9" width="20" height="17" rx="2"/>
+          <path d="M6 14h20M11 6v5M21 6v5"/>
+        </g>
+        <rect x="10" y="17.5" width="12" height="4" rx="2" fill="#fff"/>
+      </svg>
+      Gregory
+    </a>
+    <span class="ver">v0.1.0</span>
+    <span class="spacer"></span>
+    <a class="navlink" href="./" aria-current="page">Demo</a>
+    <a class="navlink" href="../api/">API</a>
+    <a class="navlink" href="https://github.com/svatekr70/gregory">GitHub</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap wrap-wide">
+
+    <section style="padding-bottom:24px">
+      <h2>Konfigurátor</h2>
+      <p class="sub">Přepni volby vlevo a picker se okamžitě přestaví. Dole je kód, který takový picker vyrobí.</p>
+
+      <div class="demo-grid">
+        <div>
+          <div class="panel">
+            <h3>Volby</h3>
+
+            <label class="field">
+              <span>mode</span>
+              <select id="opt-mode">
+                <option value="date">date</option>
+                <option value="range" selected>range</option>
+                <option value="datetime">datetime</option>
+                <option value="datetime-range">datetime-range</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>locale</span>
+              <select id="opt-locale">
+                <option value="cs" selected>cs</option>
+                <option value="sk">sk</option>
+                <option value="en-GB">en-GB</option>
+                <option value="en-US">en-US</option>
+                <option value="de">de</option>
+                <option value="pl">pl</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>months</span>
+              <input type="number" id="opt-months" min="1" max="4" value="2">
+            </label>
+
+            <label class="field">
+              <span>maxSpan (dnů, 0 = bez limitu)</span>
+              <input type="number" id="opt-maxspan" min="0" max="365" value="0">
+            </label>
+
+            <label class="field">
+              <span>timeStep (minut)</span>
+              <input type="number" id="opt-timestep" min="1" max="60" value="5">
+            </label>
+
+            <label class="field">
+              <span>opens</span>
+              <select id="opt-opens">
+                <option value="right" selected>right</option>
+                <option value="left">left</option>
+                <option value="center">center</option>
+              </select>
+            </label>
+
+            <label class="switch"><input type="checkbox" id="opt-presets" checked> presets</label>
+            <label class="switch"><input type="checkbox" id="opt-weeknumbers"> weekNumbers</label>
+            <label class="switch"><input type="checkbox" id="opt-dropdowns"> dropdowns</label>
+            <label class="switch"><input type="checkbox" id="opt-autoapply"> autoApply</label>
+            <label class="switch"><input type="checkbox" id="opt-inline"> inline</label>
+            <label class="switch"><input type="checkbox" id="opt-weekends"> isDisabled: víkendy</label>
+          </div>
+
+          <div class="panel">
+            <h3>Události</h3>
+            <ul class="event-log" id="event-log"></ul>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <h3>Picker</h3>
+            <div id="stage"></div>
+            <div class="readout" id="readout">—</div>
+          </div>
+
+          <div class="panel">
+            <h3>Kód</h3>
+            <pre class="code" id="snippet" style="box-shadow:none"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Ukázky</h2>
+      <p class="sub">Typické konfigurace, které v projektech opravdu potřebuješ.</p>
+
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))">
+
+        <div class="card example">
+          <h3>Jedno datum</h3>
+          <p>Nejjednodušší případ. <code>autoApply</code> je v single režimu zapnutý, takže klik rovnou potvrzuje.</p>
+          <input class="stage-input" id="ex-single" placeholder="Vyber datum…">
+          <div class="readout" data-for="ex-single">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Rozsah s presety</h3>
+          <p>Postranní zkratky a tlačítka Použít / Zrušit. Výchozí chování pro <code>mode: 'range'</code>.</p>
+          <input class="stage-input" id="ex-range" placeholder="Vyber rozsah…">
+          <div class="readout" data-for="ex-range">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Datum a čas</h3>
+          <p><code>mode: 'datetime'</code> s krokem 15 minut. Změna dne si čas ponechá.</p>
+          <input class="stage-input" id="ex-datetime" placeholder="Vyber termín…">
+          <div class="readout" data-for="ex-datetime">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Omezený výběr</h3>
+          <p><code>min</code> dnes, <code>max</code> za 90 dní a <code>maxSpan: 14</code>. Zbytek kalendáře je nedostupný.</p>
+          <input class="stage-input" id="ex-limited" placeholder="Nejvýše 14 dní…">
+          <div class="readout" data-for="ex-limited">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Svátky a víkendy</h3>
+          <p><code>isDisabled</code> zakáže víkendy, <code>dayClass</code> obarví české státní svátky.</p>
+          <input class="stage-input" id="ex-workdays" placeholder="Jen pracovní dny…">
+          <div class="readout" data-for="ex-workdays">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Vlastní presety a formát</h3>
+          <p>Fiskální čtvrtletí místo výchozích zkratek a vlastní <code>format</code> do inputu.</p>
+          <input class="stage-input" id="ex-custom" placeholder="Vyber čtvrtletí…">
+          <div class="readout" data-for="ex-custom">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Vlastní motiv</h3>
+          <p>Jen přenastavené CSS proměnné na obalu — žádný přepsaný selektor.</p>
+          <div id="ex-theme" class="theme-teal"></div>
+        </div>
+
+        <div class="card example">
+          <h3>Custom element</h3>
+          <p>Bez řádku JS. Hodnota se zrcadlí do atributu <code>value</code>.</p>
+          <gregory-picker id="ex-element" mode="range" locale="cs" months="2" placeholder="&lt;gregory-picker&gt;"></gregory-picker>
+          <div class="readout" data-for="ex-element">—</div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap wrap-wide fnav">
+    <span>Gregory · MIT · © Rudolf Svátek</span>
+    <span class="spacer"></span>
+    <a href="../">Úvod</a>
+    <a href="../api/">API</a>
+    <a href="https://github.com/svatekr70/gregory">GitHub</a>
+  </div>
+</footer>
+
+<style>
+  /* Element si vnitřní input nestyluje sám — to je věc hostitelské stránky. */
+  gregory-picker {
+    display: block;
+  }
+
+  gregory-picker input {
+    width: min(380px, 100%);
+    padding: 10px 13px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+  }
+
+  .theme-teal .gr {
+    --gr-accent: #0f766e;
+    --gr-range-bg: #ccfbf1;
+    --gr-radius: 16px;
+    --gr-radius-day: 999px;
+    --gr-today: #b45309;
+  }
+
+  /* Ukázka dayClass — svátky. */
+  .gr-day.is-holiday {
+    color: #b91c1c;
+    font-weight: 700;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .gr-day.is-holiday {
+      color: #f87171;
+    }
+
+    .theme-teal .gr {
+      --gr-range-bg: #113a35;
+      --gr-accent: #2dd4bf;
+      --gr-accent-fg: #04211d;
+    }
+  }
+</style>
+
+<script type="module" src="../assets/demo.ts"></script>
+</body>
+</html>

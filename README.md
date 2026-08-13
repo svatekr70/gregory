@@ -1,0 +1,128 @@
+# Gregory
+
+Rychlý date / range / datetime picker bez závislostí. Jedno jádro, dvě API:
+obyčejná JS třída pro imperativní použití a `<gregory-picker>` pro deklarativní.
+
+- **~8 kB gzip** včetně stylů, žádné runtime závislosti
+- **framework-agnostický** — funguje ve staré jQuery aplikaci i v Reactu
+- **rozsahy dat** s presety, `maxSpan`, náhledem při přejíždění myší
+- **čas** (`datetime`, `datetime-range`), čísla týdnů, dropdowny měsíc/rok
+- **lokalizace přes `Intl`** — žádné jazykové balíčky k udržování
+- **klávesnice** — šipky, PageUp/PageDown, Enter, Escape
+- **témata přes CSS proměnné**, světlé i tmavé
+
+## Instalace
+
+```bash
+npm install @svatekr70/gregory
+```
+
+```js
+import { Gregory } from '@svatekr70/gregory'
+import '@svatekr70/gregory/style.css'
+```
+
+## Použití
+
+### Imperativně
+
+```js
+const picker = new Gregory('#input', {
+  mode: 'range',
+  locale: 'cs',
+  maxSpan: 31,
+})
+
+picker.on('apply', ({ value }) => {
+  console.log(value.from, value.to)
+})
+```
+
+### Deklarativně
+
+```js
+import { defineElement } from '@svatekr70/gregory'
+defineElement()
+```
+
+```html
+<gregory-picker mode="range" locale="cs" months="2" value="2026-08-01/2026-08-13">
+</gregory-picker>
+```
+
+Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
+`gregory:close` jako bublající `CustomEvent`, hodnota je v `event.detail.value`.
+
+## Volby
+
+| volba | výchozí | popis |
+| --- | --- | --- |
+| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range` |
+| `value` | `null` | `Date`, ISO string, `{from,to}` nebo `[from, to]` |
+| `locale` | jazyk prohlížeče | BCP 47 tag nebo částečný objekt `Locale` |
+| `min` / `max` | `null` | hranice výběru |
+| `firstDayOfWeek` | podle locale | `0` = neděle … `6` = sobota |
+| `months` | `2` v range módu, jinak `1` | počet panelů vedle sebe |
+| `weekNumbers` | `false` | sloupec s ISO čísly týdnů |
+| `dropdowns` | `false` | `<select>` pro měsíc a rok |
+| `inline` | `false` | vykreslit na místo místo popoveru |
+| `autoApply` | `true` mimo range módy | potvrdit hned, bez tlačítek Apply/Cancel |
+| `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |
+| `maxSpan` | `null` | nejdelší povolený rozsah ve dnech |
+| `timeStep` | `5` | krok času v minutách |
+| `opens` / `drops` | `'right'` / `'auto'` | umístění popoveru |
+| `isDisabled` | — | `(date) => boolean` |
+| `dayClass` | — | `(date) => string \| null`, např. svátky |
+| `format` | — | `(value, locale) => string` pro text v inputu |
+
+## API
+
+```ts
+picker.getValue()      // Date | DateRange | null — potvrzená hodnota
+picker.getSelection()  // rozpracovaný výběr (v range módu i poloviční)
+picker.setValue(value, { silent })
+picker.clear()
+picker.setOptions(patch)
+picker.goTo('2026-12-01')
+picker.openPanel() / picker.close() / picker.toggle()
+picker.apply() / picker.cancel()
+picker.on(event, listener)   // vrací odhlašovací funkci
+picker.destroy()
+```
+
+Události: `change` (s příznakem `complete`), `apply`, `cancel`, `open`,
+`close`, `month-change`.
+
+## Vzhled
+
+Všechno jsou CSS proměnné na `.gr`, není potřeba přebíjet selektory:
+
+```css
+.gr {
+  --gr-accent: #0f766e;
+  --gr-range-bg: #ccfbf1;
+  --gr-radius: 14px;
+}
+```
+
+Tmavý režim se aktivuje sám podle `prefers-color-scheme`, nebo natvrdo přes
+`data-theme="dark"` / `data-theme="light"` na kořenovém prvku pickeru.
+
+## Vývoj
+
+```bash
+npm run dev            # vývojový playground
+npm test               # vitest
+npm run test:coverage
+npm run build          # typecheck + ESM/UMD/d.ts do dist/
+
+npm run site:dev       # projektový web (úvod, demo, API dokumentace)
+npm run site:build     # statický web do dist-site/
+```
+
+Web v `site/` importuje knihovnu přímo ze `src/`, takže demo vždy ukazuje
+aktuální kód. `dist-site/` je čistě statický — nahraje se kamkoli.
+
+## Licence
+
+MIT

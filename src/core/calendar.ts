@@ -1,0 +1,125 @@
+import {
+  addDays,
+  compareDay,
+  createDate,
+  formatISODate,
+  isSameDay,
+  isWithinDay,
+  isoWeekNumber,
+  startOfWeek,
+  today,
+} from './date.js'
+import type { DateRange, Locale, WeekDay } from './types.js'
+
+export interface DayCell {
+  date: Date
+  iso: string
+  /** Belongs to the previous or next month, shown to fill the grid. */
+  outside: boolean
+  isToday: boolean
+  disabled: boolean
+  selected: boolean
+  /** Strictly between the range bounds. */
+  inRange: boolean
+  rangeStart: boolean
+  rangeEnd: boolean
+  weekend: boolean
+  extraClass: string | null
+}
+
+export interface WeekRow {
+  weekNumber: number
+  days: DayCell[]
+}
+
+export interface MonthView {
+  year: number
+  month: number
+  label: string
+  weekdays: string[]
+  weeks: WeekRow[]
+}
+
+export interface MonthContext {
+  locale: Locale
+  firstDayOfWeek: WeekDay
+  selection: DateRange
+  /** Day currently hovered or focused, used to preview an unfinished range. */
+  preview: Date | null
+  min: Date | null
+  max: Date | null
+  /** Longest selectable range in days; narrows the bounds once one end is picked. */
+  maxSpan: number | null
+  isDisabled?: ((date: Date) => boolean) | undefined
+  dayClass?: ((date: Date) => string | null | undefined) | undefined
+  /** Overrides "today", so tests do not depend on the clock. */
+  reference?: Date | undefined
+}
+
+/** Range bounds sorted ascending; `preview` stands in for a missing second bound. */
+function effectiveRange(context: MonthContext): DateRange {
+  const { from, to } = context.selection
+  const end = to ?? context.preview
+  if (!from || !end) return { from, to }
+  return compareDay(from, end) <= 0 ? { from, to: end } : { from: end, to: from }
+}
+
+export function isDayDisabled(date: Date, context: MonthContext): boolean {
+  if (context.min && compareDay(date, context.min) < 0) return true
+  if (context.max && compareDay(date, context.max) > 0) return true
+
+  // While a range is half-picked, maxSpan shrinks the selectable window.
+  const { from, to } = context.selection
+  if (context.maxSpan && from && !to) {
+    const span = context.maxSpan - 1
+    if (compareDay(date, addDays(from, -span)) < 0) return true
+    if (compareDay(date, addDays(from, span)) > 0) return true
+  }
+
+  return context.isDisabled?.(date) ?? false
+}
+
+/**
+ * Builds one month panel. Always emits 6 week rows so the popover keeps a
+ * constant height while the user pages through months.
+ */
+export function buildMonth(year: number, month: number, context: MonthContext): MonthView {
+  const firstOfMonth = createDate(year, month, 1)
+  const gridStart = startOfWeek(firstOfMonth, context.firstDayOfWeek)
+  const now = context.reference ?? today()
+  const range = effectiveRange(context)
+  const weeks: WeekRow[] = []
+
+  for (let week = 0; week < 6; week += 1) {
+    const days: DayCell[] = []
+    for (let index = 0; index < 7; index += 1) {
+      const date = addDays(gridStart, week * 7 + index)
+      const weekday = date.getDay()
+      const rangeStart = isSameDay(date, range.from)
+      const rangeEnd = isSameDay(date, range.to)
+
+      days.push({
+        date,
+        iso: formatISODate(date),
+        outside: date.getMonth() !== month,
+        isToday: isSameDay(date, now),
+        disabled: isDayDisabled(date, context),
+        selected: rangeStart || rangeEnd,
+        inRange: isWithinDay(date, range.from, range.to) && !rangeStart && !rangeEnd,
+        rangeStart,
+        rangeEnd,
+        weekend: weekday === 0 || weekday === 6,
+        extraClass: context.dayClass?.(date) ?? null,
+      })
+    }
+    weeks.push({ weekNumber: isoWeekNumber(days[0]!.date), days })
+  }
+
+  return {
+    year,
+    month,
+    label: context.locale.monthLabel(firstOfMonth),
+    weekdays: context.locale.weekdayNames(context.firstDayOfWeek),
+    weeks,
+  }
+}
