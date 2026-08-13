@@ -433,14 +433,20 @@
 
 /* --------------------------------------------------------------- footer */
 
+/* Čas na svém řádku, tlačítka pod ním — jinak se panel roztahuje do šířky. */
 .gr-foot {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
   padding: calc(var(--gr-pad) * 0.8) var(--gr-pad);
   border-top: 1px solid var(--gr-border);
+}
+
+.gr-foot-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .gr-times {
@@ -542,6 +548,7 @@ div.gr-time.gr-time-sliders {
 .gr-actions-secondary {
   margin-left: 0;
   margin-right: auto;
+  gap: 12px;
 }
 
 .gr-btn {
@@ -590,6 +597,24 @@ div.gr-time.gr-time-sliders {
 
 .gr-btn-primary:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Vedlejší akce jako textový odkaz — nesoupeří s Použít o pozornost. */
+.gr-btn-link {
+  padding: calc(var(--gr-pad) * 0.5) 0;
+  border: 0;
+  background: none;
+  color: var(--gr-muted);
+}
+
+.gr-btn-link:hover:not(:disabled) {
+  color: var(--gr-accent);
+  text-decoration: underline;
+}
+
+.gr-btn-link:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 

@@ -1222,8 +1222,9 @@ export class Gregory {
       footer.append(times)
     }
 
+    // Tlačítka na vlastním řádku pod časem, ať se panel neroztahuje do šířky.
+    // V řádku pak vlevo pomocné akce, vpravo potvrzení.
     const actions = h('div', { class: 'gr-actions' })
-    // Vlevo pomocné akce, vpravo potvrzení — jako v nativním kalendáři.
     const helpers = h('div', { class: 'gr-actions gr-actions-secondary' })
 
     if (isRangeMode(mode) && this.options.allowOpenRange) {
@@ -1257,7 +1258,7 @@ export class Gregory {
         'button',
         {
           type: 'button',
-          class: 'gr-btn gr-btn-ghost',
+          class: 'gr-btn gr-btn-link',
           'data-action': 'today',
           disabled: isDayDisabled(now, this.monthContext()),
           title: locale.labels.today,
@@ -1268,7 +1269,7 @@ export class Gregory {
         'button',
         {
           type: 'button',
-          class: 'gr-btn gr-btn-ghost',
+          class: 'gr-btn gr-btn-link',
           'data-action': 'clear',
           // Mazat prázdno by jen zbytečně vyslalo apply s null.
           disabled: !this.selection.from && !this.selection.to,
@@ -1286,8 +1287,9 @@ export class Gregory {
       )
     }
 
-    footer.append(helpers)
-    if (actions.childElementCount) footer.append(actions)
+    const row = h('div', { class: 'gr-foot-row' }, [helpers])
+    if (actions.childElementCount) row.append(actions)
+    footer.append(row)
     return footer
   }
 
