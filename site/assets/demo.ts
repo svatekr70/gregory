@@ -84,6 +84,45 @@ const readout = $('#readout')
 const snippet = $('#snippet')
 const log = $<HTMLUListElement>('#event-log')
 
+/*
+ * Vzhled se nenastavuje volbami pickeru, ale CSS proměnnými na kořeni panelu.
+ * Konfigurátor je proto zapisuje přímo do `picker.element` — přesně tak, jak
+ * by je hostitelská stránka napsala do stylopisu.
+ */
+const CSS_VARS = [
+  { id: 'css-daysize', name: '--gr-day-size', unit: 'px', fallback: '32' },
+  { id: 'css-gap', name: '--gr-gap', unit: 'px', fallback: '1' },
+  { id: 'css-pad', name: '--gr-pad', unit: 'px', fallback: '10' },
+  { id: 'css-font', name: '--gr-font-size', unit: 'px', fallback: '14' },
+  { id: 'css-dayfont', name: '--gr-day-font-size', unit: 'px', fallback: '' },
+  { id: 'css-weekdayfont', name: '--gr-weekday-font-size', unit: 'px', fallback: '11.5' },
+] as const
+
+const cssInputs = CSS_VARS.map((variable) => ({ ...variable, input: $<HTMLInputElement>(`#${variable.id}`) }))
+const cssSnippet = $('#css-snippet')
+
+function applyAppearance(): void {
+  const target = current?.element
+  const changed: string[] = []
+
+  for (const { name, unit, fallback, input } of cssInputs) {
+    const value = input.value.trim()
+    if (value === '') target?.style.removeProperty(name)
+    else target?.style.setProperty(name, value + unit)
+    if (value !== fallback) changed.push(`  ${name}: ${value === '' ? 'dle panelu' : value + unit};`)
+  }
+
+  cssSnippet.hidden = changed.length === 0
+  if (changed.length) cssSnippet.innerHTML = paint(`.gr {\n${changed.join('\n')}\n}`)
+}
+
+for (const { input } of cssInputs) input.addEventListener('input', applyAppearance)
+
+$<HTMLButtonElement>('#css-reset').addEventListener('click', () => {
+  for (const { input, fallback } of cssInputs) input.value = fallback
+  applyAppearance()
+})
+
 let current: Gregory | null = null
 
 function readOptions(): GregoryOptions & { mode: Mode } {
@@ -202,6 +241,8 @@ function rebuild(): void {
   current.on('month-change', ({ year, month }) => note('month-change', `${year}-${String(month + 1).padStart(2, '0')}`))
 
   snippet.innerHTML = paint(buildSnippet(options))
+  // Panel je nový, takže proměnné je potřeba nasadit znovu.
+  applyAppearance()
 
   // Časové volby dávají smysl jen u časových režimů.
   for (const control of [controls.timeStep, controls.timeUi, controls.minTime, controls.maxTime]) {
