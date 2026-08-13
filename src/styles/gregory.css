@@ -10,9 +10,11 @@
   --gr-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --gr-radius: 10px;
   --gr-radius-day: 6px;
-  --gr-gap: 2px;
+  --gr-gap: 1px;
   /* Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu. */
-  --gr-day-size: 34px;
+  --gr-day-size: 32px;
+  /* Odsazení uvnitř panelu — druhá páka na hustotu. */
+  --gr-pad: 10px;
 
   --gr-bg: #fff;
   --gr-fg: #1c1f23;
@@ -87,14 +89,14 @@
 .gr-presets {
   display: flex;
   flex-direction: column;
-  gap: var(--gr-gap);
-  padding: 10px;
+  gap: 1px;
+  padding: var(--gr-pad);
   border-right: 1px solid var(--gr-border);
   background: color-mix(in srgb, var(--gr-hover) 55%, transparent);
 }
 
 .gr-preset {
-  padding: 6px 12px;
+  padding: 5px 10px;
   border: 0;
   border-radius: var(--gr-radius-day);
   background: transparent;
@@ -122,8 +124,8 @@
 .gr-calendars {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px;
+  gap: 14px;
+  padding: var(--gr-pad);
 }
 
 /*
@@ -148,7 +150,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 4px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .gr-caption {
@@ -253,8 +255,8 @@
 .gr-nav {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border: 0;
   border-radius: var(--gr-radius-day);
   background: transparent;
@@ -284,9 +286,9 @@
 }
 
 .gr-weekday {
-  padding-bottom: 4px;
+  padding-bottom: 2px;
   color: var(--gr-muted);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   text-align: center;
   text-transform: capitalize;
@@ -404,7 +406,7 @@
 /* -------------------------------------------------------------- souhrn */
 
 .gr-summary {
-  padding: 8px 12px;
+  padding: 6px var(--gr-pad);
   border-top: 1px solid var(--gr-border);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
@@ -423,7 +425,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px var(--gr-pad);
   border-top: 1px solid var(--gr-border);
 }
 
@@ -524,7 +526,7 @@ div.gr-time.gr-time-sliders {
 }
 
 .gr-btn {
-  padding: 6px 14px;
+  padding: 5px 12px;
   border: 1px solid transparent;
   border-radius: var(--gr-radius-day);
   font: inherit;
