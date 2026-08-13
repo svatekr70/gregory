@@ -124,7 +124,8 @@
       <div class="callout">
         <strong>Proč ne <code>&lt;input type="date"&gt;</code></strong>
         <p>Nativní pole vypadá v každém prohlížeči jinak, neumí rozsah ani
-          presety a nedá se stylovat. Gregory je naopak všude stejný a řídí se
+          presety a jeho vyskakovací kalendář se nedá stylovat. Gregory je
+          naopak všude stejný a řídí se
           tvým designem. Když ti nativní pole stačí, používej ho — tahle
           knihovna začíná dávat smysl u rozsahů, omezení a vlastního vzhledu.</p>
       </div>
@@ -152,10 +153,16 @@
       </div>
 
       <p>Režim se dá měnit i za běhu, ale je to spíš pro konfigurátory než pro
-        běžné stránky — vybraná hodnota se přitom zahodí, pokud do nového tvaru
-        nesedí:</p>
+        běžné stránky:</p>
 
       <pre class="code">picker.<span class="t">setOptions</span>({ mode: <span class="s">'range'</span> })</pre>
+
+      <p>Hodnota se přitom nezahazuje, jen se čte podle nového tvaru: z rozsahu
+        zůstane po přepnutí na <code>date</code> jeho začátek a v režimu
+        <code>multiple</code> se neprojeví vůbec, protože seznam dnů je prázdný.
+        Po návratu zpátky na <code>range</code> je celý rozsah zase na místě.
+        Když má hodnota při přepnutí opravdu zmizet, zavolej
+        <code>clear()</code>.</p>
 
       <h3>Období vs. rozsah</h3>
       <p>Na „celý srpen" jsou dvě cesty. <code>mode: 'month'</code> vrátí jeden
@@ -194,8 +201,8 @@ picker.<span class="t">clear</span>()</pre>
       <div class="callout">
         <strong>Pozor na <code>new Date('2026-08-13')</code></strong>
         <p>JavaScript takový řetězec čte jako <strong>půlnoc v UTC</strong>, takže
-          v Praze z něj vyjde 13. srpna 01:00 a ve westernové zóně 12. srpna
-          večer. Gregory si ISO řetězce parsuje sám a v místním čase, takže
+          v Praze z něj v srpnu vyjde 13. srpna 02:00 (v zimě 01:00) a v New Yorku
+          12. srpna 20:00. Gregory si ISO řetězce parsuje sám a v místním čase, takže
           <code>setValue('2026-08-13')</code> je vždycky 13. srpna. Když si datum
           skládáš ručně, použij <code>new Date(2026, 7, 13)</code> nebo utilitu
           <code>createDate(2026, 7, 13)</code>.</p>
@@ -207,8 +214,13 @@ picker.<span class="t">clear</span>()</pre>
 
       <pre class="code"><span class="k">import</span> { formatISODate } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
 
-<span class="k">const</span> value = picker.<span class="t">getValue</span>()
-formatISODate(value)   <span class="c">// '2026-08-13'</span></pre>
+<span class="k">const</span> den = picker.<span class="t">getValue</span>()   <span class="c">// v režimu date: Date | null</span>
+<span class="k">if</span> (den) odeslat(<span class="t">formatISODate</span>(den))   <span class="c">// '2026-08-13'</span></pre>
+
+      <p>V TypeScriptu <code>getValue()</code> vrací sjednocení všech tvarů
+        (<code>Date | DateRange | Date[] | null</code>), protože jeden picker umí
+        všechny režimy. Když víš, který máš, zúž si typ —
+        <code>picker.getValue() as Date</code>.</p>
 
       <p>U formulářů to za tebe udělá <code>submitName</code> — viz dál.</p>
 
@@ -295,17 +307,17 @@ formatISODate(value)   <span class="c">// '2026-08-13'</span></pre>
         Volá se pro každou vykreslenou buňku, takže ať je rychlá — hledání
         v <code>Set</code>u ano, dotaz na server ne:</p>
 
-      <pre class="code"><span class="k">const</span> obsazeno = <span class="k">new</span> <span class="t">Set</span>([<span class="s">'2026-08-15'</span>, <span class="s">'2026-08-16'</span>])
+      <pre class="code"><span class="k">let</span> obsazeno = <span class="k">new</span> <span class="t">Set</span>([<span class="s">'2026-08-15'</span>, <span class="s">'2026-08-16'</span>])
 
-<span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#pobyt'</span>, {
+<span class="k">const</span> picker = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#pobyt'</span>, {
   mode: <span class="s">'range'</span>,
-  isDisabled: (d) =&gt; obsazeno.<span class="t">has</span>(formatISODate(d)),
+  isDisabled: (d) =&gt; obsazeno.<span class="t">has</span>(<span class="t">formatISODate</span>(d)),
 })</pre>
 
-      <p>Když se seznam obsazených dnů dotáhne později, řekni pickeru, ať se
-        překreslí:</p>
+      <p>Když se seznam obsazených dnů dotáhne později, funkce si nová data vezme
+        sama — jen jí musíš dát vědět, ať se panel překreslí:</p>
 
-      <pre class="code">obsazeno = <span class="k">new</span> <span class="t">Set</span>(<span class="k">await</span> nactiObsazene())
+      <pre class="code">obsazeno = <span class="k">new</span> <span class="t">Set</span>(<span class="k">await</span> <span class="t">nactiObsazene</span>())
 picker.<span class="t">setOptions</span>({})   <span class="c">// překreslí panel s aktuálními daty</span></pre>
 
       <!-- ============================================================ -->
@@ -342,7 +354,9 @@ splatnost.<span class="t">addEventListener</span>(<span class="s">'gregory:chang
         popoveru. Hodí se do postranních filtrů; s <code>summary: true</code>
         má i řádek, který slovy říká, co je vybrané.</p>
 
-      <h3>Deklarativně, bez JavaScriptu</h3>
+      <h3>Deklarativně, v HTML</h3>
+      <p>Custom element se nastavuje atributy; JavaScript je potřeba jen jednou,
+        na jeho registraci:</p>
       <pre class="code">&lt;gregory-picker mode="range" locale="cs" months="2"&gt;&lt;/gregory-picker&gt;</pre>
       <pre class="code"><span class="k">import</span> { defineElement } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
 <span class="t">defineElement</span>()</pre>
@@ -428,7 +442,7 @@ splatnost.<span class="t">addEventListener</span>(<span class="s">'gregory:chang
           <tr><td>šipky</td><td>posun po dnech a týdnech</td></tr>
           <tr><td><code>PageUp</code> / <code>PageDown</code></td><td>o měsíc zpět a vpřed</td></tr>
           <tr><td><code>Enter</code></td><td>vybere den; v poli přečte napsané datum a zavře</td></tr>
-          <tr><td><code>Esc</code></td><td>zavře panel a vrátí fokus do pole</td></tr>
+          <tr><td><code>Esc</code></td><td>zahodí rozpracovaný výběr, zavře panel a vrátí fokus do pole</td></tr>
         </tbody>
       </table>
       </div>
@@ -585,6 +599,15 @@ filtr.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&gt
         <code>{ silent: true }</code> při zápisu hodnoty shora. Ve Vue je to
         <code>onMounted</code> / <code>onBeforeUnmount</code>, ve Svelte
         <code>onMount</code> s návratovou funkcí — princip je stejný.</p>
+
+      <div class="callout">
+        <strong>Renderování na serveru</strong>
+        <p>Balíček definuje custom element, takže samotný import potřebuje DOM —
+          v Node spadne na <code>HTMLElement is not defined</code>. V Next.js,
+          Nuxtu a spol. si ho proto natáhni až v prohlížeči: dynamickým importem
+          uvnitř efektu, nebo komponentou vyloučenou ze serverového renderu
+          (<code>next/dynamic</code> s <code>ssr: false</code>).</p>
+      </div>
 
       <!-- ============================================================ -->
       <h2 id="potize">Řešení potíží</h2>

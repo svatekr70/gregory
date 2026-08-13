@@ -3,7 +3,7 @@
 Rychlý date / range / datetime picker bez závislostí. Jedno jádro, dvě API:
 obyčejná JS třída pro imperativní použití a `<gregory-picker>` pro deklarativní.
 
-- **~16 kB gzip** včetně stylů, žádné runtime závislosti
+- **~17 kB gzip** JavaScriptu a 2,6 kB stylů, žádné runtime závislosti
 - **framework-agnostický** — funguje ve staré jQuery aplikaci i v Reactu
 - **rozsahy dat** s presety, `minSpan`/`maxSpan`, náhledem při přejíždění myší
 - **čas** (`datetime`, `datetime-range`), čísla týdnů, dropdowny měsíc/rok

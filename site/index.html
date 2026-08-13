@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gregory — picker data, rozsahu a času ve vanilla TS</title>
-<meta name="description" content="Gregory je framework-agnostický picker data, rozsahu dat a času. Bez runtime závislostí, ~16 kB gzip. Presety, maxSpan, lokalizace přes Intl, Web Component, motiv přes CSS proměnné.">
+<meta name="description" content="Gregory je framework-agnostický picker data, rozsahu dat a času. Bez runtime závislostí, ~20 kB gzip včetně stylů. Presety, maxSpan, lokalizace přes Intl, Web Component, motiv přes CSS proměnné.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f7ff5'/%3E%3Cg fill='none' stroke='white' stroke-width='2'%3E%3Crect x='6' y='9' width='20' height='17' rx='2'/%3E%3Cpath d='M6 14h20M11 6v5M21 6v5'/%3E%3C/g%3E%3Crect x='10' y='17' width='12' height='4' rx='2' fill='white'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="./assets/site.css">
 </head>
@@ -43,7 +43,7 @@
       <div class="tags">
         <span class="tag">vanilla TS · ESM + UMD</span>
         <span class="tag">0 závislostí</span>
-        <span class="tag">~16 kB gzip</span>
+        <span class="tag">~20 kB gzip</span>
         <span class="tag">Web Component</span>
         <span class="tag">MIT</span>
       </div>
@@ -68,7 +68,7 @@
 picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&gt; {
   console.<span class="t">log</span>(value.from, value.to)
 })</pre>
-        <p class="caption">Nebo bez jediného řádku JS: <code>&lt;gregory-picker mode="range" locale="cs"&gt;</code></p>
+        <p class="caption">Nebo deklarativně v HTML: <code>&lt;gregory-picker mode="range" locale="cs"&gt;</code></p>
       </div>
     </section>
 
@@ -88,9 +88,10 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
 
         <div class="card">
           <div class="ic">🗓</div>
-          <h3>Čtyři režimy</h3>
-          <p>Jedno datum, rozsah dat, datum s časem a rozsah s časem. Stejné API,
-            přepíná se jedinou volbou <code>mode</code>.</p>
+          <h3>Osm režimů</h3>
+          <p>Jedno datum, rozsah, datum s časem, rozsah s časem, seznam dnů,
+            měsíc, čtvrtletí a rok. Stejné API, přepíná se jedinou volbou
+            <code>mode</code>.</p>
         </div>
 
         <div class="card">
@@ -148,8 +149,9 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
         <div class="card">
           <div class="ic">✓</div>
           <h3>Otestováno</h3>
-          <p>99 testů ve Vitestu nad jádrem i nad DOM, pokrytí přes 90 %.
-            Prahy hlídá build, takže nemůžou tiše klesnout.</p>
+          <p>331 testů ve Vitestu nad jádrem i nad DOM, pokrytí přes 90 %
+            příkazů. Prahy hlídá <code>vitest --coverage</code>, takže nemůžou
+            tiše klesnout.</p>
         </div>
 
       </div>
