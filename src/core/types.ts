@@ -131,6 +131,12 @@ export interface GregoryOptions {
    * nesrozumitelný text se vrátí na poslední platnou hodnotu.
    */
   allowTyping?: boolean
+  /**
+   * Vyrobí skrytá pole s ISO hodnotou, která se odešlou s formulářem — ve
+   * viditelném poli je datum pro lidi, což server nepřečte. U rozsahu vzniknou
+   * dvě pole; dvojice `{ from, to }` jim dá vlastní jména.
+   */
+  submitName?: string | { from: string; to: string } | null
   /** Render the panel in place instead of a popover attached to an input. */
   inline?: boolean
   /** Commit on the last click instead of showing Apply/Cancel. */
@@ -179,6 +185,7 @@ export interface ResolvedOptions {
   linkedCalendars: boolean
   endInput: string | HTMLInputElement | null
   allowTyping: boolean
+  submitName: string | { from: string; to: string } | null
   weekNumbers: boolean
   showOutsideDays: boolean
   weekSelection: WeekSelection

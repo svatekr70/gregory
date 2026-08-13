@@ -98,6 +98,8 @@ export class Gregory {
   private readonly trigger: HTMLElement | null
   /** Co jsme prvku sami přidali, to při destroy uklidíme. */
   private readonly triggerAdded = { tabindex: false, role: false }
+  /** Skrytá pole s ISO hodnotou pro odeslání formuláře. */
+  private readonly hidden: HTMLInputElement[] = []
   /** Které z polí panel otevřelo — podle něj se pozicuje a vrací fokus. */
   private activeInput: HTMLInputElement | null = null
   private readonly host: HTMLElement
@@ -149,6 +151,7 @@ export class Gregory {
       document.body.append(this.element)
     }
 
+    this.createHiddenFields()
     this.bindHost()
     this.element.addEventListener('click', this.onPanelClick)
     this.element.addEventListener('change', this.onPanelChange)
@@ -181,6 +184,7 @@ export class Gregory {
       linkedCalendars: options.linkedCalendars ?? false,
       endInput: options.endInput ?? null,
       allowTyping: options.allowTyping ?? true,
+      submitName: options.submitName ?? null,
       weekNumbers: options.weekNumbers ?? false,
       showOutsideDays: options.showOutsideDays ?? true,
       weekSelection: options.weekSelection ?? 'off',
@@ -350,6 +354,8 @@ export class Gregory {
   }
 
   private syncInput(): void {
+    this.syncHidden()
+
     if (this.trigger) {
       this.writeTrigger()
       return
@@ -396,6 +402,41 @@ export class Gregory {
     else delete target.dataset.value
 
     target.dispatchEvent(new CustomEvent('gregory:change', { detail: { value: this.getValue() }, bubbles: true }))
+  }
+
+  /**
+   * Skrytá pole vzniknou hned vedle viditelného prvku, aby spadla do stejného
+   * formuláře. Nesou ISO podobu, protože „13. 8. 2026" na serveru nikdo
+   * spolehlivě nepřečte.
+   */
+  private createHiddenFields(): void {
+    const { submitName, mode } = this.options
+    if (!submitName) return
+
+    const names = isRangeMode(mode)
+      ? typeof submitName === 'string'
+        ? [`${submitName}_from`, `${submitName}_to`]
+        : [submitName.from, submitName.to]
+      : [typeof submitName === 'string' ? submitName : submitName.from]
+
+    const anchor = this.endField ?? this.input ?? this.trigger
+    for (const name of names) {
+      const field = h('input', { type: 'hidden', name })
+      this.hidden.push(field)
+      anchor?.after(field)
+    }
+    this.syncHidden()
+  }
+
+  private syncHidden(): void {
+    if (!this.hidden.length) return
+    const time = hasTime(this.options.mode)
+    const iso = (date: Date | null): string =>
+      date ? (time ? `${formatISODate(date)}T${formatISOTime(date)}` : formatISODate(date)) : ''
+
+    const { from, to } = this.committed
+    this.hidden[0]!.value = iso(from)
+    if (this.hidden[1]) this.hidden[1].value = iso(to)
   }
 
   private writeField(field: HTMLInputElement, value: string): void {
@@ -1597,6 +1638,7 @@ export class Gregory {
       if (this.triggerAdded.tabindex) this.trigger.removeAttribute('tabindex')
       if (this.triggerAdded.role) this.trigger.removeAttribute('role')
     }
+    for (const field of this.hidden) field.remove()
     this.element.remove()
     this.emitter.clear()
     this.destroyed = true

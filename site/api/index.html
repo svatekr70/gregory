@@ -181,6 +181,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>dropdowns</code></td><td><code>boolean | 'menu'</code></td><td><code>false</code></td><td>Výběr měsíce a roku: nativní <code>&lt;select&gt;</code>, nebo seznam otevřený klikem na caption.</td></tr>
           <tr><td><code>endInput</code></td><td><code>string | HTMLInputElement</code></td><td>—</td><td>Druhé pole pro konec rozsahu.</td></tr>
           <tr><td><code>allowTyping</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Číst datum napsané rukou do pole.</td></tr>
+          <tr><td><code>submitName</code></td><td><code>string | { from, to }</code></td><td>—</td><td>Skrytá pole s ISO hodnotou pro odeslání formuláře.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
@@ -308,6 +309,29 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>submitName</code></h3>
+
+      <p>Ve viditelném poli je <code>13. 8. 2026</code> — datum pro lidi, které
+        server spolehlivě nepřečte. <code>submitName</code> vyrobí vedle něj
+        skryté pole s ISO hodnotou, které se odešle s formulářem:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, {
+  mode: <span class="s">'date'</span>,
+  submitName: <span class="s">'termin'</span>,
+})
+
+<span class="c">// odešle se termin=2026-08-13</span></pre>
+
+      <p>V range režimech vzniknou dvě pole, <code>termin_from</code> a
+        <code>termin_to</code>. Vlastní jména jim dá dvojice:</p>
+
+      <pre class="code">submitName: { from: <span class="s">'od'</span>, to: <span class="s">'do'</span> }</pre>
+
+      <p>Hodnota je ISO datum, v <code>datetime</code> režimech
+        <code>2026-08-13T14:30</code>. Prázdný konec otevřeného rozsahu zůstane
+        prázdný řetězec. Pole se vkládají hned za viditelný prvek, takže spadnou
+        do stejného formuláře, a <code>destroy()</code> je zase odebere.</p>
 
       <h3><code>allowTyping</code></h3>
 

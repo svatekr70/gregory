@@ -87,6 +87,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `dropdowns` | `false` | výběr měsíce a roku: `true` nativní `<select>`, `'menu'` seznam po kliknutí na caption |
 | `endInput` | — | druhé pole pro konec rozsahu (`from` do prvního, `to` do druhého) |
 | `allowTyping` | `true` | číst datum napsané rukou do pole |
+| `submitName` | — | skrytá pole s ISO hodnotou pro odeslání formuláře |
 | `inline` | `false` | vykreslit na místo místo popoveru |
 | `autoApply` | `true` jen v módu `date` | potvrdit hned, bez tlačítek Apply/Cancel |
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |

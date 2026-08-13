@@ -134,6 +134,85 @@ describe('range mode', () => {
   })
 })
 
+describe('hidden fields for forms', () => {
+  const hidden = (name: string): HTMLInputElement | null =>
+    document.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`)
+
+  it('carries the ISO value next to the visible field', () => {
+    mount({ mode: 'date', submitName: 'termin' })
+
+    expect(hidden('termin')?.value).toBe('')
+
+    day('2026-08-13').click()
+
+    expect(hidden('termin')?.value).toBe('2026-08-13')
+    // Viditelné pole zůstává pro lidi.
+    expect(input.value).toBe('13. 8. 2026')
+  })
+
+  it('lands in the same form as the visible field', () => {
+    const form = document.createElement('form')
+    document.body.append(form)
+    const field = document.createElement('input')
+    form.append(field)
+
+    const inForm = new Gregory(field, { mode: 'date', locale: 'cs', submitName: 'termin' })
+    inForm.setValue('2026-08-13')
+
+    expect(new FormData(form).get('termin')).toBe('2026-08-13')
+    inForm.destroy()
+    form.remove()
+  })
+
+  it('makes two fields for a range', () => {
+    mount({ mode: 'range', presets: false, submitName: 'pobyt' })
+    picker.setValue(['2026-08-10', '2026-08-14'])
+
+    expect(hidden('pobyt_from')?.value).toBe('2026-08-10')
+    expect(hidden('pobyt_to')?.value).toBe('2026-08-14')
+  })
+
+  it('takes custom names for the two ends', () => {
+    mount({ mode: 'range', presets: false, submitName: { from: 'od', to: 'do' } })
+    picker.setValue(['2026-08-10', '2026-08-14'])
+
+    expect(hidden('od')?.value).toBe('2026-08-10')
+    expect(hidden('do')?.value).toBe('2026-08-14')
+  })
+
+  it('includes the time in datetime modes', () => {
+    mount({ mode: 'datetime', submitName: 'termin' })
+    picker.setValue('2026-08-13T14:30')
+
+    expect(hidden('termin')?.value).toBe('2026-08-13T14:30')
+  })
+
+  it('empties on clear', () => {
+    mount({ mode: 'date', submitName: 'termin' })
+    picker.setValue('2026-08-13')
+    picker.clear()
+
+    expect(hidden('termin')?.value).toBe('')
+  })
+
+  it('leaves an open range end empty', () => {
+    mount({ mode: 'range', presets: false, submitName: 'pobyt', allowOpenRange: true })
+    picker.setValue({ from: '2026-08-10', to: null })
+
+    expect(hidden('pobyt_from')?.value).toBe('2026-08-10')
+    expect(hidden('pobyt_to')?.value).toBe('')
+  })
+
+  it('takes its fields away on destroy', () => {
+    mount({ mode: 'date', submitName: 'termin' })
+    expect(hidden('termin')).not.toBeNull()
+
+    picker.destroy()
+
+    expect(hidden('termin')).toBeNull()
+  })
+})
+
 describe('trigger element', () => {
   let badge: HTMLElement
 
