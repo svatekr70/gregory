@@ -118,13 +118,13 @@ Ostatní odsazení se z `--gr-pad` dopočítává:
 
 ```css
 .gr {
-  --gr-day-size: 27px;
+  --gr-day-size: 21px;
   --gr-gap: 0;
   --gr-pad: 7px;
   --gr-font-size: 13px;
-  /* Čísla dnů se odvozují z velikosti políčka (výchozí 47 %), ne ze základního
+  /* Čísla dnů se odvozují z velikosti políčka (výchozí 50 %), ne ze základního
      písma — prázdno okolo číslice je poměr, ne odsazení. */
-  --gr-day-font-size: calc(var(--gr-day-size) * 0.55);
+  --gr-day-font-size: calc(var(--gr-day-size) * 0.6);
 }
 ```
 

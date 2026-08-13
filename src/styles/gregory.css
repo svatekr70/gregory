@@ -11,8 +11,11 @@
   --gr-radius: 10px;
   --gr-radius-day: 6px;
   --gr-gap: 1px;
-  /* Velikost políčka dne — čtverce, do kterého se vykreslí číslo. Určuje šířku celého panelu, takže je to hlavní páka na hustotu. */
-  --gr-day-size: 32px;
+  /*
+   * Velikost políčka dne — čtverce, do kterého se vykreslí číslo. Určuje
+   * šířku celého panelu, takže je to hlavní páka na hustotu.
+   */
+  --gr-day-size: 24px;
   /* Odsazení uvnitř panelu. Odvozuje se z něj i odsazení patičky a tlačítek. */
   --gr-pad: 10px;
 
@@ -22,9 +25,9 @@
    * zmenšení buňky jen zvětší prázdno okolo číslice. Vyšší poměr = plnější
    * dojem, nižší = vzdušnější.
    */
-  --gr-day-font-size: calc(var(--gr-day-size) * 0.47);
-  /* Záhlaví dnů v týdnu a čísla týdnů. */
-  --gr-weekday-font-size: 11.5px;
+  --gr-day-font-size: calc(var(--gr-day-size) * 0.5);
+  /* Zkratky dnů v týdnu a čísla týdnů. */
+  --gr-weekday-font-size: 11px;
 
   --gr-bg: #fff;
   --gr-fg: #1c1f23;

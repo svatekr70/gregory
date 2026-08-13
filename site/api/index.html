@@ -746,11 +746,11 @@ odhlasit()</pre>
           <tr><td><code>--gr-radius</code></td><td><code>10px</code></td><td>Zaoblení panelu.</td></tr>
           <tr><td><code>--gr-radius-day</code></td><td><code>6px</code></td><td>Zaoblení dne a tlačítek.</td></tr>
           <tr><td><code>--gr-gap</code></td><td><code>2px</code></td><td>Mezera v mřížce.</td></tr>
-          <tr><td><code>--gr-day-size</code></td><td><code>32px</code></td><td>Velikost políčka dne — čtverce, do kterého se vykreslí číslo. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
+          <tr><td><code>--gr-day-size</code></td><td><code>24px</code></td><td>Velikost políčka dne — čtverce, do kterého se vykreslí číslo. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
           <tr><td><code>--gr-pad</code></td><td><code>10px</code></td><td>Odsazení uvnitř panelu. Odvozuje se z něj i odsazení patičky, zkratek a tlačítek.</td></tr>
           <tr><td><code>--gr-font-size</code></td><td><code>14px</code></td><td>Písmo zbytku panelu — hlavička, tlačítka, souhrn. Čísel dnů se netýká.</td></tr>
-          <tr><td><code>--gr-day-font-size</code></td><td><code>47 %</code> políčka</td><td>Velikost čísel dnů. Odvozuje se z políčka, ne ze základního písma.</td></tr>
-          <tr><td><code>--gr-weekday-font-size</code></td><td><code>11.5px</code></td><td>Zkratky dnů v týdnu (Po, Út…) a čísla týdnů.</td></tr>
+          <tr><td><code>--gr-day-font-size</code></td><td><code>50 %</code> políčka</td><td>Velikost čísel dnů. Odvozuje se z políčka, ne ze základního písma.</td></tr>
+          <tr><td><code>--gr-weekday-font-size</code></td><td><code>11px</code></td><td>Zkratky dnů v týdnu (Po, Út…) a čísla týdnů.</td></tr>
           <tr><td><code>--gr-bg</code></td><td><code>#fff</code></td><td>Pozadí panelu.</td></tr>
           <tr><td><code>--gr-fg</code></td><td><code>#1c1f23</code></td><td>Text.</td></tr>
           <tr><td><code>--gr-muted</code></td><td><code>#8b9199</code></td><td>Sekundární text.</td></tr>
@@ -781,7 +781,7 @@ odhlasit()</pre>
 
       <pre class="code"><span class="c">/* hustší než výchozí */</span>
 .gr {
-  --gr-day-size: <span class="n">27px</span>;
+  --gr-day-size: <span class="n">21px</span>;
   --gr-gap: <span class="n">0</span>;
   --gr-pad: <span class="n">7px</span>;
   --gr-font-size: <span class="n">13px</span>;
@@ -797,27 +797,34 @@ odhlasit()</pre>
           kombinují: <code>className: 'gr-theme-riso gr-density-compact'</code>.</p>
       </div>
 
-      <p>Výchozí hustota je zhruba na úrovni nativního kalendáře prohlížeče —
-        jeden měsíc vyjde na 252 × 317 px. Rozsah se dvěma měsíci a čísly týdnů
-        má 556 × 268 px, v <code>compact</code> 464 × 225 px a v
-        <code>comfortable</code> 706 × 338 px.</p>
+      <p>Výchozí hustota je kompaktní — jeden měsíc vyjde na 196 × 268 px, tedy
+        znatelně méně než nativní kalendář prohlížeče. Rozsah se dvěma měsíci
+        a čísly týdnů má 443 × 219 px, v <code>compact</code> 379 × 188 px a
+        v <code>comfortable</code> 622 × 302 px.</p>
+
+      <div class="callout">
+        <strong>Pro dotyk je výchozí políčko malé</strong>
+        <p>24 px je pod doporučenými 44 px pro dotykové cíle. Na mobilu tedy
+          buď zvyš <code>--gr-day-size</code>, nebo použij
+          <code>gr-density-comfortable</code>.</p>
+      </div>
 
       <div class="callout">
         <strong>Prázdno okolo číslic je poměr, ne odsazení</strong>
         <p>Den nemá žádný vnitřní padding — číslice je vycentrovaná ve čtverci
           o hraně <code>--gr-day-size</code>. Kolik okolo ní zbude místa, tedy
-          určuje poměr písma k buňce. Zmenšit buňku a zároveň zmenšit písmo
+          určuje poměr písma k políčku. Zmenšit políčko a zároveň zmenšit písmo
           proto prázdno <em>nezmenší</em>.</p>
         <p style="margin-top:8px">Proto se <code>--gr-day-font-size</code> odvozuje
-          z velikosti políčka (47 %) a ne ze základního písma. Plnější dojem se dělá vyšším
+          z velikosti políčka (50 %) a ne ze základního písma. Plnější dojem se dělá vyšším
           poměrem, vzdušnější nižším:</p>
       </div>
 
       <pre class="code"><span class="c">/* plnější */</span>
-.gr { --gr-day-font-size: <span class="t">calc</span>(<span class="k">var</span>(--gr-day-size) * <span class="n">0.55</span>); }
+.gr { --gr-day-font-size: <span class="t">calc</span>(<span class="k">var</span>(--gr-day-size) * <span class="n">0.6</span>); }
 
 <span class="c">/* vzdušnější */</span>
-.gr { --gr-day-font-size: <span class="t">calc</span>(<span class="k">var</span>(--gr-day-size) * <span class="n">0.38</span>); }</pre>
+.gr { --gr-day-font-size: <span class="t">calc</span>(<span class="k">var</span>(--gr-day-size) * <span class="n">0.42</span>); }</pre>
 
       <p>Pozor jen na to, že buňka má pevný rozměr — poměr nad zhruba 0,6 už
         z ní dvojciferná čísla vytlačí.</p>

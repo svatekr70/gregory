@@ -90,12 +90,12 @@ const log = $<HTMLUListElement>('#event-log')
  * by je hostitelská stránka napsala do stylopisu.
  */
 const CSS_VARS = [
-  { id: 'css-daysize', name: '--gr-day-size', unit: 'px', fallback: '32' },
+  { id: 'css-daysize', name: '--gr-day-size', unit: 'px', fallback: '24' },
   { id: 'css-gap', name: '--gr-gap', unit: 'px', fallback: '1' },
   { id: 'css-pad', name: '--gr-pad', unit: 'px', fallback: '10' },
   { id: 'css-font', name: '--gr-font-size', unit: 'px', fallback: '14' },
   { id: 'css-dayfont', name: '--gr-day-font-size', unit: 'px', fallback: '' },
-  { id: 'css-weekdayfont', name: '--gr-weekday-font-size', unit: 'px', fallback: '11.5' },
+  { id: 'css-weekdayfont', name: '--gr-weekday-font-size', unit: 'px', fallback: '11' },
 ] as const
 
 const cssInputs = CSS_VARS.map((variable) => ({ ...variable, input: $<HTMLInputElement>(`#${variable.id}`) }))
@@ -134,7 +134,7 @@ function applyAppearance(): void {
   const dayFont = getComputedStyle(cssPreview.element.querySelector('.gr-day')!).fontSize
   $('#css-dayfont-hint').textContent = cssInputs.find((v) => v.id === 'css-dayfont')!.input.value.trim()
     ? 'pevná hodnota'
-    : `prázdné = 47 % políčka, teď ${dayFont}`
+    : `prázdné = 50 % políčka, teď ${dayFont}`
 }
 
 for (const { input } of cssInputs) input.addEventListener('input', applyAppearance)
