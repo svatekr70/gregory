@@ -44,76 +44,83 @@
             <h3>Volby</h3>
 
             <label class="field">
-              <span>mode</span>
+              <span>Režim výběru <code>mode</code></span>
               <select id="opt-mode">
-                <option value="date">date</option>
-                <option value="range" selected>range</option>
-                <option value="datetime">datetime</option>
-                <option value="datetime-range">datetime-range</option>
+                <option value="date">date — jedno datum</option>
+                <option value="range" selected>range — rozsah dat</option>
+                <option value="datetime">datetime — datum a čas</option>
+                <option value="datetime-range">datetime-range — rozsah s časem</option>
               </select>
             </label>
 
             <label class="field">
-              <span>locale</span>
+              <span>Jazyk <code>locale</code></span>
               <select id="opt-locale">
-                <option value="cs" selected>cs</option>
-                <option value="sk">sk</option>
-                <option value="en-GB">en-GB</option>
-                <option value="en-US">en-US</option>
-                <option value="de">de</option>
-                <option value="pl">pl</option>
+                <option value="cs" selected>cs — čeština</option>
+                <option value="sk">sk — slovenština</option>
+                <option value="en-GB">en-GB — angličtina (týden od pondělí)</option>
+                <option value="en-US">en-US — angličtina (týden od neděle)</option>
+                <option value="de">de — němčina</option>
+                <option value="pl">pl — polština</option>
               </select>
             </label>
 
             <label class="field">
-              <span>months</span>
+              <span>Počet měsíců vedle sebe <code>months</code></span>
               <input type="number" id="opt-months" min="1" max="4" value="2">
             </label>
 
             <label class="field">
-              <span>maxSpan (dnů, 0 = bez limitu)</span>
+              <span>Nejdelší rozsah ve dnech <code>maxSpan</code> <em>(0 = bez limitu)</em></span>
               <input type="number" id="opt-maxspan" min="0" max="365" value="0">
             </label>
 
             <label class="field">
-              <span>timeStep (minut)</span>
+              <span>Krok minut <code>timeStep</code></span>
               <input type="number" id="opt-timestep" min="1" max="60" value="5">
             </label>
 
             <label class="field">
-              <span>timeUi</span>
+              <span>Ovládání času <code>timeUi</code></span>
               <select id="opt-timeui">
-                <option value="select" selected>select</option>
-                <option value="input">input</option>
+                <option value="select" selected>select — hodiny a minuty</option>
+                <option value="input">input — nativní pole</option>
               </select>
             </label>
 
             <label class="field">
-              <span>minTime (prázdné = bez limitu)</span>
+              <span>Nejdřívější čas dne <code>minTime</code> <em>(prázdné = bez limitu)</em></span>
               <input type="text" id="opt-mintime" placeholder="08:00">
             </label>
 
             <label class="field">
-              <span>maxTime</span>
+              <span>Nejpozdější čas dne <code>maxTime</code></span>
               <input type="text" id="opt-maxtime" placeholder="18:00">
             </label>
 
             <label class="field">
-              <span>opens</span>
+              <span>Zarovnání panelu k poli <code>opens</code></span>
               <select id="opt-opens">
-                <option value="right" selected>right</option>
-                <option value="left">left</option>
-                <option value="center">center</option>
+                <option value="right" selected>right — doprava od pole</option>
+                <option value="left">left — doleva od pole</option>
+                <option value="center">center — na střed pole</option>
               </select>
             </label>
 
-            <label class="switch"><input type="checkbox" id="opt-linked"> linkedCalendars</label>
-            <label class="switch"><input type="checkbox" id="opt-presets" checked> presets</label>
-            <label class="switch"><input type="checkbox" id="opt-weeknumbers"> weekNumbers</label>
-            <label class="switch"><input type="checkbox" id="opt-dropdowns"> dropdowns</label>
-            <label class="switch"><input type="checkbox" id="opt-autoapply"> autoApply</label>
-            <label class="switch"><input type="checkbox" id="opt-inline"> inline</label>
-            <label class="switch"><input type="checkbox" id="opt-weekends"> isDisabled: víkendy</label>
+            <label class="switch"><input type="checkbox" id="opt-linked">
+              <span>Listovat měsíci společně <code>linkedCalendars</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-presets" checked>
+              <span>Zkratky rozsahů v postranním panelu <code>presets</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-weeknumbers">
+              <span>Čísla týdnů <code>weekNumbers</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-dropdowns">
+              <span>Výběr měsíce a roku <code>dropdowns</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-autoapply">
+              <span>Potvrdit hned, bez tlačítek <code>autoApply</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-inline">
+              <span>Vykreslit na místo, ne jako popover <code>inline</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-weekends">
+              <span>Zakázat víkendy <code>isDisabled</code></span></label>
           </div>
 
           <div class="panel">

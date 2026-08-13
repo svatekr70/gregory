@@ -579,8 +579,21 @@ footer {
 .field > span {
   display: block;
   margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 12.5px;
+}
+
+/* Český popis nese i název volby, aby vygenerovaný kód dával smysl. */
+.field code,
+.switch code {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11.5px;
+}
+
+.field em {
+  color: var(--muted);
+  font-size: 11.5px;
+  font-style: normal;
 }
 
 .field select,
@@ -597,11 +610,22 @@ footer {
 
 .switch {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13.5px;
+  margin-bottom: 9px;
+  font-size: 12.5px;
+  line-height: 1.4;
   cursor: pointer;
+}
+
+.switch input {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+/* Text i název volby musí být jedna flex položka, jinak se code odtrhne. */
+.switch > span {
+  flex: 1;
 }
 
 .switch input {
