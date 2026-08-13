@@ -5,6 +5,7 @@ import {
   clampDate,
   compareDay,
   createDate,
+  formatISODate,
   formatISOTime,
   isSameDay,
   parseDate,
@@ -90,6 +91,13 @@ export class Gregory {
   private readonly input: HTMLInputElement | null
   /** Druhé pole s koncem rozsahu, když je picker rozdělený do dvou. */
   private readonly endField: HTMLInputElement | null
+  /**
+   * Cíl, který není input — badge, span, tlačítko. Chová se jako spouštěč:
+   * klik otevře panel a potvrzená hodnota se do něj vypíše.
+   */
+  private readonly trigger: HTMLElement | null
+  /** Co jsme prvku sami přidali, to při destroy uklidíme. */
+  private readonly triggerAdded = { tabindex: false, role: false }
   /** Které z polí panel otevřelo — podle něj se pozicuje a vrací fokus. */
   private activeInput: HTMLInputElement | null = null
   private readonly host: HTMLElement
@@ -122,14 +130,16 @@ export class Gregory {
     this.host = element
     this.options = this.resolveOptions(options)
     this.endField = this.resolveEndField()
+    this.trigger = !this.input && !this.options.inline ? element : null
     this.element = h('div', {})
     this.applyRootAttributes()
 
-    // Rozdělený picker si počáteční hodnotu přečte z obou polí.
-    const fromFields = this.endField
+    // Rozdělený picker si počáteční hodnotu přečte z obou polí, spouštěč
+    // z atributu data-value — jeho text je pro lidi, ne pro parser.
+    const fromDom = this.endField
       ? ([this.input?.value || null, this.endField.value || null] as [DateLike, DateLike])
-      : this.input?.value || null
-    this.assign(this.toRange(options.value ?? fromFields), { commit: true, silent: true })
+      : (this.trigger?.dataset.value ?? this.input?.value ?? null) || null
+    this.assign(this.toRange(options.value ?? fromDom), { commit: true, silent: true })
 
     if (this.options.inline) {
       this.host.append(this.element)
@@ -339,6 +349,10 @@ export class Gregory {
   }
 
   private syncInput(): void {
+    if (this.trigger) {
+      this.writeTrigger()
+      return
+    }
     if (!this.input) return
 
     if (this.endField) {
@@ -353,6 +367,34 @@ export class Gregory {
     }
 
     this.writeField(this.input, this.formatValue())
+  }
+
+  /**
+   * Vypíše hodnotu do spouštěče. Text jde do `[data-gr-value]`, pokud takový
+   * potomek existuje — badge tak může mít vedle data i ikonu, kterou bychom
+   * jinak přepsali. Strojová podoba se zrcadlí do `data-value`.
+   */
+  private writeTrigger(): void {
+    const target = this.trigger
+    if (!target) return
+
+    const slot = target.querySelector<HTMLElement>('[data-gr-value]') ?? target
+    const text = this.formatValue()
+    slot.textContent = text || (target.dataset.placeholder ?? '')
+
+    const { from, to } = this.committed
+    const iso = isRangeMode(this.options.mode)
+      ? from || to
+        ? `${from ? formatISODate(from) : ''}/${to ? formatISODate(to) : ''}`
+        : ''
+      : from
+        ? formatISODate(from)
+        : ''
+
+    if (iso) target.dataset.value = iso
+    else delete target.dataset.value
+
+    target.dispatchEvent(new CustomEvent('gregory:change', { detail: { value: this.getValue() }, bubbles: true }))
   }
 
   private writeField(field: HTMLInputElement, value: string): void {
@@ -421,8 +463,8 @@ export class Gregory {
   }
 
   private position(): void {
-    // Panel se pověsí pod to pole, kterým se otevřel.
-    const anchor = this.activeInput ?? this.input
+    // Panel se pověsí pod to pole (nebo spouštěč), kterým se otevřel.
+    const anchor = this.activeInput ?? this.input ?? this.trigger
     if (!anchor) return
     const rect = anchor.getBoundingClientRect()
     const panel = this.element.getBoundingClientRect()
@@ -454,7 +496,24 @@ export class Gregory {
     this.emitter.once(event, listener)
 
   private bindHost(): void {
-    if (this.options.inline || !this.input) return
+    if (this.options.inline) return
+
+    if (this.trigger) {
+      // Ať je spouštěč dosažitelný i klávesnicí, když si to hostitel neošetřil.
+      if (!this.trigger.hasAttribute('tabindex') && !(this.trigger instanceof HTMLButtonElement)) {
+        this.trigger.setAttribute('tabindex', '0')
+        this.triggerAdded.tabindex = true
+      }
+      if (!this.trigger.hasAttribute('role') && !(this.trigger instanceof HTMLButtonElement)) {
+        this.trigger.setAttribute('role', 'button')
+        this.triggerAdded.role = true
+      }
+      this.trigger.addEventListener('click', this.onTriggerClick)
+      this.trigger.addEventListener('keydown', this.onTriggerKeydown)
+      return
+    }
+
+    if (!this.input) return
     for (const field of this.fields()) {
       field.addEventListener('focus', this.onInputFocus)
       field.addEventListener('click', this.onInputFocus)
@@ -479,11 +538,22 @@ export class Gregory {
    * bounce off the focus handler and re-open the panel we just closed.
    */
   private returnFocus(): void {
-    const field = this.activeInput ?? this.input
+    const field = this.activeInput ?? this.input ?? this.trigger
     if (!field) return
     this.suppressReopen = true
     field.focus()
     this.suppressReopen = false
+  }
+
+  private onTriggerClick = (): void => {
+    this.toggle()
+  }
+
+  private onTriggerKeydown = (event: KeyboardEvent): void => {
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'ArrowDown') return
+    event.preventDefault()
+    this.openPanel()
+    this.focusGrid()
   }
 
   private onInputKeydown = (event: KeyboardEvent): void => {
@@ -498,6 +568,7 @@ export class Gregory {
     const target = event.target as Node | null
     if (!target) return
     if (this.element.contains(target)) return
+    if (this.trigger?.contains(target)) return
     if (this.fields().some((field) => field === target || field.contains(target))) return
     // Clicking away keeps an auto-applied value but discards an uncommitted one.
     if (this.options.autoApply) this.close()
@@ -1468,6 +1539,12 @@ export class Gregory {
       field.removeEventListener('focus', this.onInputFocus)
       field.removeEventListener('click', this.onInputFocus)
       field.removeEventListener('keydown', this.onInputKeydown)
+    }
+    if (this.trigger) {
+      this.trigger.removeEventListener('click', this.onTriggerClick)
+      this.trigger.removeEventListener('keydown', this.onTriggerKeydown)
+      if (this.triggerAdded.tabindex) this.trigger.removeAttribute('tabindex')
+      if (this.triggerAdded.role) this.trigger.removeAttribute('role')
     }
     this.element.remove()
     this.emitter.clear()

@@ -38,6 +38,21 @@ picker.on('apply', ({ value }) => {
 })
 ```
 
+### Na jiném prvku než inputu
+
+```html
+<span id="termin" data-value="2026-08-13" data-placeholder="Nezadáno">
+  📅 <b data-gr-value>13. 8. 2026</b>
+</span>
+```
+
+```js
+new Gregory('#termin', { mode: 'date' })
+```
+
+Klik nebo Enter otevře panel, potvrzená hodnota se vypíše do `[data-gr-value]`
+(nebo do prvku, když takový potomek není) a strojová podoba do `data-value`.
+
 ### Deklarativně
 
 ```js

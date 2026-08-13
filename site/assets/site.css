@@ -817,6 +817,26 @@ footer {
   gap: 8px;
 }
 
+/* Ukázka pickeru na neinputovém prvku. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.badge:hover,
+.badge:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
 .two-fields .stage-input {
   width: 100%;
 }

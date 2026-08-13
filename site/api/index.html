@@ -123,11 +123,41 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           zapisuje do něj naformátovanou hodnotu,</li>
         <li>je-li to jakýkoli jiný prvek a je zapnuté <code>inline: true</code>,
           vykreslí se dovnitř,</li>
+        <li>jiný prvek bez <code>inline</code> se stane spouštěčem — viz níž,</li>
         <li>když selektor nic nenajde, konstruktor vyhodí <code>Error</code>.</li>
       </ul>
 
       <p>Existuje i tovární funkce, když ti vadí <code>new</code>:</p>
       <div class="sig">gregory(target, options?): Gregory</div>
+
+      <h3>Picker na jiném prvku než inputu</h3>
+
+      <p>Datum bývá i mimo formulář — v odznaku, v buňce tabulky, ve
+        <code>&lt;span&gt;</code>. Takový prvek se stane <strong>spouštěčem</strong>:
+        klik nebo Enter otevře panel a potvrzená hodnota se do něj vypíše.</p>
+
+      <pre class="code">&lt;<span class="t">span</span> id=<span class="s">"termin"</span> data-value=<span class="s">"2026-08-13"</span> data-placeholder=<span class="s">"Nezadáno"</span>&gt;
+  📅 &lt;<span class="t">b</span> data-gr-value&gt;13. 8. 2026&lt;/<span class="t">b</span>&gt;
+&lt;/<span class="t">span</span>&gt;</pre>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, { mode: <span class="s">'date'</span> })</pre>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Atribut</th><th>K čemu je</th></tr></thead>
+        <tbody>
+          <tr><td><code>data-value</code></td><td>Strojová podoba hodnoty. Odsud se čte počáteční stav a sem se po potvrzení zapisuje — ISO datum, u rozsahu <code>od/do</code>. Text prvku je pro lidi, ten se neparsuje.</td></tr>
+          <tr><td><code>data-gr-value</code></td><td>Nepovinný potomek, do kterého se vypíše text. Bez něj se přepíše obsah celého prvku, takže by ikona nebo popisek zmizely.</td></tr>
+          <tr><td><code>data-placeholder</code></td><td>Co se vypíše, když je hodnota prázdná.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Prvek dostane <code>tabindex="0"</code> a <code>role="button"</code>, pokud
+        je sám nemá — u <code>&lt;button&gt;</code> se nesahá na nic. Po potvrzení
+        prvek vyšle bublající <code>gregory:change</code> s hodnotou v
+        <code>event.detail</code>, takže na něj jde reagovat i bez reference na picker.
+        <code>destroy()</code> přidané atributy zase odebere.</p>
 
       <!-- ============================================================ -->
       <h2 id="volby">Přehled voleb</h2>

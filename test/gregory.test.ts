@@ -134,6 +134,114 @@ describe('range mode', () => {
   })
 })
 
+describe('trigger element', () => {
+  let badge: HTMLElement
+
+  function mountTrigger(html = '', options: GregoryOptions = {}): Gregory {
+    badge = document.createElement('span')
+    badge.innerHTML = html
+    document.body.append(badge)
+    picker = new Gregory(badge, { mode: 'date', locale: 'cs', ...options })
+    return picker
+  }
+
+  afterEach(() => badge?.remove())
+
+  it('opens on click and writes the value back', () => {
+    mountTrigger()
+    expect(picker.element.hidden).toBe(true)
+
+    badge.click()
+    expect(picker.element.hidden).toBe(false)
+
+    day('2026-08-13').click()
+
+    expect(badge.textContent).toContain('13')
+    expect(badge.dataset.value).toBe('2026-08-13')
+  })
+
+  it('becomes reachable by keyboard', () => {
+    mountTrigger()
+    expect(badge.getAttribute('tabindex')).toBe('0')
+    expect(badge.getAttribute('role')).toBe('button')
+
+    badge.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    expect(picker.element.hidden).toBe(false)
+  })
+
+  it('leaves an existing tabindex and role alone', () => {
+    badge = document.createElement('button')
+    document.body.append(badge)
+    picker = new Gregory(badge, { mode: 'date', locale: 'cs' })
+
+    expect(badge.getAttribute('tabindex')).toBeNull()
+    expect(badge.getAttribute('role')).toBeNull()
+  })
+
+  it('reads its initial value from data-value', () => {
+    badge = document.createElement('span')
+    badge.dataset.value = '2026-08-13'
+    document.body.append(badge)
+    picker = new Gregory(badge, { mode: 'date', locale: 'cs' })
+
+    expect((picker.getValue() as Date).getDate()).toBe(13)
+  })
+
+  it('writes into a marked child instead of wiping the element', () => {
+    mountTrigger('<i class="ikona">📅</i> <b data-gr-value>zatím nic</b>')
+
+    badge.click()
+    day('2026-08-13').click()
+
+    expect(badge.querySelector('.ikona')).not.toBeNull()
+    expect(badge.querySelector('[data-gr-value]')?.textContent).toContain('13')
+  })
+
+  it('falls back to the placeholder when cleared', () => {
+    mountTrigger()
+    badge.dataset.placeholder = 'Vyber datum'
+    picker.setValue('2026-08-13')
+    expect(badge.textContent).toContain('13')
+
+    picker.clear()
+    expect(badge.textContent).toBe('Vyber datum')
+    expect(badge.dataset.value).toBeUndefined()
+  })
+
+  it('stores a range as from/to', () => {
+    mountTrigger('', { mode: 'range' })
+    picker.setValue(['2026-08-10', '2026-08-14'])
+
+    expect(badge.dataset.value).toBe('2026-08-10/2026-08-14')
+  })
+
+  it('emits a DOM event on the element', () => {
+    mountTrigger()
+    const onChange = vi.fn()
+    badge.addEventListener('gregory:change', onChange)
+
+    picker.setValue('2026-08-13')
+
+    expect(onChange).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not close when the trigger itself is clicked', () => {
+    mountTrigger()
+    badge.click()
+    badge.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+
+    expect(picker.element.hidden).toBe(false)
+  })
+
+  it('tidies up after itself on destroy', () => {
+    mountTrigger()
+    picker.destroy()
+
+    expect(badge.getAttribute('tabindex')).toBeNull()
+    expect(badge.getAttribute('role')).toBeNull()
+  })
+})
+
 describe('split inputs', () => {
   let endInput: HTMLInputElement
 

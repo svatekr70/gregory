@@ -419,6 +419,8 @@ showTheme(THEMES[0]!)
 
 /* -------------------------------------------------------------- ukázky */
 
+example('ex-badge', { mode: 'date', locale: 'cs' })
+
 example('ex-from', {
   mode: 'range',
   locale: 'cs',
