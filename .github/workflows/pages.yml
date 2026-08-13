@@ -39,6 +39,12 @@ jobs:
 
       - run: npm run site:build
 
+      # Pojistka proti tomu, co se jednou stalo: tree-shaking zahodil import
+      # stylů knihovny a nasadil se web s nenastylovaným kalendářem. Ve
+      # vývojovém serveru to vidět není, protože ten netřese ničím.
+      - name: Web musí nést styly pickeru
+        run: grep -rq "gr-day" dist-site/assets/*.css
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

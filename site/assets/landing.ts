@@ -1,6 +1,9 @@
 import { Gregory, formatISODate } from '../../src/index.js'
 import type { DateRange } from '../../src/index.js'
 
+// Viz demo.ts: styly patří do vstupního souboru, ne jen do index.ts.
+import '../../src/styles/gregory.css'
+
 const readout = document.getElementById('hero-readout')
 
 const picker = new Gregory('#hero-picker', {

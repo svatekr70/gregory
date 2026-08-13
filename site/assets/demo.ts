@@ -8,8 +8,10 @@ import type {
   WeekSelection,
 } from '../../src/index.js'
 
-// Motivy se v balíčku importují jako '@svatekr70/gregory/themes.css',
-// vždy až po základních stylech.
+// Styly se importují stejně, jako to dělá uživatel knihovny — bare import
+// uvnitř index.ts by produkční build odstranil při tree-shakingu.
+// V balíčku: '@svatekr70/gregory/style.css' a '.../themes.css', vždy v tomhle pořadí.
+import '../../src/styles/gregory.css'
 import '../../src/styles/themes.css'
 
 defineElement()
