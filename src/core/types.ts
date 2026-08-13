@@ -130,8 +130,8 @@ export interface GregoryOptions {
   allowOpenRange?: boolean
   /** Minutes between selectable times in `datetime*` modes. */
   timeStep?: number
-  /** Time controls: two `<select>`s, or one native `<input type="time">`. */
-  timeUi?: 'select' | 'input'
+  /** Time controls: two `<select>`s, a native `<input type="time">`, or sliders. */
+  timeUi?: 'select' | 'input' | 'slider'
   /** Earliest selectable time of day, `'HH:MM'`. Inclusive. */
   minTime?: string | number | null
   /** Latest selectable time of day, `'HH:MM'`. Inclusive. */
@@ -171,7 +171,7 @@ export interface ResolvedOptions {
   maxSpan: number | null
   allowOpenRange: boolean
   timeStep: number
-  timeUi: 'select' | 'input'
+  timeUi: 'select' | 'input' | 'slider'
   /** Minutes since midnight, or null for no bound. */
   minTime: number | null
   maxTime: number | null

@@ -134,6 +134,7 @@ export class Gregory {
     this.bindHost()
     this.element.addEventListener('click', this.onPanelClick)
     this.element.addEventListener('change', this.onPanelChange)
+    this.element.addEventListener('input', this.onPanelInput)
     this.element.addEventListener('mouseover', this.onPanelHover)
     this.element.addEventListener('keydown', this.onPanelKeydown)
     this.render()
@@ -550,6 +551,30 @@ export class Gregory {
       default:
         break
     }
+  }
+
+  /** Live handling of the time sliders while they are being dragged. */
+  private onPanelInput = (event: Event): void => {
+    const target = event.target as HTMLInputElement | null
+    const action = target?.dataset.action
+    if (!target || !action?.startsWith('slider-')) return
+
+    const [, unit, bound] = action.split('-') as ['slider', 'hour' | 'minute', 'from' | 'to']
+    const current = this.selection[bound]
+    if (!current) return
+
+    const picked = Number(target.value)
+    const minutes = unit === 'hour' ? picked * 60 + current.getMinutes() : current.getHours() * 60 + picked
+
+    this.setTimeOfDay(bound, minutes)
+    this.syncTimeSliders(bound)
+    this.refreshSummary()
+  }
+
+  /** Keeps the summary line current without rebuilding the panel. */
+  private refreshSummary(): void {
+    const line = this.element.querySelector<HTMLElement>('.gr-summary')
+    if (line) line.textContent = this.summaryText()
   }
 
   private onPanelChange = (event: Event): void => {
@@ -1229,7 +1254,9 @@ export class Gregory {
     if (isRangeMode(mode)) {
       group.append(h('span', { class: 'gr-time-label' }, [bound === 'from' ? locale.labels.from : locale.labels.to]))
     }
-    group.append(this.options.timeUi === 'input' ? this.renderTimeInput(bound) : this.renderTimeSelects(bound))
+    if (this.options.timeUi === 'input') group.append(this.renderTimeInput(bound))
+    else if (this.options.timeUi === 'slider') group.append(this.renderTimeSliders(bound))
+    else group.append(this.renderTimeSelects(bound))
     return group
   }
 
@@ -1246,6 +1273,74 @@ export class Gregory {
       value: value ? formatISOTime(value) : '',
       disabled: !value,
     })
+  }
+
+  /**
+   * Hour and minute as sliders, with the resulting time spelled out above them.
+   * Dragging must not re-render the panel — swapping the node under the thumb
+   * would drop the drag — so the values are patched in place instead.
+   */
+  private renderTimeSliders(bound: 'from' | 'to'): HTMLElement {
+    const { locale, timeStep, minTime, maxTime } = this.options
+    const value = this.selection[bound]
+    const current = value ? minutesOfDay(value) : (minTime ?? 0)
+    const hours = hourOptions(timeStep, minTime, maxTime, current)
+    const activeHour = Math.floor(current / 60)
+    const minutes = minuteOptions(activeHour, timeStep, minTime, maxTime, current)
+
+    const slider = (kind: 'hour' | 'minute'): HTMLElement => {
+      const isHour = kind === 'hour'
+      const list = isHour ? hours : minutes
+      const input = h('input', {
+        type: 'range',
+        class: 'gr-slider',
+        'data-action': `slider-${kind}-${bound}`,
+        min: list[0] ?? 0,
+        max: list[list.length - 1] ?? 0,
+        step: isHour ? 1 : timeStep,
+        value: isHour ? activeHour : current % 60,
+        disabled: !value || list.length < 2,
+        'aria-label': isHour ? locale.labels.hours : locale.labels.minutes,
+      })
+      return h('label', { class: 'gr-slider-row' }, [
+        h('span', { class: 'gr-slider-label' }, [isHour ? locale.labels.hours : locale.labels.minutes]),
+        input,
+      ])
+    }
+
+    return h('div', { class: 'gr-time gr-time-sliders' }, [
+      h('output', { class: 'gr-time-readout', 'data-time-readout': bound }, [
+        value ? formatTimeOfDay(current) : '—:—',
+      ]),
+      slider('hour'),
+      slider('minute'),
+    ])
+  }
+
+  /** Writes the current time back into the sliders without rebuilding them. */
+  private syncTimeSliders(bound: 'from' | 'to'): void {
+    const { timeStep, minTime, maxTime } = this.options
+    const value = this.selection[bound]
+    if (!value) return
+
+    const current = minutesOfDay(value)
+    const hour = Math.floor(current / 60)
+    const minutes = minuteOptions(hour, timeStep, minTime, maxTime, current)
+
+    const readout = this.element.querySelector<HTMLElement>(`[data-time-readout="${bound}"]`)
+    if (readout) readout.textContent = formatTimeOfDay(current)
+
+    const hourInput = this.element.querySelector<HTMLInputElement>(`[data-action="slider-hour-${bound}"]`)
+    if (hourInput) hourInput.value = String(hour)
+
+    // The hour may have moved to a boundary one, which narrows the minutes.
+    const minuteInput = this.element.querySelector<HTMLInputElement>(`[data-action="slider-minute-${bound}"]`)
+    if (minuteInput) {
+      minuteInput.min = String(minutes[0] ?? 0)
+      minuteInput.max = String(minutes[minutes.length - 1] ?? 0)
+      minuteInput.value = String(current % 60)
+      minuteInput.disabled = minutes.length < 2
+    }
   }
 
   private renderTimeSelects(bound: 'from' | 'to'): HTMLElement {

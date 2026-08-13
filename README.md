@@ -75,7 +75,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `maxSpan` | `null` | nejdelší povolený rozsah ve dnech |
 | `allowOpenRange` | `false` | povolí rozsah otevřený na jednom konci (`{ from, to: null }`) |
 | `timeStep` | `5` | krok minut v časových režimech |
-| `timeUi` | `'select'` | selecty hodin a minut, nebo nativní `input[type=time]` |
+| `timeUi` | `'select'` | ovládání času: `'select'` selecty, `'slider'` posuvníky, `'input'` nativní pole |
 | `minTime` / `maxTime` | `null` | okno dne, `'HH:MM'`, včetně obou hranic |
 | `opens` / `drops` | `'right'` / `'auto'` | umístění popoveru |
 | `isDisabled` | — | `(date) => boolean` |

@@ -910,6 +910,74 @@ describe('datetime mode', () => {
     expect([...select('hour-from').options]).toHaveLength(24)
   })
 
+  it('offers sliders when asked', () => {
+    mount({ mode: 'datetime', timeUi: 'slider', timeStep: 15 })
+    day('2026-08-13').click()
+
+    const hour = picker.element.querySelector<HTMLInputElement>('[data-action="slider-hour-from"]')!
+    const minute = picker.element.querySelector<HTMLInputElement>('[data-action="slider-minute-from"]')!
+
+    expect(hour.type).toBe('range')
+    expect(hour.min).toBe('0')
+    expect(hour.max).toBe('23')
+    expect(minute.step).toBe('15')
+    expect(picker.element.querySelector('[data-time-readout="from"]')?.textContent).toBe('00:00')
+  })
+
+  const drag = (action: string, value: string): void => {
+    const input = picker.element.querySelector<HTMLInputElement>(`[data-action="${action}"]`)!
+    input.value = value
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+
+  it('updates the time while a slider is dragged', () => {
+    mount({ mode: 'datetime', timeUi: 'slider', timeStep: 15 })
+    day('2026-08-13').click()
+
+    drag('slider-hour-from', '14')
+    expect(picker.getSelection().from?.getHours()).toBe(14)
+
+    drag('slider-minute-from', '30')
+    expect(picker.getSelection().from?.getMinutes()).toBe(30)
+    expect(picker.element.querySelector('[data-time-readout="from"]')?.textContent).toBe('14:30')
+  })
+
+  it('does not rebuild the sliders mid-drag', () => {
+    mount({ mode: 'datetime', timeUi: 'slider' })
+    day('2026-08-13').click()
+
+    const before = picker.element.querySelector('[data-action="slider-hour-from"]')
+    drag('slider-hour-from', '9')
+
+    // Same node — a rebuild would drop the drag the moment the thumb moves.
+    expect(picker.element.querySelector('[data-action="slider-hour-from"]')).toBe(before)
+  })
+
+  it('narrows the minute slider on a boundary hour', () => {
+    mount({ mode: 'datetime', timeUi: 'slider', timeStep: 15, minTime: '08:00', maxTime: '18:00' })
+    day('2026-08-13').click()
+
+    const hour = picker.element.querySelector<HTMLInputElement>('[data-action="slider-hour-from"]')!
+    expect(hour.min).toBe('8')
+    expect(hour.max).toBe('18')
+
+    drag('slider-hour-from', '18')
+
+    const minute = picker.element.querySelector<HTMLInputElement>('[data-action="slider-minute-from"]')!
+    expect(minute.max).toBe('0')
+    expect(minute.disabled).toBe(true)
+    expect(picker.element.querySelector('[data-time-readout="from"]')?.textContent).toBe('18:00')
+  })
+
+  it('keeps the summary in step with the sliders', () => {
+    mount({ mode: 'datetime', timeUi: 'slider', summary: true })
+    day('2026-08-13').click()
+
+    drag('slider-hour-from', '16')
+
+    expect(picker.element.querySelector('.gr-summary')?.textContent).toContain('16:00')
+  })
+
   it('falls back to a native input when asked', () => {
     mount({ mode: 'datetime', timeUi: 'input' })
     expect(picker.element.querySelector('[data-action="time-from"]')).not.toBeNull()

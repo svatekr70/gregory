@@ -155,7 +155,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>maxSpan</code></td><td><code>number | null</code></td><td><code>null</code></td><td>Nejdelší rozsah ve dnech (včetně obou konců).</td></tr>
           <tr><td><code>allowOpenRange</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Povolí rozsah otevřený na jednom konci.</td></tr>
           <tr><td><code>timeStep</code></td><td><code>number</code></td><td><code>5</code></td><td>Krok minut v časových režimech.</td></tr>
-          <tr><td><code>timeUi</code></td><td><code>'select' | 'input'</code></td><td><code>'select'</code></td><td>Selecty hodin a minut, nebo nativní <code>input[type=time]</code>.</td></tr>
+          <tr><td><code>timeUi</code></td><td><code>'select' | 'slider' | 'input'</code></td><td><code>'select'</code></td><td>Podoba ovládání času.</td></tr>
           <tr><td><code>minTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejdřívější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
           <tr><td><code>maxTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejpozdější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
           <tr><td><code>opens</code></td><td><code>'left' | 'right' | 'center'</code></td><td><code>'right'</code></td><td>Vodorovné zarovnání popoveru.</td></tr>
@@ -381,11 +381,21 @@ picker.<span class="t">getValue</span>()
       <p>V režimech <code>datetime</code> a <code>datetime-range</code> je v patičce
         ovládání času — v range režimu zvlášť pro každý konec, s popiskem Od / Do.</p>
 
-      <p>Výchozí <code>timeUi: 'select'</code> vykreslí dva selecty: hodiny a minuty.
-        Minuty jdou po <code>timeStep</code>, takže při kroku 15 nabídnou
-        <code>00</code>, <code>15</code>, <code>30</code>, <code>45</code>.
-        Volba <code>'input'</code> přepne na nativní <code>&lt;input type="time"&gt;</code>,
-        který dostane odpovídající <code>step</code>, <code>min</code> a <code>max</code>.</p>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th><code>timeUi</code></th><th>Ovládání</th></tr></thead>
+        <tbody>
+          <tr><td><code>'select'</code></td><td>Výchozí. Dva selecty — hodiny a minuty. Minuty jdou po <code>timeStep</code>, takže při kroku 15 nabídnou 00, 15, 30, 45.</td></tr>
+          <tr><td><code>'slider'</code></td><td>Posuvník na hodiny a na minuty, nad nimi výsledný čas. Pohodlné na dotyku.</td></tr>
+          <tr><td><code>'input'</code></td><td>Nativní <code>&lt;input type="time"&gt;</code> s odpovídajícím <code>step</code>, <code>min</code> a <code>max</code>.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Posuvníky se přepočítávají za tahu a panel se přitom nepřestavuje — vyměnit
+        uzel pod táhlem by tažení přerušilo. Když hodina dojede na kraj okna, rozsah
+        minut se sám zúží; při <code>maxTime: '18:00'</code> tak v osmnácté hodině
+        zbude jediná poloha.</p>
 
       <p><code>minTime</code> a <code>maxTime</code> vymezí použitelné okno dne.
         Obě hranice jsou <strong>inkluzivní</strong>:</p>
@@ -795,6 +805,8 @@ odhlasit()</pre>
           <tr><td><code>.gr-foot</code>, <code>.gr-times</code></td><td>Patička a blok s časem.</td></tr>
           <tr><td><code>.gr-time-group</code>, <code>.gr-time-label</code></td><td>Jeden konec rozsahu a jeho popisek (nese <code>data-bound</code>).</td></tr>
           <tr><td><code>.gr-time</code>, <code>.gr-time-select</code>, <code>.gr-time-sep</code></td><td>Obal času, selecty hodin/minut a dvojtečka mezi nimi.</td></tr>
+          <tr><td><code>.gr-time-sliders</code>, <code>.gr-slider</code>, <code>.gr-time-readout</code></td><td>Posuvníky a vypsaný čas nad nimi.</td></tr>
+          <tr><td><code>.gr-summary</code></td><td>Informační řádek; prázdný stav má <code>.is-empty</code>.</td></tr>
           <tr><td><code>.gr-actions</code>, <code>.gr-btn</code></td><td>Tlačítka Vymazat / Zrušit / Použít.</td></tr>
         </tbody>
       </table>

@@ -469,6 +469,42 @@ div.gr-time {
   font-weight: 600;
 }
 
+/* Slider variant (timeUi: 'slider'). Musí přebít `div.gr-time` výš. */
+div.gr-time.gr-time-sliders {
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+}
+
+.gr-time-readout {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: center;
+}
+
+.gr-slider-row {
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.gr-slider-label {
+  color: var(--gr-muted);
+  font-size: 12px;
+}
+
+.gr-slider {
+  width: 100%;
+  accent-color: var(--gr-accent);
+  cursor: pointer;
+}
+
+.gr-slider:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .gr-actions {
   display: flex;
   gap: 6px;

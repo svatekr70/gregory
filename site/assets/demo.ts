@@ -94,7 +94,7 @@ function readOptions(): GregoryOptions & { mode: Mode } {
     months: Number(controls.months.value),
     maxSpan: maxSpan > 0 ? maxSpan : null,
     timeStep: Number(controls.timeStep.value),
-    timeUi: controls.timeUi.value as 'select' | 'input',
+    timeUi: controls.timeUi.value as 'select' | 'input' | 'slider',
     minTime: controls.minTime.value.trim() || null,
     maxTime: controls.maxTime.value.trim() || null,
     opens: controls.opens.value as 'left' | 'right' | 'center',
