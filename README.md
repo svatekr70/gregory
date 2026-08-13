@@ -63,6 +63,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `min` / `max` | `null` | hranice výběru |
 | `firstDayOfWeek` | podle locale | `0` = neděle … `6` = sobota |
 | `months` | `2` v range módu, jinak `1` | počet panelů vedle sebe |
+| `linkedCalendars` | `false` | listovat všemi panely najednou místo každým zvlášť |
 | `weekNumbers` | `false` | sloupec s ISO čísly týdnů |
 | `dropdowns` | `false` | `<select>` pro měsíc a rok |
 | `inline` | `false` | vykreslit na místo místo popoveru |

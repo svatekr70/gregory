@@ -445,24 +445,141 @@ describe('time bounds', () => {
   })
 })
 
+/** Captions of the visible month panels, lower-cased. */
+function captions(): string[] {
+  return [...picker.element.querySelectorAll('.gr-caption')].map((node) => node.textContent?.toLowerCase() ?? '')
+}
+
+function arrow(direction: 'prev' | 'next', index = 0): HTMLButtonElement {
+  const button = picker.element.querySelector<HTMLButtonElement>(
+    `[data-action="${direction}"][data-index="${index}"]`,
+  )
+  if (!button) throw new Error(`${direction} arrow of panel ${index} is missing`)
+  return button
+}
+
 describe('navigation', () => {
   it('pages months with the arrows and reports the change', () => {
     mount({ mode: 'date' })
     const onMonthChange = vi.fn()
     picker.on('month-change', onMonthChange)
 
-    picker.element.querySelector<HTMLButtonElement>('[data-action="next"]')!.click()
-    expect(onMonthChange).toHaveBeenLastCalledWith({ year: 2026, month: 8 })
-    expect(picker.element.querySelector('.gr-caption')?.textContent?.toLowerCase()).toContain('září')
+    arrow('next').click()
+    expect(onMonthChange).toHaveBeenLastCalledWith({ year: 2026, month: 8, index: 0 })
+    expect(captions()[0]).toContain('září')
 
-    picker.element.querySelector<HTMLButtonElement>('[data-action="prev"]')!.click()
-    expect(onMonthChange).toHaveBeenLastCalledWith({ year: 2026, month: 7 })
+    arrow('prev').click()
+    expect(onMonthChange).toHaveBeenLastCalledWith({ year: 2026, month: 7, index: 0 })
   })
 
-  it('shows only one pair of arrows across several months', () => {
+  it('gives every panel its own pair of arrows by default', () => {
     mount({ mode: 'range', presets: false })
+    expect(picker.element.querySelectorAll('[data-action="prev"]')).toHaveLength(2)
+    expect(picker.element.querySelectorAll('[data-action="next"]')).toHaveLength(2)
+  })
+
+  it('shows one shared pair when the calendars are linked', () => {
+    mount({ mode: 'range', presets: false, linkedCalendars: true })
     expect(picker.element.querySelectorAll('[data-action="prev"]')).toHaveLength(1)
     expect(picker.element.querySelectorAll('[data-action="next"]')).toHaveLength(1)
+  })
+
+  it('pushes the later panel forward so the months never cross', () => {
+    mount({ mode: 'range', presets: false })
+    expect(captions()[0]).toContain('srpen')
+    expect(captions()[1]).toContain('září')
+
+    arrow('next', 0).click()
+
+    expect(captions()[0]).toContain('září')
+    expect(captions()[1]).toContain('říjen')
+  })
+
+  it('leaves the later panel alone when the first one moves back', () => {
+    mount({ mode: 'range', presets: false })
+
+    arrow('prev', 0).click()
+
+    expect(captions()[0]).toContain('červenec')
+    expect(captions()[1]).toContain('září')
+  })
+
+  it('pushes the first panel back so the months never cross', () => {
+    mount({ mode: 'range', presets: false })
+
+    arrow('prev', 1).click()
+
+    expect(captions()[0]).toContain('červenec')
+    expect(captions()[1]).toContain('srpen')
+  })
+
+  it('leaves the first panel alone when the later one moves forward', () => {
+    mount({ mode: 'range', presets: false })
+
+    arrow('next', 1).click()
+
+    expect(captions()[0]).toContain('srpen')
+    expect(captions()[1]).toContain('říjen')
+  })
+
+  it('keeps a deliberate gap between the panels', () => {
+    mount({ mode: 'range', presets: false })
+    arrow('next', 1).click()
+    arrow('next', 1).click()
+    expect(captions()[1]).toContain('listopad')
+
+    // The first panel still has room, so the second one must not move.
+    arrow('next', 0).click()
+
+    expect(captions()[0]).toContain('září')
+    expect(captions()[1]).toContain('listopad')
+  })
+
+  it('keeps three panels in order', () => {
+    mount({ mode: 'range', presets: false, months: 3 })
+    expect(captions()).toHaveLength(3)
+
+    arrow('next', 0).click()
+
+    expect(captions()[0]).toContain('září')
+    expect(captions()[1]).toContain('říjen')
+    expect(captions()[2]).toContain('listopad')
+  })
+
+  it('moves both panels together when linked', () => {
+    mount({ mode: 'range', presets: false, linkedCalendars: true })
+
+    // The shared pair sits on the outer edges: prev on the first panel,
+    // next on the last.
+    arrow('next', 1).click()
+
+    expect(captions()[0]).toContain('září')
+    expect(captions()[1]).toContain('říjen')
+
+    arrow('prev', 0).click()
+
+    expect(captions()[0]).toContain('srpen')
+    expect(captions()[1]).toContain('září')
+  })
+
+  it('reports which panel moved', () => {
+    mount({ mode: 'range', presets: false })
+    const onMonthChange = vi.fn()
+    picker.on('month-change', onMonthChange)
+
+    arrow('next', 1).click()
+
+    expect(onMonthChange).toHaveBeenLastCalledWith({ year: 2026, month: 9, index: 1 })
+  })
+
+  it('realigns the panels on goTo', () => {
+    mount({ mode: 'range', presets: false })
+    arrow('next', 1).click()
+
+    picker.goTo('2027-03-01')
+
+    expect(captions()[0]).toContain('březen')
+    expect(captions()[1]).toContain('duben')
   })
 
   it('jumps to a month through the dropdowns', () => {

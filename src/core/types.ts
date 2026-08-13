@@ -67,6 +67,8 @@ export interface GregoryOptions {
   firstDayOfWeek?: WeekDay
   /** Month panels side by side. Defaults to 2 in range modes, 1 otherwise. */
   months?: number
+  /** Page all panels together instead of giving each its own arrows. */
+  linkedCalendars?: boolean
   weekNumbers?: boolean
   /** Month/year `<select>`s in the panel header. */
   dropdowns?: boolean
@@ -104,6 +106,7 @@ export interface ResolvedOptions {
   max: Date | null
   firstDayOfWeek: WeekDay
   months: number
+  linkedCalendars: boolean
   weekNumbers: boolean
   dropdowns: boolean
   inline: boolean
@@ -134,6 +137,7 @@ export type GregoryEvents = {
   cancel: { value: GregoryValue }
   open: { value: GregoryValue }
   close: { value: GregoryValue }
-  'month-change': { year: number; month: number }
+  /** `index` is the panel that moved; 0 when there is only one. */
+  'month-change': { year: number; month: number; index: number }
 }
 

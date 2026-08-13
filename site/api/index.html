@@ -143,6 +143,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>max</code></td><td><code>DateLike</code></td><td><code>null</code></td><td>Nejmladší volitelný den.</td></tr>
           <tr><td><code>firstDayOfWeek</code></td><td><code>0–6</code></td><td>dle locale</td><td>0 = neděle … 6 = sobota.</td></tr>
           <tr><td><code>months</code></td><td><code>number</code></td><td><code>2</code> v range, jinak <code>1</code></td><td>Počet panelů vedle sebe.</td></tr>
+          <tr><td><code>linkedCalendars</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Listovat všemi panely najednou místo každým zvlášť.</td></tr>
           <tr><td><code>weekNumbers</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Sloupec s ISO čísly týdnů.</td></tr>
           <tr><td><code>dropdowns</code></td><td><code>boolean</code></td><td><code>false</code></td><td><code>&lt;select&gt;</code> pro měsíc a rok.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
@@ -194,6 +195,39 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
         nedokončí: rozsah čeká na druhý konec a <code>datetime</code> na čas. Kdyby
         se <code>datetime</code> potvrzoval hned, panel by se zavřel dřív, než by šel
         čas vůbec nastavit.</p>
+
+      <h3><code>months</code> a <code>linkedCalendars</code></h3>
+
+      <p>Ve výchozím stavu má <strong>každý panel vlastní šipky</strong> a lze jím
+        listovat nezávisle. Panely přitom musí zůstat v chronologickém pořadí, takže
+        ten posunutý si v případě potřeby odsune sousedy:</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Akce</th><th>Výsledek</th></tr></thead>
+        <tbody>
+          <tr><td>první panel vpřed</td><td>druhý ustoupí, pokud by se překryly</td></tr>
+          <tr><td>první panel zpět</td><td>druhý zůstává, mezera se zvětší</td></tr>
+          <tr><td>druhý panel zpět</td><td>první ustoupí, pokud by se překryly</td></tr>
+          <tr><td>druhý panel vpřed</td><td>první zůstává, mezera se zvětší</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Odsun je vždy <em>nejmenší možný</em>. U sousedních měsíců (srpen / září) to
+        vyjde na stejný posun, jaký jsi provedl. Když si ale mezi panely vytvoříš
+        mezeru (srpen / listopad), zůstane zachovaná, dokud se panely nedotknou.</p>
+
+      <p><code>linkedCalendars: true</code> vrátí spřažené chování: panely tvoří jeden
+        blok, listuje se jedinou dvojicí šipek na krajích a mezera mezi měsíci je
+        vždy nulová.</p>
+
+      <div class="callout">
+        <strong>Pořadí panelů vs. pořadí hodnoty</strong>
+        <p>Že by <code>from</code> vyšlo později než <code>to</code>, hlídá už samotný
+          výběr — konce se v takovém případě prohodí. Pořadí panelů je věc přehlednosti:
+          nemá se stát, aby levý kalendář ukazoval pozdější měsíc než pravý.</p>
+      </div>
 
       <h3><code>maxSpan</code></h3>
       <p>Platí jen v range režimech a měří se <strong>včetně obou konců</strong>:
@@ -357,7 +391,7 @@ odhlasit()</pre>
           <tr><td><code>cancel</code></td><td><code>{ value }</code></td><td>Zrušit, Escape nebo kliknutí mimo panel.</td></tr>
           <tr><td><code>open</code></td><td><code>{ value }</code></td><td>Otevření popoveru.</td></tr>
           <tr><td><code>close</code></td><td><code>{ value }</code></td><td>Zavření popoveru.</td></tr>
-          <tr><td><code>month-change</code></td><td><code>{ year, month }</code></td><td>Změna zobrazeného měsíce. <code>month</code> je 0–11.</td></tr>
+          <tr><td><code>month-change</code></td><td><code>{ year, month, index }</code></td><td>Změna zobrazeného měsíce. <code>month</code> je 0–11, <code>index</code> je pořadí panelu.</td></tr>
         </tbody>
       </table>
       </div>

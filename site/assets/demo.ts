@@ -51,6 +51,7 @@ const controls = {
   minTime: $<HTMLInputElement>('#opt-mintime'),
   maxTime: $<HTMLInputElement>('#opt-maxtime'),
   opens: $<HTMLSelectElement>('#opt-opens'),
+  linkedCalendars: $<HTMLInputElement>('#opt-linked'),
   presets: $<HTMLInputElement>('#opt-presets'),
   weekNumbers: $<HTMLInputElement>('#opt-weeknumbers'),
   dropdowns: $<HTMLInputElement>('#opt-dropdowns'),
@@ -78,6 +79,7 @@ function readOptions(): GregoryOptions & { mode: Mode } {
     minTime: controls.minTime.value.trim() || null,
     maxTime: controls.maxTime.value.trim() || null,
     opens: controls.opens.value as 'left' | 'right' | 'center',
+    linkedCalendars: controls.linkedCalendars.checked,
     presets: controls.presets.checked,
     weekNumbers: controls.weekNumbers.checked,
     dropdowns: controls.dropdowns.checked,
@@ -103,6 +105,7 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
     if (options.maxTime) lines.push(`maxTime: '${options.maxTime}'`)
   }
   if (options.opens !== 'right') lines.push(`opens: '${options.opens}'`)
+  if (options.linkedCalendars) lines.push('linkedCalendars: true')
   if (options.presets !== isRange) lines.push(`presets: ${options.presets}`)
   if (options.weekNumbers) lines.push('weekNumbers: true')
   if (options.dropdowns) lines.push('dropdowns: true')

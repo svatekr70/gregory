@@ -59,6 +59,16 @@ function hasTime(mode: ResolvedOptions['mode']): boolean {
   return mode === 'datetime' || mode === 'datetime-range'
 }
 
+/** First day of the month `date` falls in. */
+function monthAnchor(date: Date): Date {
+  return createDate(date.getFullYear(), date.getMonth(), 1)
+}
+
+/** Whole months from `a` to `b`; negative when `b` is earlier. */
+function monthsBetween(a: Date, b: Date): number {
+  return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
+}
+
 /** Parses the time window and tolerates the bounds being handed over swapped. */
 function resolveTimeBounds(
   min: GregoryOptions['minTime'],
@@ -83,7 +93,8 @@ export class Gregory {
   private selection: DateRange = { from: null, to: null }
   /** Last committed value, restored on Cancel. */
   private committed: DateRange = { from: null, to: null }
-  private viewDate: Date = today()
+  /** One month anchor per visible panel, always kept in ascending order. */
+  private views: Date[] = [today()]
   private preview: Date | null = null
   private focusedDay: Date = today()
   private open = false
@@ -140,6 +151,7 @@ export class Gregory {
       max: parseDate(options.max),
       firstDayOfWeek: options.firstDayOfWeek ?? locale.firstDayOfWeek,
       months: options.months ?? (isRangeMode(mode) ? 2 : 1),
+      linkedCalendars: options.linkedCalendars ?? false,
       weekNumbers: options.weekNumbers ?? false,
       dropdowns: options.dropdowns ?? false,
       inline: options.inline ?? false,
@@ -211,7 +223,7 @@ export class Gregory {
   private assign(range: DateRange, { commit = false, silent = false } = {}): void {
     this.selection = range
     if (range.from) {
-      this.viewDate = createDate(range.from.getFullYear(), range.from.getMonth(), 1)
+      this.resetViews(range.from)
       this.focusedDay = range.from
     }
     if (commit) {
@@ -260,7 +272,7 @@ export class Gregory {
     this.open = true
     this.element.hidden = false
     this.selection = { ...this.committed }
-    if (this.committed.from) this.viewDate = createDate(this.committed.from.getFullYear(), this.committed.from.getMonth(), 1)
+    if (this.committed.from) this.resetViews(this.committed.from)
     this.render()
     this.position()
     document.addEventListener('mousedown', this.onDocumentDown, true)
@@ -298,8 +310,8 @@ export class Gregory {
   goTo(date: DateLike): void {
     const parsed = parseDate(date)
     if (!parsed) return
-    this.viewDate = createDate(parsed.getFullYear(), parsed.getMonth(), 1)
-    this.emitter.emit('month-change', { year: this.viewDate.getFullYear(), month: this.viewDate.getMonth() })
+    this.resetViews(parsed)
+    this.emitter.emit('month-change', { year: parsed.getFullYear(), month: parsed.getMonth(), index: 0 })
     this.render()
   }
 
@@ -390,10 +402,10 @@ export class Gregory {
     const { action, value } = target.dataset
     switch (action) {
       case 'prev':
-        this.shiftMonths(-1)
+        this.shiftMonth(Number(target.dataset.index ?? 0), -1)
         break
       case 'next':
-        this.shiftMonths(1)
+        this.shiftMonth(Number(target.dataset.index ?? 0), 1)
         break
       case 'day':
         this.pick(parseDate(value ?? null))
@@ -431,14 +443,20 @@ export class Gregory {
     if (!target || !action) return
 
     switch (action) {
-      case 'select-month':
-        this.viewDate = createDate(this.viewDate.getFullYear(), Number(target.value), 1)
-        this.render()
+      // The dropdowns go through shiftMonth, so linking and ordering behave
+      // exactly the same as when the arrows are used.
+      case 'select-month': {
+        const index = Number(target.dataset.index ?? 0)
+        const view = this.views[index]
+        if (view) this.shiftMonth(index, Number(target.value) - view.getMonth())
         break
-      case 'select-year':
-        this.viewDate = createDate(Number(target.value), this.viewDate.getMonth(), 1)
-        this.render()
+      }
+      case 'select-year': {
+        const index = Number(target.dataset.index ?? 0)
+        const view = this.views[index]
+        if (view) this.shiftMonth(index, (Number(target.value) - view.getFullYear()) * 12)
         break
+      }
       case 'time-from':
       case 'time-to': {
         const bound = action === 'time-from' ? 'from' : 'to'
@@ -495,16 +513,54 @@ export class Gregory {
     const next =
       typeof step === 'number' ? addDays(this.focusedDay, step) : addMonths(this.focusedDay, step.months)
     this.focusedDay = clampDate(next, this.options.min, this.options.max)
-    if (compareDay(this.focusedDay, this.viewDate) < 0 || compareDay(this.focusedDay, this.lastVisibleDay()) > 0) {
-      this.viewDate = createDate(this.focusedDay.getFullYear(), this.focusedDay.getMonth(), 1)
-    }
+    this.ensureVisible(this.focusedDay)
     this.render()
     this.focusGrid()
   }
 
-  private lastVisibleDay(): Date {
-    const last = addMonths(this.viewDate, this.options.months - 1)
-    return createDate(last.getFullYear(), last.getMonth() + 1, 0)
+  private firstView(): Date {
+    return this.views[0] ?? monthAnchor(today())
+  }
+
+  private lastView(): Date {
+    return this.views[this.views.length - 1] ?? this.firstView()
+  }
+
+  /** Rebuilds every panel as consecutive months starting at `first`. */
+  private resetViews(first: Date): void {
+    const anchor = monthAnchor(first)
+    this.views = Array.from({ length: Math.max(1, this.options.months) }, (_, index) => addMonths(anchor, index))
+  }
+
+  /** Slides all panels by the same amount, keeping any gaps between them. */
+  private shiftAllViews(amount: number): void {
+    if (amount === 0) return
+    this.views = this.views.map((view) => addMonths(view, amount))
+  }
+
+  /** Scrolls the panels just far enough for `date` to be on screen. */
+  private ensureVisible(date: Date): void {
+    const anchor = monthAnchor(date)
+    const before = monthsBetween(this.firstView(), anchor)
+    const after = monthsBetween(this.lastView(), anchor)
+    if (before < 0) this.shiftAllViews(before)
+    else if (after > 0) this.shiftAllViews(after)
+  }
+
+  /**
+   * Keeps the panels in ascending order after panel `index` has moved. The
+   * neighbours are pushed by the smallest amount that restores the order, so a
+   * pair of adjacent months moves as one while a deliberate gap survives.
+   */
+  private enforceViewOrder(index: number): void {
+    for (let i = index + 1; i < this.views.length; i += 1) {
+      const floor = addMonths(this.views[i - 1]!, 1)
+      if (compareDay(this.views[i]!, floor) < 0) this.views[i] = floor
+    }
+    for (let i = index - 1; i >= 0; i -= 1) {
+      const ceiling = addMonths(this.views[i + 1]!, -1)
+      if (compareDay(this.views[i]!, ceiling) > 0) this.views[i] = ceiling
+    }
   }
 
   private focusGrid(): void {
@@ -513,9 +569,23 @@ export class Gregory {
     this.element.querySelector<HTMLButtonElement>(selector)?.focus()
   }
 
-  private shiftMonths(amount: number): void {
-    this.viewDate = addMonths(this.viewDate, amount)
-    this.emitter.emit('month-change', { year: this.viewDate.getFullYear(), month: this.viewDate.getMonth() })
+  /**
+   * Pages one panel. With `linkedCalendars` every panel moves together;
+   * otherwise only this one moves and its neighbours give way as needed.
+   */
+  private shiftMonth(index: number, amount: number): void {
+    const view = this.views[index]
+    if (!view || amount === 0) return
+
+    if (this.options.linkedCalendars) {
+      this.shiftAllViews(amount)
+    } else {
+      this.views[index] = addMonths(view, amount)
+      this.enforceViewOrder(index)
+    }
+
+    const moved = this.views[index]!
+    this.emitter.emit('month-change', { year: moved.getFullYear(), month: moved.getMonth(), index })
     this.render()
   }
 
@@ -601,23 +671,38 @@ export class Gregory {
 
   private render(): void {
     if (this.destroyed) return
-    const { locale, months, presets, weekNumbers, dropdowns } = this.options
+    const { locale, months, presets, weekNumbers, dropdowns, linkedCalendars } = this.options
     const context = this.monthContext()
+
+    // Panel count can change through setOptions; keep the anchors in step.
+    if (this.views.length !== months) this.resetViews(this.firstView())
 
     const calendars = h('div', { class: 'gr-calendars' })
     for (let offset = 0; offset < months; offset += 1) {
-      const anchor = addMonths(this.viewDate, offset)
+      const anchor = this.views[offset] ?? addMonths(this.firstView(), offset)
       const view = buildMonth(anchor.getFullYear(), anchor.getMonth(), context)
       const head = h('header', { class: 'gr-head' })
 
+      // Linked panels share one pair of arrows; independent ones get their own.
+      const showPrev = linkedCalendars ? offset === 0 : true
+      const showNext = linkedCalendars ? offset === months - 1 : true
+      const arrow = (direction: 'prev' | 'next'): HTMLElement =>
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'gr-nav',
+            'data-action': direction,
+            'data-index': offset,
+            'aria-label': direction === 'prev' ? locale.labels.previousMonth : locale.labels.nextMonth,
+          },
+          [direction === 'prev' ? '‹' : '›'],
+        )
+
       head.append(
-        offset === 0
-          ? h('button', { type: 'button', class: 'gr-nav', 'data-action': 'prev', 'aria-label': locale.labels.previousMonth }, ['‹'])
-          : h('span', { class: 'gr-nav gr-nav-placeholder', 'aria-hidden': 'true' }),
-        dropdowns ? this.renderDropdowns(anchor) : h('div', { class: 'gr-caption' }, [view.label]),
-        offset === months - 1
-          ? h('button', { type: 'button', class: 'gr-nav', 'data-action': 'next', 'aria-label': locale.labels.nextMonth }, ['›'])
-          : h('span', { class: 'gr-nav gr-nav-placeholder', 'aria-hidden': 'true' }),
+        showPrev ? arrow('prev') : h('span', { class: 'gr-nav gr-nav-placeholder', 'aria-hidden': 'true' }),
+        dropdowns ? this.renderDropdowns(anchor, offset) : h('div', { class: 'gr-caption' }, [view.label]),
+        showNext ? arrow('next') : h('span', { class: 'gr-nav gr-nav-placeholder', 'aria-hidden': 'true' }),
       )
 
       const grid = h('div', { class: 'gr-grid', role: 'grid', 'data-weeknumbers': weekNumbers })
@@ -678,11 +763,11 @@ export class Gregory {
     if (this.open && !this.options.inline) this.position()
   }
 
-  private renderDropdowns(anchor: Date): HTMLElement {
+  private renderDropdowns(anchor: Date, panelIndex: number): HTMLElement {
     const { locale, min, max } = this.options
     const caption = h('div', { class: 'gr-caption gr-caption-select' })
 
-    const monthSelect = h('select', { class: 'gr-select', 'data-action': 'select-month' })
+    const monthSelect = h('select', { class: 'gr-select', 'data-action': 'select-month', 'data-index': panelIndex })
     locale.monthNames().forEach((name, index) => {
       monthSelect.append(h('option', { value: index, selected: index === anchor.getMonth() }, [name]))
     })
@@ -690,7 +775,7 @@ export class Gregory {
     const currentYear = anchor.getFullYear()
     const firstYear = min ? min.getFullYear() : currentYear - 10
     const lastYear = max ? max.getFullYear() : currentYear + 10
-    const yearSelect = h('select', { class: 'gr-select', 'data-action': 'select-year' })
+    const yearSelect = h('select', { class: 'gr-select', 'data-action': 'select-year', 'data-index': panelIndex })
     for (let year = firstYear; year <= lastYear; year += 1) {
       yearSelect.append(h('option', { value: year, selected: year === currentYear }, [String(year)]))
     }
