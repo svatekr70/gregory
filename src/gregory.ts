@@ -246,17 +246,33 @@ export class Gregory {
       this.syncInput()
     }
     if (!silent) {
-      this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+      this.emitter.emit('change', { value: this.selectedValue(), complete: this.isFullyPicked() })
       if (commit) this.emitter.emit('apply', { value: this.getValue() })
     }
   }
 
-  /** Whether the current selection is worth committing. */
-  private isComplete(): boolean {
+  /**
+   * Whether Apply may be pressed. One end is enough even in a range: without
+   * `allowOpenRange` it commits as a single-day range, with it as an open one.
+   * Demanding two clicks for a one-day range only looked like the picker was
+   * refusing to work.
+   */
+  private isCommittable(): boolean {
     const { from, to } = this.selection
     if (!isRangeMode(this.options.mode)) return from !== null
-    // An open range is finished as soon as one end is known.
-    return this.options.allowOpenRange ? from !== null || to !== null : from !== null && to !== null
+    return from !== null || to !== null
+  }
+
+  /**
+   * The selection as it would be stored. A closed range with only one end picked
+   * collapses to that single day; an open range keeps the missing end null.
+   */
+  private normalisedSelection(): DateRange {
+    const { from, to } = this.selection
+    if (!isRangeMode(this.options.mode) || this.options.allowOpenRange) return { from, to }
+    if (from && !to) return { from, to: new Date(from.getTime()) }
+    if (!from && to) return { from: new Date(to.getTime()), to }
+    return { from, to }
   }
 
   /** Both ends picked — the only case where autoApply may close the panel. */
@@ -322,6 +338,7 @@ export class Gregory {
   }
 
   apply(): void {
+    this.selection = this.normalisedSelection()
     this.committed = { ...this.selection }
     this.syncInput()
     this.emitter.emit('apply', { value: this.getValue() })
@@ -660,7 +677,7 @@ export class Gregory {
       this.committed = { ...this.selection }
       this.syncInput()
     }
-    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isFullyPicked() })
     if (rerender) this.render()
   }
 
@@ -688,7 +705,7 @@ export class Gregory {
       this.syncInput()
     }
 
-    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isFullyPicked() })
     if (settled) {
       this.emitter.emit('apply', { value: this.getValue() })
       this.render()
@@ -726,7 +743,7 @@ export class Gregory {
       this.committed = { ...this.selection }
       this.syncInput()
     }
-    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isFullyPicked() })
 
     if (this.options.autoApply) {
       this.emitter.emit('apply', { value: this.getValue() })
@@ -753,7 +770,7 @@ export class Gregory {
       this.committed = { ...this.selection }
       this.syncInput()
     }
-    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isFullyPicked() })
     this.render()
   }
 
@@ -948,7 +965,7 @@ export class Gregory {
     if (!autoApply) {
       actions.append(
         h('button', { type: 'button', class: 'gr-btn gr-btn-ghost', 'data-action': 'cancel' }, [locale.labels.cancel]),
-        h('button', { type: 'button', class: 'gr-btn gr-btn-primary', 'data-action': 'apply', disabled: !this.isComplete() }, [
+        h('button', { type: 'button', class: 'gr-btn gr-btn-primary', 'data-action': 'apply', disabled: !this.isCommittable() }, [
           locale.labels.apply,
         ]),
       )

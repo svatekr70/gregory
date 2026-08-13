@@ -13,6 +13,8 @@ const $ = <T extends HTMLElement>(selector: string): T => {
 
 const hasTime = (mode: Mode): boolean => mode === 'datetime' || mode === 'datetime-range'
 
+const isRange = (mode: Mode): boolean => mode === 'range' || mode === 'datetime-range'
+
 function describe(value: GregoryValue, mode: Mode): string {
   if (!value) return 'null'
   const stamp = (date: Date): string =>
@@ -36,6 +38,7 @@ function example(id: string, options: GregoryOptions): Gregory {
     if (output) output.textContent = describe(value, options.mode ?? 'date')
   }
   picker.on('change', ({ value }) => show(value))
+  picker.on('apply', ({ value }) => show(value))
   show(picker.getValue())
   return picker
 }
@@ -98,10 +101,10 @@ function readOptions(): GregoryOptions & { mode: Mode } {
 
 /** Vypíše jen ty volby, které se liší od výchozích — kód má být opsatelný. */
 function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
-  const isRange = options.mode === 'range' || options.mode === 'datetime-range'
+  const range = isRange(options.mode)
   const lines: string[] = [`mode: '${options.mode}'`, `locale: '${options.locale}'`]
 
-  if (options.months !== (isRange ? 2 : 1)) lines.push(`months: ${options.months}`)
+  if (options.months !== (range ? 2 : 1)) lines.push(`months: ${options.months}`)
   if (options.maxSpan) lines.push(`maxSpan: ${options.maxSpan}`)
   if (hasTime(options.mode)) {
     if (options.timeStep !== 5) lines.push(`timeStep: ${options.timeStep}`)
@@ -112,7 +115,7 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
   if (options.opens !== 'right') lines.push(`opens: '${options.opens}'`)
   if (options.allowOpenRange) lines.push('allowOpenRange: true')
   if (options.linkedCalendars) lines.push('linkedCalendars: true')
-  if (options.presets !== isRange) lines.push(`presets: ${options.presets}`)
+  if (options.presets !== range) lines.push(`presets: ${options.presets}`)
   if (options.weekNumbers) lines.push('weekNumbers: true')
   if (options.selectableWeeks) lines.push('selectableWeeks: true')
   if (options.dropdowns) lines.push('dropdowns: true')
@@ -169,7 +172,11 @@ function rebuild(): void {
     readout.textContent = describe(value, options.mode)
     note('change', complete ? '(complete)' : '(rozpracováno)')
   })
-  current.on('apply', ({ value }) => note('apply', describe(value, options.mode)))
+  current.on('apply', ({ value }) => {
+    // Potvrzení může hodnotu ještě doladit (jeden den → jednodenní rozsah).
+    readout.textContent = describe(value, options.mode)
+    note('apply', describe(value, options.mode))
+  })
   current.on('cancel', () => note('cancel', ''))
   current.on('open', () => note('open', ''))
   current.on('close', () => note('close', ''))
@@ -181,11 +188,41 @@ function rebuild(): void {
   for (const control of [controls.timeStep, controls.timeUi, controls.minTime, controls.maxTime]) {
     control.disabled = !hasTime(options.mode)
   }
+  // Tyhle se týkají jen rozsahů.
+  for (const control of [controls.maxSpan, controls.allowOpenRange, controls.selectableWeeks]) {
+    control.disabled = !isRange(options.mode)
+  }
+  controls.linkedCalendars.disabled = Number(controls.months.value) < 2
   controls.opens.disabled = options.inline ?? false
 }
 
-for (const control of Object.values(controls)) {
-  control.addEventListener('change', rebuild)
+/**
+ * Volby, jejichž výchozí hodnota se odvozuje od režimu. Po přepnutí režimu se
+ * musí přenastavit — jinak by konfigurátor poslal do pickeru hodnoty z toho
+ * předchozího a picker by se choval jinak, než jak je popsaný v dokumentaci.
+ */
+function applyModeDefaults(mode: Mode): void {
+  const range = isRange(mode)
+  controls.months.value = String(range ? 2 : 1)
+  controls.presets.checked = range
+  controls.autoApply.checked = mode === 'date'
+  if (!range) {
+    controls.allowOpenRange.checked = false
+    controls.selectableWeeks.checked = false
+    controls.maxSpan.value = '0'
+  }
+}
+
+let currentMode = controls.mode.value as Mode
+
+for (const [name, control] of Object.entries(controls)) {
+  control.addEventListener('change', () => {
+    if (name === 'mode' && controls.mode.value !== currentMode) {
+      currentMode = controls.mode.value as Mode
+      applyModeDefaults(currentMode)
+    }
+    rebuild()
+  })
 }
 rebuild()
 

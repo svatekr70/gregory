@@ -193,6 +193,14 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
       <p>Rozdíl je vidět na návratových hodnotách: <code>getSelection()</code> ukazuje
         rozpracovaný stav, <code>getValue()</code> až potvrzený.</p>
 
+      <div class="callout">
+        <strong>Jeden den v rozsahu</strong>
+        <p>Tlačítko Použít se odemkne už po prvním kliknutí. Potvrzení jediného dne
+          uloží <strong>jednodenní rozsah</strong> — <code>{ from: 10. 8., to: 10. 8. }</code>.
+          Klikat dvakrát na stejné datum není potřeba. Se zapnutým
+          <code>allowOpenRange</code> se místo toho uloží otevřený rozsah.</p>
+      </div>
+
       <p>Zapnuté je jen v režimu <code>date</code>, protože jinde jeden klik hodnotu
         nedokončí: rozsah čeká na druhý konec a <code>datetime</code> na čas. Kdyby
         se <code>datetime</code> potvrzoval hned, panel by se zavřel dřív, než by šel
@@ -283,8 +291,9 @@ picker.<span class="t">getValue</span>()
 
       <p>Chování se tím mění na třech místech:</p>
       <ul>
-        <li>Výběr je hotový, jakmile je znám <strong>jeden</strong> konec — tlačítko
-          Použít se odemkne hned po prvním kliknutí.</li>
+        <li>Potvrzení jediného vybraného dne uloží <strong>otevřený</strong> rozsah
+          <code>{ from, to: null }</code>. Bez této volby by se stejný klik uložil
+          jako jednodenní rozsah.</li>
         <li>V patičce přibudou tlačítka <strong>Bez začátku</strong> a
           <strong>Bez konce</strong>, která příslušný konec zahodí. Zbylý konec se
           přesune na správnou stranu, takže z „1. 8." udělá <em>Bez začátku</em>

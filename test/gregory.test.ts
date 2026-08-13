@@ -113,15 +113,24 @@ describe('range mode', () => {
     expect(value.to?.getDate()).toBe(5)
   })
 
-  it('disables the Apply button until both bounds are picked', () => {
+  it('allows Apply as soon as one day is picked', () => {
     const apply = () => picker.element.querySelector<HTMLButtonElement>('[data-action="apply"]')!
     expect(apply().disabled).toBe(true)
 
     day('2026-08-10').click()
-    expect(apply().disabled).toBe(true)
+    expect(apply().disabled).toBe(false)
 
     day('2026-08-11').click()
     expect(apply().disabled).toBe(false)
+  })
+
+  it('commits a single picked day as a one-day range', () => {
+    day('2026-08-10').click()
+    picker.apply()
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to?.getDate()).toBe(10)
   })
 })
 
@@ -262,12 +271,16 @@ describe('open ranges', () => {
   const button = (action: string): HTMLButtonElement =>
     picker.element.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)!
 
-  it('is off by default — one bound is not enough to apply', () => {
+  it('is off by default — one day closes into a one-day range instead', () => {
     mount({ mode: 'range', presets: false })
     day('2026-08-10').click()
-
-    expect(button('apply').disabled).toBe(true)
     expect(picker.element.querySelector('[data-action="open-end"]')).toBeNull()
+
+    picker.apply()
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to?.getDate()).toBe(10)
   })
 
   it('lets a single bound be applied as an open range', () => {
