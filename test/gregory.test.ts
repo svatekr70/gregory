@@ -134,6 +134,49 @@ describe('range mode', () => {
   })
 })
 
+describe('outside days', () => {
+  const cells = (): Element[] => [...picker.element.querySelectorAll('.gr-grid > .gr-day, .gr-grid > .gr-day-empty')]
+
+  it('shows the neighbouring months by default', () => {
+    mount({ mode: 'date' })
+
+    expect(day('2026-07-27').classList.contains('is-outside')).toBe(true)
+    expect(day('2026-09-06').classList.contains('is-outside')).toBe(true)
+  })
+
+  it('hides them without losing grid cells', () => {
+    mount({ mode: 'date', showOutsideDays: false })
+
+    expect(picker.element.querySelector('[data-value="2026-07-27"]')).toBeNull()
+    expect(picker.element.querySelector('[data-value="2026-09-06"]')).toBeNull()
+
+    // Still six rows of seven.
+    expect(cells()).toHaveLength(42)
+    expect(picker.element.querySelectorAll('.gr-day-empty').length).toBeGreaterThan(0)
+  })
+
+  it('keeps every day of the shown month clickable', () => {
+    mount({ mode: 'date', showOutsideDays: false })
+
+    day('2026-08-01').click()
+    expect((picker.getValue() as Date).getDate()).toBe(1)
+
+    picker.openPanel()
+    day('2026-08-31').click()
+    expect((picker.getValue() as Date).getDate()).toBe(31)
+  })
+
+  it('leaves the blanks out of the range painting', () => {
+    mount({ mode: 'range', presets: false, showOutsideDays: false })
+    day('2026-08-10').click()
+    day('2026-08-14').click()
+
+    for (const blank of picker.element.querySelectorAll('.gr-day-empty')) {
+      expect(blank.classList.contains('is-in-range')).toBe(false)
+    }
+  })
+})
+
 describe('hover preview', () => {
   const hover = (target: HTMLElement | null): void => {
     const node = target ?? picker.element.querySelector<HTMLElement>('.gr-foot')!

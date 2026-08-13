@@ -145,6 +145,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>months</code></td><td><code>number</code></td><td><code>2</code> v range, jinak <code>1</code></td><td>Počet panelů vedle sebe.</td></tr>
           <tr><td><code>linkedCalendars</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Listovat všemi panely najednou místo každým zvlášť.</td></tr>
           <tr><td><code>weekNumbers</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Sloupec s ISO čísly týdnů.</td></tr>
+          <tr><td><code>showOutsideDays</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Zobrazovat dny přesahující ze sousedních měsíců.</td></tr>
           <tr><td><code>weekSelection</code></td><td><code>'off' | 'number' | 'day' | 'both'</code></td><td><code>'off'</code></td><td>Výběr celého týdne jedním klikem.</td></tr>
           <tr><td><code>dropdowns</code></td><td><code>boolean | 'menu'</code></td><td><code>false</code></td><td>Výběr měsíce a roku: nativní <code>&lt;select&gt;</code>, nebo seznam otevřený klikem na caption.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
@@ -253,6 +254,20 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>showOutsideDays</code></h3>
+
+      <p>Mřížka má vždy šest řádků, takže první a poslední týden obvykle přetéká do
+        sousedních měsíců. Ve výchozím stavu jsou tyhle dny vidět zašedle a jdou
+        vybrat. <code>showOutsideDays: false</code> je skryje:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  showOutsideDays: <span class="k">false</span>,
+})</pre>
+
+      <p>Buňka přitom <strong>zůstane</strong>, jen prázdná — mřížka si drží šest
+        řádků a panel při listování neposkakuje. Prázdná místa nesou třídu
+        <code>.gr-day-empty</code>, nejsou to tlačítka a nereagují na myš.</p>
 
       <h3><code>dropdowns</code></h3>
 

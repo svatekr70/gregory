@@ -89,6 +89,11 @@ export interface GregoryOptions {
   linkedCalendars?: boolean
   weekNumbers?: boolean
   /**
+   * Days spilling in from the neighbouring months. Turning this off leaves the
+   * cells empty rather than removing them, so the grid keeps its six rows.
+   */
+  showOutsideDays?: boolean
+  /**
    * Turns the picker into a week picker. `'number'` makes the week numbers
    * clickable (needs `weekNumbers`), `'day'` makes any day select its whole
    * week, `'both'` offers both. Range modes only.
@@ -141,6 +146,7 @@ export interface ResolvedOptions {
   months: number
   linkedCalendars: boolean
   weekNumbers: boolean
+  showOutsideDays: boolean
   weekSelection: WeekSelection
   dropdowns: false | 'select' | 'menu'
   inline: boolean

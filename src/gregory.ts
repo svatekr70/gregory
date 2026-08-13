@@ -161,6 +161,7 @@ export class Gregory {
       months: options.months ?? (isRangeMode(mode) ? 2 : 1),
       linkedCalendars: options.linkedCalendars ?? false,
       weekNumbers: options.weekNumbers ?? false,
+      showOutsideDays: options.showOutsideDays ?? true,
       weekSelection: options.weekSelection ?? 'off',
       dropdowns: options.dropdowns === true ? 'select' : (options.dropdowns ?? false),
       inline: options.inline ?? false,
@@ -901,7 +902,7 @@ export class Gregory {
 
   private render(): void {
     if (this.destroyed) return
-    const { locale, months, presets, weekNumbers, dropdowns, linkedCalendars } = this.options
+    const { locale, months, presets, weekNumbers, dropdowns, linkedCalendars, showOutsideDays } = this.options
     const context = this.monthContext()
 
     // Panel count can change through setOptions; keep the anchors in step.
@@ -947,6 +948,13 @@ export class Gregory {
       for (const week of view.weeks) {
         if (weekNumbers) grid.append(this.renderWeekNumber(week))
         for (const day of week.days) {
+          // The cell stays, only its contents go — otherwise the grid would
+          // lose rows and the panel would change height between months.
+          if (day.outside && !showOutsideDays) {
+            grid.append(h('div', { class: 'gr-day gr-day-empty', 'aria-hidden': 'true' }))
+            continue
+          }
+
           const classes = ['gr-day']
           if (day.outside) classes.push('is-outside')
           if (day.isToday) classes.push('is-today')

@@ -352,6 +352,11 @@
   opacity: 0.55;
 }
 
+/* Prázdné místo po skrytém dni ze sousedního měsíce. */
+.gr-day-empty {
+  pointer-events: none;
+}
+
 .gr-day.is-today {
   font-weight: 700;
   box-shadow: inset 0 0 0 1px var(--gr-today);
