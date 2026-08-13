@@ -11,7 +11,7 @@
   --gr-radius: 10px;
   --gr-radius-day: 6px;
   --gr-gap: 1px;
-  /* Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu. */
+  /* Velikost políčka dne — čtverce, do kterého se vykreslí číslo. Určuje šířku celého panelu, takže je to hlavní páka na hustotu. */
   --gr-day-size: 32px;
   /* Odsazení uvnitř panelu. Odvozuje se z něj i odsazení patičky a tlačítek. */
   --gr-pad: 10px;

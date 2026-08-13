@@ -166,38 +166,47 @@
 
           <div class="panel">
             <h3>Vzhled — CSS proměnné</h3>
+            <p class="panel-note">Šířku panelu určuje velikost políčka dne. Prázdné místo
+              okolo číslice není odsazení — políčko žádné nemá — ale poměr velikosti písma
+              k políčku. Všechny hodnoty jsou v pixelech.</p>
 
             <div class="css-grid">
               <div class="css-preview" id="css-preview"></div>
 
               <div class="css-fields">
                 <label class="field">
-                  <span>Hrana dne <code>--gr-day-size</code></span>
+                  <span>Velikost políčka dne <code>--gr-day-size</code>
+                    <em>čtverec, do kterého se vykreslí číslo</em></span>
                   <input type="number" id="css-daysize" min="20" max="64" step="1" value="32">
                 </label>
 
                 <label class="field">
-                  <span>Mezera v mřížce <code>--gr-gap</code></span>
+                  <span>Mezera mezi políčky <code>--gr-gap</code>
+                    <em>0 = políčka na sraz</em></span>
                   <input type="number" id="css-gap" min="0" max="8" step="1" value="1">
                 </label>
 
                 <label class="field">
-                  <span>Odsazení panelu <code>--gr-pad</code></span>
+                  <span>Odsazení uvnitř panelu <code>--gr-pad</code>
+                    <em>okraje, patička, tlačítka</em></span>
                   <input type="number" id="css-pad" min="0" max="24" step="1" value="10">
                 </label>
 
                 <label class="field">
-                  <span>Písmo panelu <code>--gr-font-size</code></span>
+                  <span>Velikost čísel dnů <code>--gr-day-font-size</code>
+                    <em id="css-dayfont-hint">prázdné = 47 % políčka</em></span>
+                  <input type="number" id="css-dayfont" min="9" max="26" step="0.5" placeholder="dle políčka">
+                </label>
+
+                <label class="field">
+                  <span>Písmo zbytku panelu <code>--gr-font-size</code>
+                    <em>hlavička, tlačítka, souhrn — ne čísla dnů</em></span>
                   <input type="number" id="css-font" min="10" max="20" step="0.5" value="14">
                 </label>
 
                 <label class="field">
-                  <span>Čísla dnů <code>--gr-day-font-size</code> <em>(prázdné = 47 % hrany dne)</em></span>
-                  <input type="number" id="css-dayfont" min="9" max="26" step="0.5" placeholder="dle hrany dne">
-                </label>
-
-                <label class="field">
-                  <span>Záhlaví dnů <code>--gr-weekday-font-size</code></span>
+                  <span>Písmo zkratek dnů <code>--gr-weekday-font-size</code>
+                    <em>Po, Út… a čísla týdnů</em></span>
                   <input type="number" id="css-weekdayfont" min="8" max="18" step="0.5" value="11.5">
                 </label>
 

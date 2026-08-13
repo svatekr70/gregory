@@ -124,11 +124,17 @@ function applyAppearance(): void {
       if (value === '') panel.style.removeProperty(name)
       else panel.style.setProperty(name, value + unit)
     }
-    if (value !== fallback) changed.push(`  ${name}: ${value === '' ? 'dle hrany dne' : value + unit};`)
+    if (value !== fallback) changed.push(`  ${name}: ${value === '' ? 'dle políčka' : value + unit};`)
   }
 
   cssSnippet.hidden = changed.length === 0
   if (changed.length) cssSnippet.innerHTML = paint(`.gr {\n${changed.join('\n')}\n}`)
+
+  // Dopočítanou velikost čísel ukážeme rovnou u pole, ať je ten poměr vidět.
+  const dayFont = getComputedStyle(cssPreview.element.querySelector('.gr-day')!).fontSize
+  $('#css-dayfont-hint').textContent = cssInputs.find((v) => v.id === 'css-dayfont')!.input.value.trim()
+    ? 'pevná hodnota'
+    : `prázdné = 47 % políčka, teď ${dayFont}`
 }
 
 for (const { input } of cssInputs) input.addEventListener('input', applyAppearance)

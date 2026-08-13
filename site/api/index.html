@@ -746,11 +746,11 @@ odhlasit()</pre>
           <tr><td><code>--gr-radius</code></td><td><code>10px</code></td><td>Zaoblení panelu.</td></tr>
           <tr><td><code>--gr-radius-day</code></td><td><code>6px</code></td><td>Zaoblení dne a tlačítek.</td></tr>
           <tr><td><code>--gr-gap</code></td><td><code>2px</code></td><td>Mezera v mřížce.</td></tr>
-          <tr><td><code>--gr-day-size</code></td><td><code>32px</code></td><td>Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
+          <tr><td><code>--gr-day-size</code></td><td><code>32px</code></td><td>Velikost políčka dne — čtverce, do kterého se vykreslí číslo. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
           <tr><td><code>--gr-pad</code></td><td><code>10px</code></td><td>Odsazení uvnitř panelu. Odvozuje se z něj i odsazení patičky, zkratek a tlačítek.</td></tr>
-          <tr><td><code>--gr-font-size</code></td><td><code>14px</code></td><td>Základní velikost písma panelu.</td></tr>
-          <tr><td><code>--gr-day-font-size</code></td><td><code>47 %</code> hrany dne</td><td>Velikost čísel dnů. Odvozuje se z buňky, ne ze základního písma.</td></tr>
-          <tr><td><code>--gr-weekday-font-size</code></td><td><code>11.5px</code></td><td>Záhlaví dnů v týdnu a čísla týdnů.</td></tr>
+          <tr><td><code>--gr-font-size</code></td><td><code>14px</code></td><td>Písmo zbytku panelu — hlavička, tlačítka, souhrn. Čísel dnů se netýká.</td></tr>
+          <tr><td><code>--gr-day-font-size</code></td><td><code>47 %</code> políčka</td><td>Velikost čísel dnů. Odvozuje se z políčka, ne ze základního písma.</td></tr>
+          <tr><td><code>--gr-weekday-font-size</code></td><td><code>11.5px</code></td><td>Zkratky dnů v týdnu (Po, Út…) a čísla týdnů.</td></tr>
           <tr><td><code>--gr-bg</code></td><td><code>#fff</code></td><td>Pozadí panelu.</td></tr>
           <tr><td><code>--gr-fg</code></td><td><code>#1c1f23</code></td><td>Text.</td></tr>
           <tr><td><code>--gr-muted</code></td><td><code>#8b9199</code></td><td>Sekundární text.</td></tr>
@@ -773,7 +773,7 @@ odhlasit()</pre>
 
       <p>Panel je vždy jen tak široký, jak potřebuje — šířku určuje
         <code>--gr-day-size</code>, ne dostupné místo. Kompaktnější kalendář se
-        tedy dělá zmenšením hrany dne, ne přebíjením rozměrů panelu:</p>
+        tedy dělá zmenšením políčka dne, ne přebíjením rozměrů panelu:</p>
 
       <p>Hustotu drží čtyři proměnné: velikost dne, mezera v mřížce, odsazení
         a velikost písma. Ostatní odsazení se z <code>--gr-pad</code> dopočítává,
@@ -809,7 +809,7 @@ odhlasit()</pre>
           určuje poměr písma k buňce. Zmenšit buňku a zároveň zmenšit písmo
           proto prázdno <em>nezmenší</em>.</p>
         <p style="margin-top:8px">Proto se <code>--gr-day-font-size</code> odvozuje
-          z hrany dne (47 %) a ne ze základního písma. Plnější dojem se dělá vyšším
+          z velikosti políčka (47 %) a ne ze základního písma. Plnější dojem se dělá vyšším
           poměrem, vzdušnější nižším:</p>
       </div>
 
