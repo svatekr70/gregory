@@ -747,7 +747,10 @@ odhlasit()</pre>
           <tr><td><code>--gr-radius-day</code></td><td><code>6px</code></td><td>Zaoblení dne a tlačítek.</td></tr>
           <tr><td><code>--gr-gap</code></td><td><code>2px</code></td><td>Mezera v mřížce.</td></tr>
           <tr><td><code>--gr-day-size</code></td><td><code>32px</code></td><td>Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
-          <tr><td><code>--gr-pad</code></td><td><code>10px</code></td><td>Odsazení uvnitř panelu — druhá páka na hustotu.</td></tr>
+          <tr><td><code>--gr-pad</code></td><td><code>10px</code></td><td>Odsazení uvnitř panelu. Odvozuje se z něj i odsazení patičky, zkratek a tlačítek.</td></tr>
+          <tr><td><code>--gr-font-size</code></td><td><code>14px</code></td><td>Základní velikost písma panelu.</td></tr>
+          <tr><td><code>--gr-day-font-size</code></td><td>dle základní</td><td>Velikost čísel dnů.</td></tr>
+          <tr><td><code>--gr-weekday-font-size</code></td><td><code>11.5px</code></td><td>Záhlaví dnů v týdnu a čísla týdnů.</td></tr>
           <tr><td><code>--gr-bg</code></td><td><code>#fff</code></td><td>Pozadí panelu.</td></tr>
           <tr><td><code>--gr-fg</code></td><td><code>#1c1f23</code></td><td>Text.</td></tr>
           <tr><td><code>--gr-muted</code></td><td><code>#8b9199</code></td><td>Sekundární text.</td></tr>
@@ -772,14 +775,36 @@ odhlasit()</pre>
         <code>--gr-day-size</code>, ne dostupné místo. Kompaktnější kalendář se
         tedy dělá zmenšením hrany dne, ne přebíjením rozměrů panelu:</p>
 
-      <pre class="code"><span class="c">/* hustší než výchozí */</span>
-.gr { --gr-day-size: <span class="n">28px</span>; --gr-gap: <span class="n">0</span>; --gr-pad: <span class="n">8px</span>; }
+      <p>Hustotu drží čtyři proměnné: velikost dne, mezera v mřížce, odsazení
+        a velikost písma. Ostatní odsazení se z <code>--gr-pad</code> dopočítává,
+        takže stačí přenastavit je:</p>
 
-<span class="c">/* vzdušnější, třeba pro dotyk */</span>
-.gr { --gr-day-size: <span class="n">40px</span>; --gr-gap: <span class="n">3px</span>; --gr-pad: <span class="n">14px</span>; }</pre>
+      <pre class="code"><span class="c">/* hustší než výchozí */</span>
+.gr {
+  --gr-day-size: <span class="n">27px</span>;
+  --gr-gap: <span class="n">0</span>;
+  --gr-pad: <span class="n">7px</span>;
+  --gr-font-size: <span class="n">13px</span>;
+}
+
+<span class="c">/* jen větší čísla dnů, zbytek beze změny */</span>
+.gr { --gr-day-font-size: <span class="n">16px</span>; }</pre>
+
+      <div class="callout">
+        <strong>Hotové stupně hustoty</strong>
+        <p><code>themes.css</code> nese třídy <code>gr-density-compact</code> a
+          <code>gr-density-comfortable</code>. Barvy neřeší, takže se s motivy
+          kombinují: <code>className: 'gr-theme-riso gr-density-compact'</code>.</p>
+      </div>
 
       <p>Výchozí hustota je zhruba na úrovni nativního kalendáře prohlížeče —
-        jeden měsíc vyjde na 252 × 317 px.</p>
+        jeden měsíc vyjde na 252 × 317 px. Rozsah se dvěma měsíci a čísly týdnů
+        má 556 × 268 px, v <code>compact</code> 464 × 225 px a v
+        <code>comfortable</code> 706 × 338 px.</p>
+
+      <p>Velikost dne a velikost písma spolu nedrží krok automaticky — buňka má
+        pevný rozměr, takže výrazně větší písmo v malé buňce přeteče. Když měníš
+        jedno, koukni i na druhé.</p>
 
       <h3>Hotové motivy</h3>
 

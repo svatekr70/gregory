@@ -113,6 +113,22 @@ Všechno jsou CSS proměnné na `.gr`, není potřeba přebíjet selektory:
 }
 ```
 
+Hustotu drží čtyři proměnné — velikost dne, mezera, odsazení a písmo.
+Ostatní odsazení se z `--gr-pad` dopočítává:
+
+```css
+.gr {
+  --gr-day-size: 27px;
+  --gr-gap: 0;
+  --gr-pad: 7px;
+  --gr-font-size: 13px;
+  --gr-day-font-size: 13px;   /* jen čísla dnů */
+}
+```
+
+Hotové stupně jsou v `themes.css` jako `gr-density-compact`
+a `gr-density-comfortable`; barvy neřeší, takže se s motivy kombinují.
+
 Tmavý režim se aktivuje sám podle `prefers-color-scheme`, nebo natvrdo přes
 `data-theme="dark"` / `data-theme="light"` na kořenovém prvku pickeru.
 

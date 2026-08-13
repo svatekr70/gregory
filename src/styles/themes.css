@@ -14,6 +14,26 @@
  * v základních stylech. Proto na pořadí importu záleží.
  */
 
+/* ---------------------------------------------------------------- hustota
+ * Nezávislé na barvách, takže se kombinují: className: 'gr-theme-riso
+ * gr-density-compact'. Kdo chce jinou, přenastaví si ty čtyři proměnné sám.
+ */
+.gr.gr-density-compact {
+  --gr-day-size: 27px;
+  --gr-gap: 0px;
+  --gr-pad: 7px;
+  --gr-font-size: 13px;
+  --gr-weekday-font-size: 10.5px;
+}
+
+.gr.gr-density-comfortable {
+  --gr-day-size: 40px;
+  --gr-gap: 3px;
+  --gr-pad: 14px;
+  --gr-font-size: 15px;
+  --gr-weekday-font-size: 12.5px;
+}
+
 /* --------------------------------------------------------------- Blueprint
  * Technický výkres: tmavě modrý papír, rýsovací azurová, monospace číslice
  * a hustá mřížka. Pro nástroje, kde je datum údaj, ne dekorace.

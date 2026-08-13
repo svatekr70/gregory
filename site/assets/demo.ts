@@ -299,11 +299,16 @@ const THEMES: Theme[] = [
 const themeStage = $('#theme-stage')
 const themePicks = $('#theme-picks')
 const themeCode = $('#theme-code')
+const themeDensity = $<HTMLSelectElement>('#theme-density')
 let themePicker: Gregory | null = null
+let currentTheme: Theme
 
 function showTheme(theme: Theme): void {
+  currentTheme = theme
   themePicker?.destroy()
   themeStage.replaceChildren()
+
+  const className = [theme.className, themeDensity.value].filter(Boolean).join(' ')
 
   themePicker = new Gregory(themeStage, {
     mode: 'range',
@@ -314,12 +319,12 @@ function showTheme(theme: Theme): void {
     weekNumbers: true,
     autoApply: true,
     value: ['2026-08-10', '2026-08-16'],
-    ...(theme.className ? { className: theme.className } : {}),
+    ...(className ? { className } : {}),
   })
 
   themeCode.innerHTML = paint(
-    theme.className
-      ? `import '@svatekr70/gregory/themes.css'\n\nconst picker = new Gregory('#vstup', {\n  mode: 'range',\n  className: '${theme.className}',\n})`
+    className
+      ? `import '@svatekr70/gregory/themes.css'\n\nconst picker = new Gregory('#vstup', {\n  mode: 'range',\n  className: '${className}',\n})`
       : `const picker = new Gregory('#vstup', {\n  mode: 'range',\n})`,
   )
 
@@ -345,6 +350,8 @@ THEMES.forEach((theme, index) => {
   button.addEventListener('click', () => showTheme(theme))
   themePicks.append(button)
 })
+
+themeDensity.addEventListener('change', () => showTheme(currentTheme))
 
 showTheme(THEMES[0]!)
 

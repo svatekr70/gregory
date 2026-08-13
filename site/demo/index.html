@@ -172,7 +172,17 @@
         proměnné <code>--gr-*</code> — žádný selektor komponenty se nepřepisuje.</p>
 
       <div class="themes">
-        <div class="theme-picks" id="theme-picks" role="radiogroup" aria-label="Motiv"></div>
+        <div>
+          <div class="theme-picks" id="theme-picks" role="radiogroup" aria-label="Motiv"></div>
+          <label class="field" style="margin-top:14px">
+            <span>Hustota <code>gr-density-*</code></span>
+            <select id="theme-density">
+              <option value="">výchozí</option>
+              <option value="gr-density-compact">compact — hustá</option>
+              <option value="gr-density-comfortable">comfortable — vzdušná</option>
+            </select>
+          </label>
+        </div>
         <div>
           <div id="theme-stage"></div>
           <pre class="code" id="theme-code" style="box-shadow:none;margin-top:14px"></pre>
