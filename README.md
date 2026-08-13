@@ -73,7 +73,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 
 | volba | výchozí | popis |
 | --- | --- | --- |
-| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range` |
+| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range`, `multiple` |
 | `className` | — | vlastní třídy pro kořen panelu (takhle se aplikují motivy) |
 | `value` | `null` | `Date`, ISO string, `{from,to}` nebo `[from, to]` |
 | `locale` | jazyk prohlížeče | BCP 47 tag nebo částečný objekt `Locale` |
@@ -93,6 +93,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |
 | `maxSpan` | `null` | nejdelší povolený rozsah ve dnech |
 | `allowOpenRange` | `false` | povolí rozsah otevřený na jednom konci (`{ from, to: null }`) |
+| `maxSelected` | `null` | nejvíc dnů v režimu `multiple` |
 | `timeStep` | `5` | krok minut v časových režimech |
 | `timeUi` | `'select'` | ovládání času: `'select'` selecty, `'slider'` posuvníky, `'input'` nativní pole |
 | `minTime` / `maxTime` | `null` | okno dne, `'HH:MM'`, včetně obou hranic |
@@ -107,7 +108,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 ## API
 
 ```ts
-picker.getValue()      // Date | DateRange | null — potvrzená hodnota
+picker.getValue()      // Date | DateRange | Date[] | null — potvrzená hodnota
 picker.getSelection()  // rozpracovaný výběr (v range módu i poloviční)
 picker.setValue(value, { silent })
 picker.clear()

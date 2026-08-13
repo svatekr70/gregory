@@ -50,6 +50,7 @@
                 <option value="range" selected>range — rozsah dat</option>
                 <option value="datetime">datetime — datum a čas</option>
                 <option value="datetime-range">datetime-range — rozsah s časem</option>
+                <option value="multiple">multiple — více samostatných dnů</option>
               </select>
             </label>
 
@@ -293,6 +294,14 @@
           <p>Fiskální čtvrtletí místo výchozích zkratek a vlastní <code>format</code> do inputu.</p>
           <input class="stage-input" id="ex-custom" placeholder="Vyber čtvrtletí…">
           <div class="readout" data-for="ex-custom">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Více samostatných dnů</h3>
+          <p><code>mode: 'multiple'</code> — klik den přidá, druhý klik ho zase odebere.
+            Hodnota je pole dat, ne rozsah.</p>
+          <input class="stage-input" id="ex-multiple" placeholder="Vyber dny…">
+          <div class="readout" data-for="ex-multiple">—</div>
         </div>
 
         <div class="card example">

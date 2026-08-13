@@ -216,6 +216,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>'range'</code></td><td><code>DateRange</code></td><td>2</td><td><code>false</code></td></tr>
           <tr><td><code>'datetime'</code></td><td><code>Date | null</code></td><td>1</td><td><code>false</code></td></tr>
           <tr><td><code>'datetime-range'</code></td><td><code>DateRange</code></td><td>2</td><td><code>false</code></td></tr>
+          <tr><td><code>'multiple'</code></td><td><code>Date[]</code></td><td>1</td><td><code>false</code></td></tr>
         </tbody>
       </table>
       </div>
@@ -239,6 +240,37 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
 
       <p>Prázdná hodnota má tvar <code>null</code> v single režimech a
         <code>{ from: null, to: null }</code> v rozsazích.</p>
+
+      <h3>Režim <code>multiple</code></h3>
+
+      <p>Seznam samostatných dnů, ne rozsah — rozvrhy, směny, termíny školení.
+        Klik den přidá, druhý klik ho zase odebere.</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  mode: <span class="s">'multiple'</span>,
+  maxSelected: <span class="n">5</span>,
+})
+
+picker.<span class="t">getValue</span>()  <span class="c">// [Date, Date, Date] — vždy vzestupně</span></pre>
+
+      <p>Hodnota je pole seřazené vzestupně, bez ohledu na pořadí klikání.
+        Vybrané dny se malují každý zvlášť — mezi nimi <strong>nevzniká rozsah</strong>,
+        to je celý rozdíl proti <code>range</code>.</p>
+
+      <p>Do pole se vypíše seznam a za třetím dnem se zkrátí:
+        <code>5. 8. 2026, 13. 8. 2026, 20. 8. 2026 +1</code>. Souhrn místo toho
+        hlásí počet („4 dny"). Na vstupu se čeká pole:
+        <code>value: ['2026-08-05', '2026-08-13']</code>.</p>
+
+      <p><code>maxSelected</code> omezí počet. Po dosažení limitu další den
+        nepřibude, ale odebrat už vybraný jde pořád — jinak by se uživatel zasekl.</p>
+
+      <div class="callout">
+        <strong>Panel se sám nezavírá</strong>
+        <p>Seznam se pořád doplňuje, takže „hotovo" nemá kdy nastat.
+          I s <code>autoApply</code> se hodnota průběžně potvrzuje, ale panel
+          zůstane otevřený, dokud ho uživatel nezavře.</p>
+      </div>
 
       <h3><code>autoApply</code></h3>
       <p>Rozhoduje o tom, kdy se rozpracovaný výběr stane hodnotou.</p>

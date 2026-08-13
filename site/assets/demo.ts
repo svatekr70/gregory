@@ -32,6 +32,9 @@ function describe(value: GregoryValue, mode: Mode): string {
     hasTime(mode) ? `${formatISODate(date)} ${formatISOTime(date)}` : formatISODate(date)
 
   if (value instanceof Date) return `'${stamp(value)}'`
+  if (Array.isArray(value)) {
+    return value.length ? `[${value.map((date) => `'${stamp(date)}'`).join(', ')}]  →  ${value.length} dnů` : '[]'
+  }
   if (!value.from && !value.to) return '{ from: null, to: null }'
   if (!value.from) return `{ from: null, to: '${stamp(value.to!)}' }  →  otevřený začátek`
   if (!value.to) return `{ from: '${stamp(value.from)}', to: null }  →  otevřený konec`
@@ -182,6 +185,7 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
 
   if (options.months !== (range ? 2 : 1)) lines.push(`months: ${options.months}`)
   if (options.maxSpan) lines.push(`maxSpan: ${options.maxSpan}`)
+  if (options.maxSelected) lines.push(`maxSelected: ${options.maxSelected}`)
   if (hasTime(options.mode)) {
     if (options.timeStep !== 5) lines.push(`timeStep: ${options.timeStep}`)
     if (options.timeUi !== 'select') lines.push(`timeUi: '${options.timeUi}'`)
@@ -421,6 +425,8 @@ showTheme(THEMES[0]!)
 
 example('ex-badge', { mode: 'date', locale: 'cs' })
 
+example('ex-multiple', { mode: 'multiple', locale: 'cs', summary: true, months: 1 })
+
 // Předstíraná data: „kolik je ten den rezervací".
 const BOOKINGS = new Map<string, number>([
   ['2026-08-11', 2],
@@ -517,7 +523,7 @@ example('ex-custom', {
   locale: 'cs',
   presets: QUARTERS,
   format: (value) => {
-    if (!value || value instanceof Date || !value.from || !value.to) return ''
+    if (!value || value instanceof Date || Array.isArray(value) || !value.from || !value.to) return ''
     const quarter = Math.floor(value.from.getMonth() / 3) + 1
     return `Q${quarter} ${value.from.getFullYear()} (${formatISODate(value.from)} – ${formatISODate(value.to)})`
   },

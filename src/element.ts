@@ -96,11 +96,14 @@ export class GregoryElement extends HTMLElement {
       this.removeAttribute('value')
       return
     }
-    const serialized =
-      value instanceof Date
-        ? formatISODate(value)
-        : [value.from, value.to].map((date) => (date ? formatISODate(date) : '')).join('/')
-    this.setAttribute('value', serialized)
+    let serialized: string
+    if (value instanceof Date) serialized = formatISODate(value)
+    // Seznam dnů se zapisuje čárkami, rozsah lomítkem.
+    else if (Array.isArray(value)) serialized = value.map(formatISODate).join(',')
+    else serialized = [value.from, value.to].map((date) => (date ? formatISODate(date) : '')).join('/')
+
+    if (!serialized || serialized === '/') this.removeAttribute('value')
+    else this.setAttribute('value', serialized)
   }
 
   private forward(type: string, detail: unknown): void {

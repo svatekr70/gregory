@@ -601,7 +601,8 @@ describe('summary line', () => {
     mount({
       mode: 'range',
       presets: false,
-      summary: (value) => (value && !(value instanceof Date) && value.from ? 'něco vybráno' : 'zatím nic'),
+      summary: (value) =>
+        value && !(value instanceof Date) && !Array.isArray(value) && value.from ? 'něco vybráno' : 'zatím nic',
     })
 
     expect(summary()).toBe('zatím nic')

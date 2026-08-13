@@ -1,7 +1,7 @@
 /** Anything Gregory accepts where a date is expected. */
 export type DateLike = Date | string | number | null | undefined
 
-export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range'
+export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range' | 'multiple'
 
 /** How a whole week can be picked. See `GregoryOptions.weekSelection`. */
 export type WeekSelection = 'off' | 'number' | 'day' | 'both'
@@ -23,8 +23,8 @@ export interface DateRangeInput {
 /** Everything accepted where a range value is expected. */
 export type RangeValueInput = DateLike | DateRangeInput | [DateLike, DateLike]
 
-/** Value shape depends on the mode: a single date, or a range. */
-export type GregoryValue = Date | DateRange | null
+/** Value shape depends on the mode: a single date, a range, or a list. */
+export type GregoryValue = Date | DateRange | Date[] | null
 
 /** Sidebar shortcut, e.g. "Last 7 days". Resolved lazily so "today" stays fresh. */
 export interface RangePreset {
@@ -150,6 +150,8 @@ export interface GregoryOptions {
    * day onwards". Only meaningful in range modes.
    */
   allowOpenRange?: boolean
+  /** Nejvíc dnů, které jde vybrat v režimu `multiple`. */
+  maxSelected?: number | null
   /** Minutes between selectable times in `datetime*` modes. */
   timeStep?: number
   /** Time controls: two `<select>`s, a native `<input type="time">`, or sliders. */
@@ -205,6 +207,7 @@ export interface ResolvedOptions {
   presets: RangePreset[]
   maxSpan: number | null
   allowOpenRange: boolean
+  maxSelected: number | null
   timeStep: number
   timeUi: 'select' | 'input' | 'slider'
   /** Minutes since midnight, or null for no bound. */

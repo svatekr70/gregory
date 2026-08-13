@@ -58,6 +58,10 @@ function isRangeMode(mode: ResolvedOptions['mode']): boolean {
   return mode === 'range' || mode === 'datetime-range'
 }
 
+function isMultiMode(mode: ResolvedOptions['mode']): boolean {
+  return mode === 'multiple'
+}
+
 function hasTime(mode: ResolvedOptions['mode']): boolean {
   return mode === 'datetime' || mode === 'datetime-range'
 }
@@ -110,6 +114,9 @@ export class Gregory {
   private selection: DateRange = { from: null, to: null }
   /** Last committed value, restored on Cancel. */
   private committed: DateRange = { from: null, to: null }
+  /** Samostatně vybrané dny v režimu `multiple`, klíčem ISO datum. */
+  private picked = new Map<string, Date>()
+  private pickedCommitted = new Map<string, Date>()
   /** One month anchor per visible panel, always kept in ascending order. */
   private views: Date[] = [today()]
   private preview: Date | null = null
@@ -197,6 +204,7 @@ export class Gregory {
       presets,
       maxSpan: options.maxSpan ?? null,
       allowOpenRange: options.allowOpenRange ?? false,
+      maxSelected: options.maxSelected ?? null,
       timeStep: options.timeStep ?? 5,
       timeUi: options.timeUi ?? 'select',
       ...resolveTimeBounds(options.minTime, options.maxTime),
@@ -246,7 +254,19 @@ export class Gregory {
 
   private toRange(value: RangeValueInput): DateRange {
     if (value === null || value === undefined || value === '') return { from: null, to: null }
-    if (Array.isArray(value)) return { from: parseDate(value[0]), to: parseDate(value[1]) }
+    if (Array.isArray(value)) {
+      // V režimu multiple je pole seznamem dnů, ne dvojicí konců.
+      if (isMultiMode(this.options.mode)) {
+        this.picked = new Map()
+        for (const item of value) {
+          const parsed = parseDate(item)
+          if (parsed) this.picked.set(formatISODate(parsed), startOfDay(parsed))
+        }
+        const sorted = this.sortedPicked()
+        return { from: sorted[0] ?? null, to: sorted[sorted.length - 1] ?? null }
+      }
+      return { from: parseDate(value[0]), to: parseDate(value[1]) }
+    }
     if (typeof value === 'object' && !(value instanceof Date)) {
       return { from: parseDate(value.from), to: parseDate(value.to) }
     }
@@ -259,20 +279,25 @@ export class Gregory {
     return { from: parsed, to: isRangeMode(this.options.mode) ? null : parsed }
   }
 
+  private sortedPicked(source = this.picked): Date[] {
+    return [...source.values()].sort((a, b) => a.getTime() - b.getTime())
+  }
+
   /** Shapes a range as the public value: a `Date` in single modes. */
-  private valueOf(range: DateRange): GregoryValue {
+  private valueOf(range: DateRange, picked = this.picked): GregoryValue {
+    if (isMultiMode(this.options.mode)) return this.sortedPicked(picked)
     if (isRangeMode(this.options.mode)) return { ...range }
     return range.from ? new Date(range.from.getTime()) : null
   }
 
   /** The committed value: a `Date` in single modes, a `DateRange` in range modes. */
   getValue(): GregoryValue {
-    return this.valueOf(this.committed)
+    return this.valueOf(this.committed, this.pickedCommitted)
   }
 
   /** What `change` reports — the working selection, committed or not. */
   private selectedValue(): GregoryValue {
-    return this.valueOf(this.selection)
+    return this.valueOf(this.selection, this.picked)
   }
 
   /** The in-progress selection, which may be half-finished in range modes. */
@@ -286,6 +311,7 @@ export class Gregory {
   }
 
   clear({ silent = false } = {}): void {
+    this.picked.clear()
     this.assign({ from: null, to: null }, { commit: true, silent })
     this.render()
   }
@@ -300,6 +326,7 @@ export class Gregory {
     }
     if (commit) {
       this.committed = { ...range }
+      this.pickedCommitted = new Map(this.picked)
       this.syncInput()
     }
     if (!silent) {
@@ -316,6 +343,7 @@ export class Gregory {
    */
   private isCommittable(): boolean {
     const { from, to } = this.selection
+    if (isMultiMode(this.options.mode)) return this.picked.size > 0 || this.pickedCommitted.size > 0
     if (!isRangeMode(this.options.mode)) return from !== null
     return from !== null || to !== null
   }
@@ -326,6 +354,7 @@ export class Gregory {
    */
   private normalisedSelection(): DateRange {
     const { from, to } = this.selection
+    if (isMultiMode(this.options.mode)) return { from, to }
     if (!isRangeMode(this.options.mode) || this.options.allowOpenRange) return { from, to }
     if (from && !to) return { from, to: new Date(from.getTime()) }
     if (!from && to) return { from: new Date(to.getTime()), to }
@@ -334,6 +363,9 @@ export class Gregory {
 
   /** Both ends picked — the only case where autoApply may close the panel. */
   private isFullyPicked(): boolean {
+    // V multiple režimu není „hotovo" — seznam se pořád doplňuje, takže
+    // autoApply nesmí panel zavřít po prvním kliknutí.
+    if (isMultiMode(this.options.mode)) return false
     if (!isRangeMode(this.options.mode)) return this.selection.from !== null
     return this.selection.from !== null && this.selection.to !== null
   }
@@ -344,6 +376,14 @@ export class Gregory {
 
     const { from, to } = this.committed
     const time = hasTime(mode)
+
+    if (isMultiMode(mode)) {
+      // Dlouhý seznam by se do pole nevešel, takže se za třetím dnem zkrátí.
+      const dates = this.sortedPicked(this.pickedCommitted)
+      if (!dates.length) return ''
+      const shown = dates.slice(0, 3).map((date) => locale.formatDate(date, false))
+      return dates.length > 3 ? `${shown.join(', ')} +${dates.length - 3}` : shown.join(', ')
+    }
 
     if (!isRangeMode(mode)) return from ? locale.formatDate(from, time) : ''
     // A range open at one end reads as "od 1. 8." / "do 1. 8.".
@@ -490,6 +530,7 @@ export class Gregory {
   apply(): void {
     this.selection = this.normalisedSelection()
     this.committed = { ...this.selection }
+    this.pickedCommitted = new Map(this.picked)
     this.syncInput()
     this.emitter.emit('apply', { value: this.getValue() })
     this.close()
@@ -498,6 +539,7 @@ export class Gregory {
 
   cancel(): void {
     this.selection = { ...this.committed }
+    this.picked = new Map(this.pickedCommitted)
     this.preview = null
     this.emitter.emit('cancel', { value: this.getValue() })
     this.close()
@@ -1069,6 +1111,10 @@ export class Gregory {
       this.pickWeek(this.weekStartOf(date))
       return
     }
+    if (isMultiMode(this.options.mode)) {
+      this.togglePicked(date)
+      return
+    }
 
     if (!isRangeMode(this.options.mode)) {
       this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from)), to: null }
@@ -1165,6 +1211,31 @@ export class Gregory {
     return startOfWeek(date, this.options.firstDayOfWeek)
   }
 
+  /** Přidá nebo odebere den ze seznamu v režimu `multiple`. */
+  private togglePicked(date: Date): void {
+    const key = formatISODate(date)
+    const { maxSelected } = this.options
+
+    if (this.picked.has(key)) this.picked.delete(key)
+    else {
+      if (maxSelected !== null && this.picked.size >= maxSelected) return
+      this.picked.set(key, startOfDay(date))
+    }
+
+    const sorted = this.sortedPicked()
+    this.selection = { from: sorted[0] ?? null, to: sorted[sorted.length - 1] ?? null }
+    this.focusedDay = date
+    this.preview = null
+
+    if (this.options.autoApply) {
+      this.committed = { ...this.selection }
+      this.pickedCommitted = new Map(this.picked)
+      this.syncInput()
+    }
+    this.emitter.emit('change', { value: this.selectedValue(), complete: false })
+    this.render()
+  }
+
   /** Drops one end of the range, keeping the other one whichever side it sits on. */
   private openRange(side: 'start' | 'end'): void {
     const { from, to } = this.selection
@@ -1193,6 +1264,10 @@ export class Gregory {
       maxSpan: isRangeMode(this.options.mode) ? this.options.maxSpan : null,
       openEnded: isRangeMode(this.options.mode) && this.options.allowOpenRange,
       previewRange: this.previewWeek,
+      picked: isMultiMode(this.options.mode) ? new Set(this.picked.keys()) : undefined,
+      // V multiple režimu se dny nespojují do rozsahu, i když si picker krajní
+      // hodnoty drží kvůli listování a fokusu.
+      ...(isMultiMode(this.options.mode) ? { selection: { from: null, to: null } } : {}),
       isDisabled: this.options.isDisabled,
       dayClass: this.options.dayClass,
     }
@@ -1521,6 +1596,12 @@ export class Gregory {
 
     const time = hasTime(mode)
     const { from, to } = this.selection
+
+    if (isMultiMode(mode)) {
+      const count = this.picked.size
+      return count ? locale.formatDayCount(count) : locale.labels.nothingSelected
+    }
+
     if (!from && !to) return locale.labels.nothingSelected
     if (!isRangeMode(mode)) return from ? locale.formatDate(from, time) : locale.labels.nothingSelected
     if (!from) return `${locale.labels.until} ${locale.formatDate(to!, time)}`

@@ -54,6 +54,8 @@ export interface MonthContext {
   openEnded?: boolean | undefined
   /** Overrides the painted range, e.g. the week under the cursor. */
   previewRange?: DateRange | null | undefined
+  /** Samostatně vybrané dny v režimu `multiple`, jako ISO klíče. */
+  picked?: ReadonlySet<string> | undefined
   isDisabled?: ((date: Date) => boolean) | undefined
   dayClass?: ((date: Date) => string | null | undefined) | undefined
   /** Overrides "today", so tests do not depend on the clock. */
@@ -118,13 +120,16 @@ export function buildMonth(year: number, month: number, context: MonthContext): 
     const days: DayCell[] = []
     for (let index = 0; index < 7; index += 1) {
       const date = addDays(gridStart, week * 7 + index)
+      const iso = formatISODate(date)
       const weekday = date.getDay()
-      const rangeStart = isSameDay(date, range.from)
-      const rangeEnd = isSameDay(date, range.to)
+      // V režimu multiple není rozsah, jen seznam samostatných dnů.
+      const isPicked = context.picked?.has(iso) ?? false
+      const rangeStart = isPicked || isSameDay(date, range.from)
+      const rangeEnd = isPicked || isSameDay(date, range.to)
 
       days.push({
         date,
-        iso: formatISODate(date),
+        iso,
         outside: date.getMonth() !== month,
         isToday: isSameDay(date, now),
         disabled: isDayDisabled(date, context),

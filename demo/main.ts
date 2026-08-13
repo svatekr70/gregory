@@ -10,10 +10,11 @@ const show = (id: string, value: GregoryValue): void => {
     target.textContent = '—'
     return
   }
-  target.textContent =
-    value instanceof Date
-      ? formatISODate(value)
-      : `${value.from ? formatISODate(value.from) : '?'} → ${value.to ? formatISODate(value.to) : '?'}`
+  if (value instanceof Date) target.textContent = formatISODate(value)
+  else if (Array.isArray(value)) target.textContent = value.map(formatISODate).join(', ')
+  else {
+    target.textContent = `${value.from ? formatISODate(value.from) : '?'} → ${value.to ? formatISODate(value.to) : '?'}`
+  }
 }
 
 const range = new Gregory('#range', {
