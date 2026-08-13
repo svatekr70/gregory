@@ -278,7 +278,8 @@ header {
 
 /* ------------------------------------------------------------- sections */
 
-section {
+/* Jen sekce stránky — ne každý <section> na stránce, komponenty mají svoje. */
+.wrap > section {
   padding: 52px 0;
 }
 

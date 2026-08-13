@@ -66,7 +66,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `linkedCalendars` | `false` | listovat všemi panely najednou místo každým zvlášť |
 | `weekNumbers` | `false` | sloupec s ISO čísly týdnů |
 | `weekSelection` | `'off'` | výběr celého týdne: `'number'` klikem na číslo týdne, `'day'` klikem na kterýkoli den, `'both'` obojí |
-| `dropdowns` | `false` | `<select>` pro měsíc a rok |
+| `dropdowns` | `false` | výběr měsíce a roku: `true` nativní `<select>`, `'menu'` seznam po kliknutí na caption |
 | `inline` | `false` | vykreslit na místo místo popoveru |
 | `autoApply` | `true` jen v módu `date` | potvrdit hned, bez tlačítek Apply/Cancel |
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |

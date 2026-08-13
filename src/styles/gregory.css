@@ -42,6 +42,30 @@
   box-sizing: inherit;
 }
 
+/*
+ * Komponenta nesmí záviset na tom, jak si hostitelská stránka stylizuje
+ * section, header, footer a spol. — takové pravidlo by prosáklo dovnitř
+ * panelu. `:where()` má nulovou specificitu, takže konkrétní pravidla níž
+ * mají přednost bez ohledu na pořadí.
+ */
+.gr :where(section, header, footer, aside, div, span, p, ul, li, button, select, input) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: none;
+  /*
+   * Bez text-align — tlačítka mají od prohlížeče vycentrovaný obsah a přepsat
+   * ho na `inherit` by čísla dnů zarovnalo doleva.
+   */
+}
+
 .gr[hidden] {
   display: none;
 }
@@ -92,13 +116,20 @@
 .gr-calendars {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
   padding: 12px;
 }
 
 .gr-calendar {
+  position: relative;
   flex: 1;
   min-width: 240px;
+}
+
+/* Oddělovač mezi měsíci. Mezera je souměrná: gap zleva, padding zprava. */
+.gr-calendar + .gr-calendar {
+  padding-left: 16px;
+  border-left: 1px solid var(--gr-border);
 }
 
 .gr-head {
@@ -129,6 +160,83 @@
   background: var(--gr-bg);
   color: inherit;
   font: inherit;
+}
+
+/* Caption jako dvě tlačítka (dropdowns: 'menu'). */
+.gr-caption-menu {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.gr-caption-btn {
+  padding: 2px 7px;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.gr-caption-btn:hover,
+.gr-caption-btn[aria-expanded="true"] {
+  background: var(--gr-hover);
+}
+
+.gr-caption-btn::after {
+  content: " ▾";
+  color: var(--gr-muted);
+  font-size: 0.75em;
+}
+
+.gr-menu {
+  position: absolute;
+  z-index: 3;
+  top: 34px;
+  display: grid;
+  gap: 1px;
+  max-height: 232px;
+  min-width: 8.5em;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--gr-border);
+  border-radius: var(--gr-radius);
+  background: var(--gr-bg);
+  box-shadow: var(--gr-shadow);
+}
+
+.gr-menu[data-kind="month"] {
+  left: 8px;
+}
+
+.gr-menu[data-kind="year"] {
+  right: 8px;
+}
+
+.gr-menu-item {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-transform: capitalize;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gr-menu-item:hover {
+  background: var(--gr-hover);
+}
+
+.gr-menu-item.is-current {
+  background: var(--gr-accent);
+  color: var(--gr-accent-fg);
+  font-weight: 600;
 }
 
 .gr-nav {
@@ -202,6 +310,8 @@
 }
 
 .gr-day {
+  display: grid;
+  place-items: center;
   aspect-ratio: 1;
   min-width: 32px;
   padding: 0;
@@ -211,11 +321,25 @@
   color: inherit;
   font: inherit;
   font-variant-numeric: tabular-nums;
+  text-align: center;
   cursor: pointer;
 }
 
-.gr-day:hover:not(:disabled) {
+/*
+ * Zvýraznění pod myší nesmí přebít stav dne. Dřív se vybranému dni podložilo
+ * světlé pozadí, ale text zůstal bílý — číslo bylo nečitelné.
+ */
+.gr-day:hover:not(:disabled):not(.is-selected):not(.is-in-range) {
   background: var(--gr-hover);
+}
+
+.gr-day.is-in-range:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gr-range-bg) 82%, var(--gr-accent));
+}
+
+.gr-day.is-selected:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gr-accent) 85%, #000);
+  color: var(--gr-accent-fg);
 }
 
 .gr-day:focus-visible {
@@ -337,6 +461,7 @@ div.gr-time {
   border: 1px solid transparent;
   border-radius: var(--gr-radius-day);
   font: inherit;
+  text-align: center;
   cursor: pointer;
 }
 

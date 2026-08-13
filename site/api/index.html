@@ -146,7 +146,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>linkedCalendars</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Listovat všemi panely najednou místo každým zvlášť.</td></tr>
           <tr><td><code>weekNumbers</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Sloupec s ISO čísly týdnů.</td></tr>
           <tr><td><code>weekSelection</code></td><td><code>'off' | 'number' | 'day' | 'both'</code></td><td><code>'off'</code></td><td>Výběr celého týdne jedním klikem.</td></tr>
-          <tr><td><code>dropdowns</code></td><td><code>boolean</code></td><td><code>false</code></td><td><code>&lt;select&gt;</code> pro měsíc a rok.</td></tr>
+          <tr><td><code>dropdowns</code></td><td><code>boolean | 'menu'</code></td><td><code>false</code></td><td>Výběr měsíce a roku: nativní <code>&lt;select&gt;</code>, nebo seznam otevřený klikem na caption.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
@@ -253,6 +253,34 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>dropdowns</code></h3>
+
+      <p>Bez této volby je v hlavičce jen text „srpen 2026". Zapnout jde dvěma
+        způsoby:</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hodnota</th><th>Hlavička</th></tr></thead>
+        <tbody>
+          <tr><td><code>false</code></td><td>Výchozí. Jen titulek a šipky.</td></tr>
+          <tr><td><code>true</code></td><td>Dva nativní <code>&lt;select&gt;</code>y, trvale viditelné.</td></tr>
+          <tr><td><code>'menu'</code></td><td>Titulek zůstane, ale měsíc a rok jsou tlačítka — klik na ně vyroluje seznam.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  dropdowns: <span class="s">'menu'</span>,
+})</pre>
+
+      <p>Seznam roků se řídí <code>min</code> a <code>max</code>, jinak sahá deset let
+        na obě strany, a otevře se rovnou na zobrazeném roce. Zavře ho druhý klik na
+        stejné tlačítko, klik kamkoli jinam v panelu, nebo Escape — ten nejdřív
+        zavře seznam a teprve podruhé celý picker.</p>
+
+      <p>Výběr ze seznamu jde stejnou cestou jako šipky, takže respektuje
+        <code>linkedCalendars</code> i pořadí panelů. Každý panel má vlastní seznam.</p>
 
       <h3><code>weekSelection</code></h3>
 
@@ -680,7 +708,9 @@ odhlasit()</pre>
           <tr><td><code>.gr-presets</code>, <code>.gr-preset</code></td><td>Postranní panel a jeho tlačítka.</td></tr>
           <tr><td><code>.gr-calendars</code>, <code>.gr-calendar</code></td><td>Obal měsíců a jeden měsíc.</td></tr>
           <tr><td><code>.gr-head</code>, <code>.gr-nav</code>, <code>.gr-caption</code></td><td>Hlavička s šipkami a titulkem.</td></tr>
-          <tr><td><code>.gr-select</code></td><td>Dropdown měsíce a roku.</td></tr>
+          <tr><td><code>.gr-select</code></td><td>Nativní dropdown měsíce a roku (<code>dropdowns: true</code>).</td></tr>
+          <tr><td><code>.gr-caption-btn</code></td><td>Měsíc a rok jako tlačítka (<code>dropdowns: 'menu'</code>).</td></tr>
+          <tr><td><code>.gr-menu</code>, <code>.gr-menu-item</code></td><td>Vyrolovaný seznam; aktuální položka má <code>.is-current</code>.</td></tr>
           <tr><td><code>.gr-grid</code></td><td>Mřížka dnů, <code>role="grid"</code>.</td></tr>
           <tr><td><code>.gr-weekday</code>, <code>.gr-weeknum</code></td><td>Záhlaví dnů a sloupec čísel týdnů.</td></tr>
           <tr><td><code>.gr-weeknum-button</code></td><td>Číslo týdne při zapnutém <code>selectableWeeks</code>.</td></tr>
@@ -754,8 +784,20 @@ odhlasit()</pre>
         neposkakuje. Přebytečné dny mají <code>.is-outside</code>.</p>
 
       <h3>Vykreslování</h3>
-      <p>Panel se při každé změně staví znovu přes <code>replaceChildren()</code>.
-        Žádný diffing — u 42 buněk na měsíc je to rychlejší než ho udržovat.</p>
+      <p>Panel se při změně stavu staví znovu přes <code>replaceChildren()</code>.
+        Žádný diffing — u 42 buněk na měsíc je to rychlejší než ho udržovat.
+        Výjimkou je náhled pod myší, který jen přepíná třídy na existujících
+        tlačítkách: přestavět DOM pod kurzorem znamená ztracené kliknutí, protože
+        prohlížeč vyvolá <code>click</code> jen tehdy, když stisk i puštění skončí
+        na tomtéž prvku.</p>
+
+      <h3>Odolnost vůči stylům stránky</h3>
+      <p>Panel používá běžné značky (<code>section</code>, <code>header</code>,
+        <code>footer</code>, <code>button</code>), takže si je hned na začátku
+        vynuluje pravidlem s nulovou specificitou přes <code>:where()</code>.
+        Globální <code>section { padding: 52px 0 }</code> na hostitelské stránce
+        tak panel nerozhodí, a přitom stačí přepsat kteroukoli vlastnost bez
+        souboje o specificitu.</p>
 
     </article>
   </div>

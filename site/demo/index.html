@@ -124,8 +124,14 @@
                 <option value="both">both — obojí</option>
               </select>
             </label>
-            <label class="switch"><input type="checkbox" id="opt-dropdowns">
-              <span>Výběr měsíce a roku <code>dropdowns</code></span></label>
+            <label class="field">
+              <span>Výběr měsíce a roku <code>dropdowns</code></span>
+              <select id="opt-dropdowns">
+                <option value="off" selected>vypnuto</option>
+                <option value="select">true — nativní selecty</option>
+                <option value="menu">menu — klikem na měsíc / rok</option>
+              </select>
+            </label>
             <label class="switch"><input type="checkbox" id="opt-autoapply">
               <span>Potvrdit hned, bez tlačítek <code>autoApply</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-inline">

@@ -67,7 +67,7 @@ const controls = {
   presets: $<HTMLInputElement>('#opt-presets'),
   weekNumbers: $<HTMLInputElement>('#opt-weeknumbers'),
   weekSelection: $<HTMLSelectElement>('#opt-weekselection'),
-  dropdowns: $<HTMLInputElement>('#opt-dropdowns'),
+  dropdowns: $<HTMLSelectElement>('#opt-dropdowns'),
   autoApply: $<HTMLInputElement>('#opt-autoapply'),
   inline: $<HTMLInputElement>('#opt-inline'),
   weekends: $<HTMLInputElement>('#opt-weekends'),
@@ -97,7 +97,8 @@ function readOptions(): GregoryOptions & { mode: Mode } {
     presets: controls.presets.checked,
     weekNumbers: controls.weekNumbers.checked,
     weekSelection: controls.weekSelection.value as WeekSelection,
-    dropdowns: controls.dropdowns.checked,
+    dropdowns:
+      controls.dropdowns.value === 'menu' ? 'menu' : controls.dropdowns.value === 'select' ? true : false,
     autoApply: controls.autoApply.checked,
     inline: controls.inline.checked,
     ...(controls.weekends.checked
@@ -125,7 +126,8 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
   if (options.presets !== range) lines.push(`presets: ${options.presets}`)
   if (options.weekNumbers) lines.push('weekNumbers: true')
   if (options.weekSelection && options.weekSelection !== 'off') lines.push(`weekSelection: '${options.weekSelection}'`)
-  if (options.dropdowns) lines.push('dropdowns: true')
+  if (options.dropdowns === 'menu') lines.push("dropdowns: 'menu'")
+  else if (options.dropdowns) lines.push('dropdowns: true')
   if (options.autoApply !== (options.mode === 'date')) lines.push(`autoApply: ${options.autoApply}`)
   if (options.inline) lines.push('inline: true')
   if (controls.weekends.checked) lines.push('isDisabled: (d) => d.getDay() === 0 || d.getDay() === 6')

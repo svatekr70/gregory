@@ -100,6 +100,8 @@ export class Gregory {
   private preview: Date | null = null
   /** Whole week under the cursor, used by the week-picking modes. */
   private previewWeek: DateRange | null = null
+  /** Which caption list is unrolled, if any. */
+  private openMenu: { kind: 'month' | 'year'; index: number } | null = null
   /** `panelIndex:iso` → day button, so hover can restyle without rebuilding. */
   private dayCells = new Map<string, HTMLButtonElement>()
   private focusedDay: Date = today()
@@ -160,7 +162,7 @@ export class Gregory {
       linkedCalendars: options.linkedCalendars ?? false,
       weekNumbers: options.weekNumbers ?? false,
       weekSelection: options.weekSelection ?? 'off',
-      dropdowns: options.dropdowns ?? false,
+      dropdowns: options.dropdowns === true ? 'select' : (options.dropdowns ?? false),
       inline: options.inline ?? false,
       // Only a plain date is complete on the first click. A range still needs its
       // second bound and a datetime still needs its time, so both keep Apply.
@@ -186,8 +188,9 @@ export class Gregory {
   }
 
   private optionsAsInput(): GregoryOptions {
-    const { locale, presets, ...rest } = this.options
-    return { ...rest, locale, presets }
+    const { locale, presets, dropdowns, ...rest } = this.options
+    // `'select'` is the resolved form of the input value `true`.
+    return { ...rest, locale, presets, dropdowns: dropdowns === 'select' ? true : dropdowns }
   }
 
   // ------------------------------------------------------------------ value
@@ -338,6 +341,7 @@ export class Gregory {
     this.element.hidden = true
     this.preview = null
     this.previewWeek = null
+    this.openMenu = null
     document.removeEventListener('mousedown', this.onDocumentDown, true)
     document.removeEventListener('keydown', this.onDocumentKeydown, true)
     this.emitter.emit('close', { value: this.getValue() })
@@ -441,20 +445,55 @@ export class Gregory {
   }
 
   private onDocumentKeydown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') {
-      event.stopPropagation()
-      this.cancel()
-      this.returnFocus()
+    if (event.key !== 'Escape') return
+    event.stopPropagation()
+
+    // Escape closes the caption list first, the whole panel only after that.
+    if (this.openMenu) {
+      this.openMenu = null
+      this.render()
+      return
     }
+    this.cancel()
+    this.returnFocus()
   }
 
   private onPanelClick = (event: MouseEvent): void => {
     const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-action]')
+
+    // Any click that is not on the open list itself puts it away again.
+    if (this.openMenu && !target?.dataset.action?.startsWith('menu-')) {
+      this.openMenu = null
+      this.render()
+      if (!target) return
+    }
     if (!target) return
     event.preventDefault()
 
     const { action, value } = target.dataset
+    const panel = Number(target.dataset.index ?? 0)
     switch (action) {
+      case 'menu-month':
+      case 'menu-year': {
+        const kind = action === 'menu-month' ? 'month' : 'year'
+        this.openMenu = this.isMenuOpen(kind, panel) ? null : { kind, index: panel }
+        this.render()
+        break
+      }
+      case 'menu-pick-month': {
+        const view = this.views[panel]
+        this.openMenu = null
+        if (view) this.shiftMonth(panel, Number(value) - view.getMonth())
+        else this.render()
+        break
+      }
+      case 'menu-pick-year': {
+        const view = this.views[panel]
+        this.openMenu = null
+        if (view) this.shiftMonth(panel, (Number(value) - view.getFullYear()) * 12)
+        else this.render()
+        break
+      }
       case 'prev':
         this.shiftMonth(Number(target.dataset.index ?? 0), -1)
         break
@@ -893,7 +932,11 @@ export class Gregory {
 
       head.append(
         showPrev ? arrow('prev') : h('span', { class: 'gr-nav gr-nav-placeholder', 'aria-hidden': 'true' }),
-        dropdowns ? this.renderDropdowns(anchor, offset) : h('div', { class: 'gr-caption' }, [view.label]),
+        dropdowns === 'select'
+          ? this.renderDropdowns(anchor, offset)
+          : dropdowns === 'menu'
+            ? this.renderCaptionButtons(anchor, offset)
+            : h('div', { class: 'gr-caption' }, [view.label]),
         showNext ? arrow('next') : h('span', { class: 'gr-nav gr-nav-placeholder', 'aria-hidden': 'true' }),
       )
 
@@ -932,7 +975,10 @@ export class Gregory {
         }
       }
 
-      calendars.append(h('section', { class: 'gr-calendar' }, [head, grid]))
+      const section = h('section', { class: 'gr-calendar' }, [head, grid])
+      const menu = dropdowns === 'menu' ? this.renderMenu(anchor, offset) : null
+      if (menu) section.append(menu)
+      calendars.append(section)
     }
 
     const body = h('div', { class: 'gr-body' }, [calendars])
@@ -953,6 +999,8 @@ export class Gregory {
 
     this.element.replaceChildren(...children)
     if (this.open && !this.options.inline) this.position()
+    // A year list can be long; start it on the year that is showing.
+    this.element.querySelector('.gr-menu-item.is-current')?.scrollIntoView({ block: 'nearest' })
   }
 
   private renderWeekNumber(week: WeekRow): HTMLElement {
@@ -972,6 +1020,72 @@ export class Gregory {
       },
       [label],
     )
+  }
+
+  /** Caption whose month and year open a list instead of being a `<select>`. */
+  private renderCaptionButtons(anchor: Date, panelIndex: number): HTMLElement {
+    const { locale } = this.options
+    const caption = h('div', { class: 'gr-caption gr-caption-menu' })
+    const monthName = locale.monthNames()[anchor.getMonth()] ?? ''
+
+    const trigger = (kind: 'month' | 'year', label: string): HTMLElement =>
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'gr-caption-btn',
+          'data-action': kind === 'month' ? 'menu-month' : 'menu-year',
+          'data-index': panelIndex,
+          'aria-haspopup': 'listbox',
+          'aria-expanded': this.isMenuOpen(kind, panelIndex) ? 'true' : 'false',
+        },
+        [label],
+      )
+
+    caption.append(trigger('month', monthName), trigger('year', String(anchor.getFullYear())))
+    return caption
+  }
+
+  private isMenuOpen(kind: 'month' | 'year', panelIndex: number): boolean {
+    return this.openMenu?.kind === kind && this.openMenu.index === panelIndex
+  }
+
+  /** The list that drops out of the caption. */
+  private renderMenu(anchor: Date, panelIndex: number): HTMLElement | null {
+    if (!this.openMenu || this.openMenu.index !== panelIndex) return null
+    const { locale, min, max } = this.options
+    const { kind } = this.openMenu
+
+    const menu = h('div', { class: 'gr-menu', role: 'listbox', 'data-kind': kind })
+    const item = (value: number, label: string, current: boolean): HTMLElement =>
+      h(
+        'button',
+        {
+          type: 'button',
+          class: current ? 'gr-menu-item is-current' : 'gr-menu-item',
+          role: 'option',
+          'aria-selected': String(current),
+          'data-action': kind === 'month' ? 'menu-pick-month' : 'menu-pick-year',
+          'data-index': panelIndex,
+          'data-value': value,
+        },
+        [label],
+      )
+
+    if (kind === 'month') {
+      locale.monthNames().forEach((name, index) => {
+        menu.append(item(index, name, index === anchor.getMonth()))
+      })
+    } else {
+      const current = anchor.getFullYear()
+      const firstYear = min ? min.getFullYear() : current - 10
+      const lastYear = max ? max.getFullYear() : current + 10
+      for (let year = firstYear; year <= lastYear; year += 1) {
+        menu.append(item(year, String(year), year === current))
+      }
+    }
+
+    return menu
   }
 
   private renderDropdowns(anchor: Date, panelIndex: number): HTMLElement {

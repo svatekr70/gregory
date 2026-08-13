@@ -1044,6 +1044,93 @@ describe('navigation', () => {
     expect(picker.element.querySelector('.gr-caption')?.textContent?.toLowerCase()).toContain('prosinec')
   })
 
+  it('opens a month list from the caption', () => {
+    mount({ mode: 'date', dropdowns: 'menu' })
+    expect(picker.element.querySelector('.gr-menu')).toBeNull()
+
+    picker.element.querySelector<HTMLButtonElement>('[data-action="menu-month"]')!.click()
+
+    const items = picker.element.querySelectorAll('[data-action="menu-pick-month"]')
+    expect(items).toHaveLength(12)
+    expect(picker.element.querySelector('[data-action="menu-month"]')?.getAttribute('aria-expanded')).toBe('true')
+
+    picker.element.querySelector<HTMLButtonElement>('[data-value="11"][data-action="menu-pick-month"]')!.click()
+
+    expect(captions()[0]?.toLowerCase()).toContain('prosinec')
+    expect(picker.element.querySelector('.gr-menu')).toBeNull()
+  })
+
+  it('opens a year list from the caption', () => {
+    mount({ mode: 'date', dropdowns: 'menu', min: '2025-01-01', max: '2027-12-31' })
+
+    picker.element.querySelector<HTMLButtonElement>('[data-action="menu-year"]')!.click()
+
+    const years = [...picker.element.querySelectorAll('[data-action="menu-pick-year"]')].map(
+      (item) => item.textContent,
+    )
+    expect(years).toEqual(['2025', '2026', '2027'])
+
+    picker.element.querySelector<HTMLButtonElement>('[data-value="2027"][data-action="menu-pick-year"]')!.click()
+
+    expect(captions()[0]).toContain('2027')
+  })
+
+  it('marks the month and year that are showing', () => {
+    mount({ mode: 'date', dropdowns: 'menu' })
+    picker.element.querySelector<HTMLButtonElement>('[data-action="menu-month"]')!.click()
+
+    const current = picker.element.querySelector('.gr-menu-item.is-current')
+    expect(current?.getAttribute('data-value')).toBe('7')
+    expect(current?.getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('closes the list on a second click, on Escape and on a click elsewhere', () => {
+    const trigger = () => picker.element.querySelector<HTMLButtonElement>('[data-action="menu-month"]')!
+    mount({ mode: 'date', dropdowns: 'menu' })
+
+    trigger().click()
+    trigger().click()
+    expect(picker.element.querySelector('.gr-menu')).toBeNull()
+
+    trigger().click()
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(picker.element.querySelector('.gr-menu')).toBeNull()
+    // The panel itself stays open — Escape only put the list away.
+    expect(picker.element.hidden).toBe(false)
+
+    trigger().click()
+    picker.element.querySelector<HTMLButtonElement>('[data-action="next"]')!.click()
+    expect(picker.element.querySelector('.gr-menu')).toBeNull()
+  })
+
+  it('keeps each panel list independent', () => {
+    mount({ mode: 'range', presets: false, dropdowns: 'menu' })
+
+    picker.element.querySelector<HTMLButtonElement>('[data-action="menu-month"][data-index="1"]')!.click()
+
+    const menus = picker.element.querySelectorAll('.gr-menu')
+    expect(menus).toHaveLength(1)
+    expect(menus[0]?.closest('.gr-calendar')).toBe(picker.element.querySelectorAll('.gr-calendar')[1])
+  })
+
+  it('respects linked calendars when picking from the list', () => {
+    mount({ mode: 'range', presets: false, dropdowns: 'menu', linkedCalendars: true })
+
+    picker.element.querySelector<HTMLButtonElement>('[data-action="menu-month"][data-index="0"]')!.click()
+    picker.element
+      .querySelector<HTMLButtonElement>('[data-action="menu-pick-month"][data-value="9"]')!
+      .click()
+
+    expect(captions()[0]?.toLowerCase()).toContain('říjen')
+    expect(captions()[1]?.toLowerCase()).toContain('listopad')
+  })
+
+  it('renders native selects for dropdowns: true', () => {
+    mount({ mode: 'date', dropdowns: true })
+    expect(picker.element.querySelector('[data-action="select-month"]')).not.toBeNull()
+    expect(picker.element.querySelector('[data-action="menu-month"]')).toBeNull()
+  })
+
   it('limits the year dropdown to the min/max window', () => {
     mount({ mode: 'date', dropdowns: true, min: '2025-01-01', max: '2027-12-31' })
     const options = picker.element.querySelectorAll('[data-action="select-year"] option')

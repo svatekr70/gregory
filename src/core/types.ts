@@ -94,8 +94,12 @@ export interface GregoryOptions {
    * week, `'both'` offers both. Range modes only.
    */
   weekSelection?: WeekSelection
-  /** Month/year `<select>`s in the panel header. */
-  dropdowns?: boolean
+  /**
+   * Month and year navigation in the panel header. `true` renders native
+   * `<select>`s, `'menu'` keeps the plain caption and opens a list when the
+   * month or the year is clicked.
+   */
+  dropdowns?: boolean | 'menu'
   /** Render the panel in place instead of a popover attached to an input. */
   inline?: boolean
   /** Commit on the last click instead of showing Apply/Cancel. */
@@ -138,7 +142,7 @@ export interface ResolvedOptions {
   linkedCalendars: boolean
   weekNumbers: boolean
   weekSelection: WeekSelection
-  dropdowns: boolean
+  dropdowns: false | 'select' | 'menu'
   inline: boolean
   autoApply: boolean
   presets: RangePreset[]
