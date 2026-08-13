@@ -1,20 +1,45 @@
 # Gregory
 
-Rychlý date / range / datetime picker bez závislostí. Jedno jádro, dvě API:
-obyčejná JS třída pro imperativní použití a `<gregory-picker>` pro deklarativní.
+Picker data, rozsahu dat, času a období pro obyčejné weby. Vznikl z otravné
+situace, kterou zná asi každý, kdo spravuje víc než jeden projekt: tady jQuery
+daterangepicker, tam nativní `<input type="date">`, jinde něco třetího. Každý
+vypadá jinak, jinak se ovládá a jinak vrací hodnotu. Gregory je jedna
+komponenta, která to všechno zvládne — bez jediné runtime závislosti a bez
+toho, aby si diktovala, jakým frameworkem je stránka postavená.
 
-- **~17 kB gzip** JavaScriptu a 2,6 kB stylů, žádné runtime závislosti
-- **framework-agnostický** — funguje ve staré jQuery aplikaci i v Reactu
-- **rozsahy dat** s presety, `minSpan`/`maxSpan`, náhledem při přejíždění myší
-- **čas** (`datetime`, `datetime-range`), čísla týdnů, dropdowny měsíc/rok
-- **lokalizace přes `Intl`** — měsíce a formáty pro jakýkoli jazyk,
-  popisky pro cs, sk, de, pl, en, es, fr, it (další jde doplnit)
-- **klávesnice** — šipky, PageUp/PageDown, Enter, Escape
-- **témata přes CSS proměnné**, světlé i tmavé
+```js
+const picker = new Gregory('#termin', { mode: 'range', locale: 'cs' })
+picker.on('apply', ({ value }) => console.log(value.from, value.to))
+```
 
-Dokumentace: [uživatelská příručka](site/guide/index.html) na nasazení krok za
-krokem, [API reference](site/api/index.html) na úplný výčet voleb a
-[demo](site/demo/index.html) s konfigurátorem.
+Do pole se napíše `10.–16. 8. 2026`, ven vypadnou dva obyčejné `Date`. Žádné
+momenty, žádné řetězce, které se pak musí luštit.
+
+## Proč zrovna tenhle
+
+- **Osm režimů, jedno API.** Jedno datum, rozsah, datum s časem, rozsah
+  s časem, seznam samostatných dnů, měsíc, čtvrtletí, rok. Přepíná se jedinou
+  volbou `mode`, zbytek zůstává stejný.
+- **~17 kB gzip** JavaScriptu a 2,6 kB stylů. Žádné závislosti — ani jQuery,
+  ani knihovna na práci s daty.
+- **Funguje všude.** Ve staré jQuery aplikaci stejně jako v Reactu; vedle třídy
+  je i custom element `<gregory-picker>` pro deklarativní použití.
+- **Omezení, která dávají smysl v praxi.** `min`/`max`, zakázané dny,
+  nejkratší i nejdelší rozsah, zákaz přeskočit obsazený termín, časové okno
+  zvlášť pro každý den. Co picker nepustí do výběru, to nepustí ani do hodnoty.
+- **Lokalizace přes `Intl`.** Názvy měsíců, formáty a skloňování počtu dnů
+  fungují pro jakýkoli jazyk; popisky tlačítek jsou hotové pro osm z nich.
+- **Vzhled přes CSS proměnné.** Motivy i hustota jsou jen sady `--gr-*`, takže
+  se nikdy nemusíš prát o specificitu. Tmavý režim automaticky.
+- **Ovládání klávesnicí.** Šipky, PageUp/PageDown, Enter, Escape — a datum jde
+  do pole i prostě napsat rukou.
+- **Místní čas, žádná magie.** Datum, na které uživatel klikne, je to datum,
+  které dostaneš. Časové zóny knihovna vědomě neřeší.
+- **300+ testů** ve Vitestu nad jádrem i nad DOM, pokrytí přes 90 % příkazů.
+
+Dokumentace se staví ze složky `site/` (`npm run site:dev`): úvod, demo
+s konfigurátorem, [uživatelská příručka](site/guide/index.html) na nasazení
+krok za krokem a [API reference](site/api/index.html) s úplným výčtem voleb.
 
 ## Instalace
 
@@ -217,6 +242,13 @@ npm run site:build     # statický web do dist-site/
 Web v `site/` importuje knihovnu přímo ze `src/`, takže demo vždy ukazuje
 aktuální kód. `dist-site/` je čistě statický — nahraje se kamkoli.
 
+## Podpora prohlížečů
+
+Moderní evergreen prohlížeče — Chrome a Edge 90+, Firefox 88+, Safari 15+.
+Knihovna se sestavuje na ES2022 a nepoužívá polyfilly. `Intl.Locale#getWeekInfo()`
+(první den v týdnu) zatím neumí každý prohlížeč, takže na něj existuje záložní
+tabulka.
+
 ## Licence
 
-MIT
+MIT © Rudolf Svátek
