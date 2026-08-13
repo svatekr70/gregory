@@ -97,6 +97,8 @@ export class Gregory {
   /** One month anchor per visible panel, always kept in ascending order. */
   private views: Date[] = [today()]
   private preview: Date | null = null
+  /** `panelIndex:iso` → day button, so hover can restyle without rebuilding. */
+  private dayCells = new Map<string, HTMLButtonElement>()
   private focusedDay: Date = today()
   private open = false
   private destroyed = false
@@ -550,8 +552,32 @@ export class Gregory {
     const day = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-action="day"]')
     const hovered = day ? parseDate(day.dataset.value ?? null) : null
     if (isSameDay(hovered, this.preview)) return
+    if (hovered === null && this.preview === null) return
+
     this.preview = hovered
-    this.render()
+    // Only restyle. A full re-render would swap out the node under the cursor,
+    // and a click whose mousedown and mouseup land on different nodes is lost.
+    this.refreshDayStates()
+  }
+
+  /** Re-applies the range classes to the existing day buttons. */
+  private refreshDayStates(): void {
+    const context = this.monthContext()
+    this.views.forEach((anchor, index) => {
+      const view = buildMonth(anchor.getFullYear(), anchor.getMonth(), context)
+      for (const week of view.weeks) {
+        for (const cellData of week.days) {
+          const cell = this.dayCells.get(`${index}:${cellData.iso}`)
+          if (!cell) continue
+          cell.classList.toggle('is-selected', cellData.selected)
+          cell.classList.toggle('is-in-range', cellData.inRange)
+          cell.classList.toggle('is-start', cellData.rangeStart)
+          cell.classList.toggle('is-end', cellData.rangeEnd)
+          cell.disabled = cellData.disabled
+          cell.setAttribute('aria-selected', String(cellData.selected))
+        }
+      }
+    })
   }
 
   private onPanelKeydown = (event: KeyboardEvent): void => {
@@ -799,6 +825,7 @@ export class Gregory {
     // Panel count can change through setOptions; keep the anchors in step.
     if (this.views.length !== months) this.resetViews(this.firstView())
 
+    this.dayCells.clear()
     const calendars = h('div', { class: 'gr-calendars' })
     for (let offset = 0; offset < months; offset += 1) {
       const anchor = this.views[offset] ?? addMonths(this.firstView(), offset)
@@ -844,21 +871,21 @@ export class Gregory {
           if (day.weekend) classes.push('is-weekend')
           if (day.extraClass) classes.push(day.extraClass)
 
-          grid.append(
-            h(
-              'button',
-              {
-                type: 'button',
-                class: classes.join(' '),
-                'data-action': 'day',
-                'data-value': day.iso,
-                disabled: day.disabled,
-                'aria-selected': day.selected,
-                tabindex: isSameDay(day.date, this.focusedDay) && !day.outside ? 0 : -1,
-              },
-              [String(day.date.getDate())],
-            ),
+          const cell = h(
+            'button',
+            {
+              type: 'button',
+              class: classes.join(' '),
+              'data-action': 'day',
+              'data-value': day.iso,
+              disabled: day.disabled,
+              'aria-selected': String(day.selected),
+              tabindex: isSameDay(day.date, this.focusedDay) && !day.outside ? 0 : -1,
+            },
+            [String(day.date.getDate())],
           )
+          this.dayCells.set(`${offset}:${day.iso}`, cell)
+          grid.append(cell)
         }
       }
 
@@ -943,9 +970,11 @@ export class Gregory {
     const actions = h('div', { class: 'gr-actions' })
 
     if (isRangeMode(mode) && this.options.allowOpenRange) {
-      // Each button is disabled once that end is already gone — which also
-      // covers the empty selection, where neither would have anything to keep.
+      // Toggles, not one-shot actions: both stay live from the first picked day
+      // so the open side can be chosen straight away, and the active one is
+      // marked. Disabled only while there is nothing to keep.
       const { from, to } = this.selection
+      const nothingPicked = from === null && to === null
       const openButton = (side: 'start' | 'end'): HTMLElement =>
         h(
           'button',
@@ -953,7 +982,11 @@ export class Gregory {
             type: 'button',
             class: 'gr-btn gr-btn-ghost gr-btn-open',
             'data-action': side === 'start' ? 'open-start' : 'open-end',
-            disabled: side === 'start' ? from === null : to === null,
+            disabled: nothingPicked,
+            // Written as a string: `h()` drops attributes whose value is false.
+            'aria-pressed': (side === 'start' ? from === null && to !== null : from !== null && to === null)
+              ? 'true'
+              : 'false',
           },
           [side === 'start' ? locale.labels.openStart : locale.labels.openEnd],
         )

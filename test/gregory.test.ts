@@ -134,6 +134,51 @@ describe('range mode', () => {
   })
 })
 
+describe('hover preview', () => {
+  const hover = (target: HTMLElement | null): void => {
+    const node = target ?? picker.element.querySelector<HTMLElement>('.gr-foot')!
+    node.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+  }
+
+  it('previews the range without rebuilding the panel', () => {
+    mount({ mode: 'range', presets: false })
+    day('2026-08-10').click()
+
+    const before = day('2026-08-14')
+    const applyBefore = picker.element.querySelector('[data-action="apply"]')
+
+    hover(before)
+
+    // Same nodes — a rebuild here would swap out whatever is under the cursor
+    // and a click straddling it would be lost.
+    expect(day('2026-08-14')).toBe(before)
+    expect(picker.element.querySelector('[data-action="apply"]')).toBe(applyBefore)
+    expect(day('2026-08-12').classList.contains('is-in-range')).toBe(true)
+  })
+
+  it('clears the preview when the pointer leaves the grid', () => {
+    mount({ mode: 'range', presets: false })
+    day('2026-08-10').click()
+
+    hover(day('2026-08-14'))
+    expect(day('2026-08-12').classList.contains('is-in-range')).toBe(true)
+
+    hover(null)
+    expect(day('2026-08-12').classList.contains('is-in-range')).toBe(false)
+  })
+
+  it('survives a click whose target is hovered first', () => {
+    mount({ mode: 'range', presets: false })
+    day('2026-08-10').click()
+
+    const target = day('2026-08-14')
+    target.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+    target.click()
+
+    expect(picker.getSelection().to?.getDate()).toBe(14)
+  })
+})
+
 describe('week selection', () => {
   const weeks = (): HTMLButtonElement[] => [
     ...picker.element.querySelectorAll<HTMLButtonElement>('[data-action="week"]'),
@@ -321,18 +366,61 @@ describe('open ranges', () => {
     expect(value.to?.getDate()).toBe(10)
   })
 
-  it('disables the button for an end that is already gone', () => {
+  it('keeps both toggles live from the first picked day', () => {
     mount({ mode: 'range', presets: false, allowOpenRange: true })
     expect(button('open-start').disabled).toBe(true)
     expect(button('open-end').disabled).toBe(true)
 
     day('2026-08-10').click()
+
+    // One day is enough to declare which side stays open.
     expect(button('open-start').disabled).toBe(false)
-    expect(button('open-end').disabled).toBe(true)
+    expect(button('open-end').disabled).toBe(false)
 
     day('2026-08-14').click()
     expect(button('open-start').disabled).toBe(false)
     expect(button('open-end').disabled).toBe(false)
+  })
+
+  it('marks the side that is currently open', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    day('2026-08-10').click()
+
+    // A lone start already means "from this day onwards".
+    expect(button('open-end').getAttribute('aria-pressed')).toBe('true')
+    expect(button('open-start').getAttribute('aria-pressed')).toBe('false')
+
+    button('open-start').click()
+    expect(button('open-start').getAttribute('aria-pressed')).toBe('true')
+    expect(button('open-end').getAttribute('aria-pressed')).toBe('false')
+
+    // With no start, the next click starts a fresh range rather than closing
+    // the open one — so the range is once again open at the end.
+    day('2026-08-14').click()
+    expect(picker.getSelection().from?.getDate()).toBe(14)
+    expect(button('open-end').getAttribute('aria-pressed')).toBe('true')
+
+    day('2026-08-20').click()
+    expect(button('open-start').getAttribute('aria-pressed')).toBe('false')
+    expect(button('open-end').getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('flips the open side back and forth on a single picked day', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    day('2026-08-10').click()
+
+    button('open-start').click()
+    expect(picker.getSelection().from).toBeNull()
+    expect(picker.getSelection().to?.getDate()).toBe(10)
+
+    button('open-end').click()
+    expect(picker.getSelection().from?.getDate()).toBe(10)
+    expect(picker.getSelection().to).toBeNull()
+
+    picker.apply()
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to).toBeNull()
   })
 
   it('accepts an open range as an input value', () => {

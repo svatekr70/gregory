@@ -367,6 +367,14 @@ div.gr-time {
   cursor: not-allowed;
 }
 
+/* Strana, která je právě otevřená. */
+.gr-btn-open[aria-pressed="true"] {
+  border-color: var(--gr-accent);
+  background: var(--gr-range-bg);
+  color: var(--gr-accent);
+  font-weight: 600;
+}
+
 .gr-btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
