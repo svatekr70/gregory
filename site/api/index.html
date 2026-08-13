@@ -726,6 +726,7 @@ odhlasit()</pre>
           <tr><td><code>--gr-radius</code></td><td><code>10px</code></td><td>Zaoblení panelu.</td></tr>
           <tr><td><code>--gr-radius-day</code></td><td><code>6px</code></td><td>Zaoblení dne a tlačítek.</td></tr>
           <tr><td><code>--gr-gap</code></td><td><code>2px</code></td><td>Mezera v mřížce.</td></tr>
+          <tr><td><code>--gr-day-size</code></td><td><code>34px</code></td><td>Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu.</td></tr>
           <tr><td><code>--gr-bg</code></td><td><code>#fff</code></td><td>Pozadí panelu.</td></tr>
           <tr><td><code>--gr-fg</code></td><td><code>#1c1f23</code></td><td>Text.</td></tr>
           <tr><td><code>--gr-muted</code></td><td><code>#8b9199</code></td><td>Sekundární text.</td></tr>
@@ -745,6 +746,12 @@ odhlasit()</pre>
   --gr-range-bg: <span class="n">#ccfbf1</span>;
   --gr-radius-day: <span class="n">999px</span>;
 }</pre>
+
+      <p>Panel je vždy jen tak široký, jak potřebuje — šířku určuje
+        <code>--gr-day-size</code>, ne dostupné místo. Kompaktnější kalendář se
+        tedy dělá zmenšením hrany dne, ne přebíjením rozměrů panelu:</p>
+
+      <pre class="code">.gr { --gr-day-size: <span class="n">28px</span>; --gr-gap: <span class="n">1px</span>; }</pre>
 
       <h3>Hotové motivy</h3>
 

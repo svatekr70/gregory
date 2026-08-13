@@ -23,6 +23,7 @@
   --gr-radius: 3px;
   --gr-radius-day: 2px;
   --gr-gap: 1px;
+  --gr-day-size: 32px;
 
   --gr-bg: #0d1b2a;
   --gr-fg: #dce8f5;
@@ -66,6 +67,7 @@
   --gr-radius: 16px;
   --gr-radius-day: 999px;
   --gr-gap: 4px;
+  --gr-day-size: 38px;
 
   --gr-bg: #ffffff;
   --gr-fg: #17242b;

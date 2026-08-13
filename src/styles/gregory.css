@@ -11,6 +11,8 @@
   --gr-radius: 10px;
   --gr-radius-day: 6px;
   --gr-gap: 2px;
+  /* Hrana dne. Určuje šířku celého panelu, takže je to hlavní páka na hustotu. */
+  --gr-day-size: 34px;
 
   --gr-bg: #fff;
   --gr-fg: #1c1f23;
@@ -24,6 +26,10 @@
   --gr-shadow: 0 12px 32px rgb(16 24 40 / 14%), 0 2px 6px rgb(16 24 40 / 8%);
 
   display: flex;
+  /* Hugs its content instead of the container — jinak by inline panel vyplnil
+     celou šířku a měsíce by se krčily vlevo. */
+  width: fit-content;
+  max-width: 100%;
   overflow: hidden;
   box-sizing: border-box;
   border: 1px solid var(--gr-border);
@@ -120,10 +126,15 @@
   padding: 12px;
 }
 
+/*
+ * Měsíc se needrží šířky okna — je tak široký, jak potřebuje. Bez toho se
+ * absolutně pozicovaný popover roztáhne po dostupné šířce a spolu s ním
+ * i čtvercové buňky, takže na širokém monitoru vznikne obří kalendář.
+ */
 .gr-calendar {
   position: relative;
-  flex: 1;
-  min-width: 240px;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 /* Oddělovač mezi měsíci. Mezera je souměrná: gap zleva, padding zprava. */
@@ -263,12 +274,13 @@
 
 .gr-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, var(--gr-day-size));
+  justify-content: center;
   gap: var(--gr-gap);
 }
 
 .gr-grid[data-weeknumbers] {
-  grid-template-columns: auto repeat(7, 1fr);
+  grid-template-columns: auto repeat(7, var(--gr-day-size));
 }
 
 .gr-weekday {
@@ -312,8 +324,8 @@
 .gr-day {
   display: grid;
   place-items: center;
-  aspect-ratio: 1;
-  min-width: 32px;
+  width: var(--gr-day-size);
+  height: var(--gr-day-size);
   padding: 0;
   border: 0;
   border-radius: var(--gr-radius-day);
