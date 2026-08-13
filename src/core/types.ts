@@ -76,6 +76,12 @@ export type LocaleInput = string | (Partial<Omit<Locale, 'labels'>> & { labels?:
 
 export interface GregoryOptions {
   mode?: Mode
+  /**
+   * Extra classes for the panel root. The panel is created by the library and
+   * a popover lives on `<body>`, so this is the only way to reach it — themes
+   * are applied this way: `className: 'gr-theme-riso'`.
+   */
+  className?: string
   value?: RangeValueInput
   /** BCP 47 tag ("cs", "en-GB") or a partial locale object overriding the resolved one. */
   locale?: LocaleInput
@@ -139,6 +145,7 @@ export interface GregoryOptions {
 
 export interface ResolvedOptions {
   mode: Mode
+  className: string
   locale: Locale
   min: Date | null
   max: Date | null

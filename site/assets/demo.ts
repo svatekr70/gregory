@@ -8,6 +8,10 @@ import type {
   WeekSelection,
 } from '../../src/index.js'
 
+// Motivy se v balíčku importují jako '@svatekr70/gregory/themes.css',
+// vždy až po základních stylech.
+import '../../src/styles/themes.css'
+
 defineElement()
 
 /* ------------------------------------------------------------- pomocníci */
@@ -245,6 +249,103 @@ example('ex-single', { mode: 'date', locale: 'cs', dropdowns: true, weekNumbers:
 example('ex-range', { mode: 'range', locale: 'cs', weekNumbers: true })
 
 example('ex-datetime', { mode: 'datetime', locale: 'cs', timeStep: 15 })
+
+/* -------------------------------------------------------------- motivy */
+
+interface Theme {
+  className: string
+  name: string
+  note: string
+  /** Pozadí vzorku a v něm accent, výplň rozsahu a značka dneška. */
+  swatch: [bg: string, accent: string, range: string, today: string]
+}
+
+const THEMES: Theme[] = [
+  {
+    className: '',
+    name: 'Výchozí',
+    note: 'Neutrální, drží se systémového vzhledu',
+    swatch: ['#ffffff', '#2f6fed', '#e7efff', '#e8590c'],
+  },
+  {
+    className: 'gr-theme-blueprint',
+    name: 'Blueprint',
+    note: 'Technický výkres, monospace, hustá mřížka',
+    swatch: ['#0d1b2a', '#4cc2ff', '#12304c', '#ff6b4a'],
+  },
+  {
+    className: 'gr-theme-riso',
+    name: 'Riso',
+    note: 'Dvoubarevný tisk, posunutý stín místo rozostřeného',
+    swatch: ['#fbfaf5', '#ff3e80', '#dfe3ff', '#2b44ff'],
+  },
+  {
+    className: 'gr-theme-clinic',
+    name: 'Ordinace',
+    note: 'Klidná, vzdušná, vybrané dny jako pilulky',
+    swatch: ['#ffffff', '#0e7c86', '#ddf0f1', '#b45309'],
+  },
+  {
+    className: 'gr-theme-nocturne',
+    name: 'Nokturno',
+    note: 'Skoro černá s teplým jantarem, na noční provoz',
+    swatch: ['#08090b', '#ffb020', '#2b2413', '#7dd3fc'],
+  },
+]
+
+const themeStage = $('#theme-stage')
+const themePicks = $('#theme-picks')
+const themeCode = $('#theme-code')
+let themePicker: Gregory | null = null
+
+function showTheme(theme: Theme): void {
+  themePicker?.destroy()
+  themeStage.replaceChildren()
+
+  themePicker = new Gregory(themeStage, {
+    mode: 'range',
+    locale: 'cs',
+    inline: true,
+    months: 2,
+    presets: false,
+    weekNumbers: true,
+    autoApply: true,
+    value: ['2026-08-10', '2026-08-16'],
+    ...(theme.className ? { className: theme.className } : {}),
+  })
+
+  themeCode.innerHTML = paint(
+    theme.className
+      ? `import '@svatekr70/gregory/themes.css'\n\nconst picker = new Gregory('#vstup', {\n  mode: 'range',\n  className: '${theme.className}',\n})`
+      : `const picker = new Gregory('#vstup', {\n  mode: 'range',\n})`,
+  )
+
+  for (const button of themePicks.querySelectorAll('[aria-checked]')) {
+    button.setAttribute('aria-checked', String(button.getAttribute('data-theme') === theme.className))
+  }
+}
+
+THEMES.forEach((theme, index) => {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'theme-pick'
+  button.setAttribute('role', 'radio')
+  button.setAttribute('aria-checked', String(index === 0))
+  button.setAttribute('data-theme', theme.className)
+
+  const [bg, accent, range, today] = theme.swatch
+  button.innerHTML =
+    `<span class="theme-chip" style="background:${bg}">` +
+    `<i style="background:${accent}"></i><i style="background:${range}"></i><i style="background:${today}"></i>` +
+    `</span><span><b>${theme.name}</b><small>${theme.note}</small></span>`
+
+  button.addEventListener('click', () => showTheme(theme))
+  themePicks.append(button)
+})
+
+showTheme(THEMES[0]!)
+
+/* -------------------------------------------------------------- ukázky */
 
 example('ex-week', {
   mode: 'range',

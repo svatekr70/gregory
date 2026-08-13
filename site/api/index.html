@@ -137,6 +137,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
         <thead><tr><th>Volba</th><th>Typ</th><th>Výchozí</th><th>Popis</th></tr></thead>
         <tbody>
           <tr><td><code>mode</code></td><td><code>Mode</code></td><td><code>'date'</code></td><td>Režim výběru.</td></tr>
+          <tr><td><code>className</code></td><td><code>string</code></td><td>—</td><td>Vlastní třídy pro kořen panelu; takhle se aplikují motivy.</td></tr>
           <tr><td><code>value</code></td><td><code>DateLike | DateRange | [DateLike, DateLike]</code></td><td><code>null</code></td><td>Počáteční hodnota.</td></tr>
           <tr><td><code>locale</code></td><td><code>LocaleInput</code></td><td>jazyk prohlížeče</td><td>BCP 47 tag nebo přebití částí locale.</td></tr>
           <tr><td><code>min</code></td><td><code>DateLike</code></td><td><code>null</code></td><td>Nejstarší volitelný den.</td></tr>
@@ -707,6 +708,40 @@ odhlasit()</pre>
   --gr-range-bg: <span class="n">#ccfbf1</span>;
   --gr-radius-day: <span class="n">999px</span>;
 }</pre>
+
+      <h3>Hotové motivy</h3>
+
+      <p>Volitelný soubor <code>themes.css</code> nese čtyři připravené motivy.
+        Načítá se <strong>až po</strong> základních stylech:</p>
+
+      <pre class="code"><span class="k">import</span> <span class="s">'@svatekr70/gregory/style.css'</span>
+<span class="k">import</span> <span class="s">'@svatekr70/gregory/themes.css'</span>
+
+<span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, { className: <span class="s">'gr-theme-riso'</span> })</pre>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Třída</th><th>Charakter</th></tr></thead>
+        <tbody>
+          <tr><td><code>gr-theme-blueprint</code></td><td>Technický výkres — tmavě modrá, monospace číslice, hustá mřížka.</td></tr>
+          <tr><td><code>gr-theme-riso</code></td><td>Dvoubarevný tisk — papír, fluorescentní růžová, posunutý stín místo rozostřeného.</td></tr>
+          <tr><td><code>gr-theme-clinic</code></td><td>Objednávkový systém — vzdušná bílá, modrozelená, vybrané dny jako pilulky.</td></tr>
+          <tr><td><code>gr-theme-nocturne</code></td><td>Noční provoz — skoro černá s teplým jantarem.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Motivy nepřepisují jediný selektor komponenty — mění jen proměnné
+        <code>--gr-*</code>. Vlastní motiv se dělá stejně: zkopíruj kterýkoli z nich
+        a přebarvi. Posunutý stín u <code>riso</code> je vidět jen u popoveru; inline
+        panel stín zásadně nemá, protože sedí uvnitř cizího rámečku.</p>
+
+      <h3><code>className</code></h3>
+
+      <p>Panel si vyrábí knihovna sama a v režimu popoveru ho věší na
+        <code>&lt;body&gt;</code>, takže se k němu nedá dostat přes obalový prvek.
+        <code>className</code> je proto jediná cesta, jak mu přidat vlastní třídu —
+        motivy toho využívají, ale hodí se na jakékoli cílení.</p>
 
       <p>Tmavý motiv naskočí sám podle <code>prefers-color-scheme</code>. Natvrdo se
         přepíná atributem na kořenovém prvku pickeru:

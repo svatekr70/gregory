@@ -58,6 +58,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | volba | výchozí | popis |
 | --- | --- | --- |
 | `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range` |
+| `className` | — | vlastní třídy pro kořen panelu (takhle se aplikují motivy) |
 | `value` | `null` | `Date`, ISO string, `{from,to}` nebo `[from, to]` |
 | `locale` | jazyk prohlížeče | BCP 47 tag nebo částečný objekt `Locale` |
 | `min` / `max` | `null` | hranice výběru |
@@ -113,6 +114,24 @@ Všechno jsou CSS proměnné na `.gr`, není potřeba přebíjet selektory:
 
 Tmavý režim se aktivuje sám podle `prefers-color-scheme`, nebo natvrdo přes
 `data-theme="dark"` / `data-theme="light"` na kořenovém prvku pickeru.
+
+### Hotové motivy
+
+```js
+import '@svatekr70/gregory/style.css'
+import '@svatekr70/gregory/themes.css'   // vždy až po style.css
+
+new Gregory('#vstup', { className: 'gr-theme-riso' })
+```
+
+| Třída | Charakter |
+| --- | --- |
+| `gr-theme-blueprint` | technický výkres — tmavě modrá, monospace, hustá mřížka |
+| `gr-theme-riso` | dvoubarevný tisk — papír, fluorescentní růžová, posunutý stín |
+| `gr-theme-clinic` | objednávkový systém — vzdušná bílá, modrozelená, dny jako pilulky |
+| `gr-theme-nocturne` | noční provoz — skoro černá s teplým jantarem |
+
+Žádný z nich nepřepisuje selektor komponenty, mění jen proměnné `--gr-*`.
 
 ## Vývoj
 

@@ -117,17 +117,16 @@ export class Gregory {
     this.input = element instanceof HTMLInputElement ? element : null
     this.host = element
     this.options = this.resolveOptions(options)
-    this.element = h('div', { class: 'gr', 'data-mode': this.options.mode })
+    this.element = h('div', {})
+    this.applyRootAttributes()
 
     const initial = options.value ?? (this.input?.value || null)
     this.assign(this.toRange(initial), { commit: true, silent: true })
 
     if (this.options.inline) {
       this.host.append(this.element)
-      this.element.setAttribute('data-inline', '')
       this.open = true
     } else {
-      this.element.setAttribute('data-popover', '')
       this.element.hidden = true
       document.body.append(this.element)
     }
@@ -154,6 +153,7 @@ export class Gregory {
 
     return {
       mode,
+      className: options.className ?? '',
       locale,
       min: parseDate(options.min),
       max: parseDate(options.max),
@@ -184,8 +184,19 @@ export class Gregory {
 
   setOptions(patch: GregoryOptions): void {
     this.options = this.resolveOptions({ ...this.optionsAsInput(), ...patch })
+    this.applyRootAttributes()
     if (patch.value !== undefined) this.assign(this.toRange(patch.value), { commit: true, silent: true })
     this.render()
+  }
+
+  /** Classes and flags on the panel root, kept in sync with the options. */
+  private applyRootAttributes(): void {
+    const { className, mode, inline } = this.options
+    this.element.className = className ? `gr ${className}` : 'gr'
+    this.element.setAttribute('data-mode', mode)
+    // The constructor sets these later on first run; afterwards they must stick.
+    if (inline) this.element.setAttribute('data-inline', '')
+    else this.element.setAttribute('data-popover', '')
   }
 
   private optionsAsInput(): GregoryOptions {

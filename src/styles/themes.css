@@ -1,0 +1,101 @@
+/*
+ * Gregory — hotové motivy.
+ *
+ * Každý motiv jen přenastavuje proměnné --gr-*, žádný selektor komponenty
+ * nepřepisuje. Je to zároveň zkouška toho, jestli je sada proměnných dost
+ * bohatá na skutečně odlišné vzhledy.
+ *
+ *   import '@svatekr70/gregory/style.css'
+ *   import '@svatekr70/gregory/themes.css'   // vždy až po style.css
+ *
+ *   new Gregory('#vstup', { className: 'gr-theme-riso' })
+ *
+ * Selektory jsou dvojité (.gr.gr-theme-*), aby přebily i tmavý blok
+ * v základních stylech. Proto na pořadí importu záleží.
+ */
+
+/* --------------------------------------------------------------- Blueprint
+ * Technický výkres: tmavě modrý papír, rýsovací azurová, monospace číslice
+ * a hustá mřížka. Pro nástroje, kde je datum údaj, ne dekorace.
+ */
+.gr.gr-theme-blueprint {
+  --gr-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --gr-radius: 3px;
+  --gr-radius-day: 2px;
+  --gr-gap: 1px;
+
+  --gr-bg: #0d1b2a;
+  --gr-fg: #dce8f5;
+  --gr-muted: #5f83a8;
+  --gr-border: #1b3350;
+  --gr-hover: #152c45;
+  --gr-accent: #4cc2ff;
+  --gr-accent-fg: #08192a;
+  --gr-range-bg: #12304c;
+  --gr-today: #ff6b4a;
+  --gr-shadow: 0 18px 44px rgb(0 0 0 / 55%);
+}
+
+/* -------------------------------------------------------------------- Riso
+ * Dvoubarevný sítotisk: papír, fluorescentní růžová a inkoustová modrá.
+ * Stín není rozostřený, ale posunutý — jako když se dvě barvy netrefí
+ * přesně přes sebe. To je celý vtip tohohle motivu.
+ */
+.gr.gr-theme-riso {
+  --gr-radius: 4px;
+  --gr-radius-day: 3px;
+  --gr-gap: 3px;
+
+  --gr-bg: #fbfaf5;
+  --gr-fg: #16161d;
+  --gr-muted: #8a8778;
+  --gr-border: #e0dccd;
+  --gr-hover: #f0eee3;
+  --gr-accent: #ff3e80;
+  --gr-accent-fg: #fffdf8;
+  --gr-range-bg: #dfe3ff;
+  --gr-today: #2b44ff;
+  --gr-shadow: 5px 5px 0 rgb(43 68 255 / 22%);
+}
+
+/* ----------------------------------------------------------------- Ordinace
+ * Objednávkový systém: chladná bílá, tlumená modrozelená, vybrané dny jako
+ * pilulky a hodně vzduchu. Nemá na sebe strhávat pozornost.
+ */
+.gr.gr-theme-clinic {
+  --gr-radius: 16px;
+  --gr-radius-day: 999px;
+  --gr-gap: 4px;
+
+  --gr-bg: #ffffff;
+  --gr-fg: #17242b;
+  --gr-muted: #7c93a0;
+  --gr-border: #e6edf0;
+  --gr-hover: #f1f6f8;
+  --gr-accent: #0e7c86;
+  --gr-accent-fg: #ffffff;
+  --gr-range-bg: #ddf0f1;
+  --gr-today: #b45309;
+  --gr-shadow: 0 12px 32px rgb(23 36 43 / 10%);
+}
+
+/* ---------------------------------------------------------------- Nokturno
+ * Pro dashboardy, na které se kouká i ve tři ráno. Skoro černé pozadí,
+ * teplý jantar místo modré, aby v noci tolik nesvítilo.
+ */
+.gr.gr-theme-nocturne {
+  --gr-radius: 12px;
+  --gr-radius-day: 8px;
+  --gr-gap: 2px;
+
+  --gr-bg: #08090b;
+  --gr-fg: #eceef1;
+  --gr-muted: #7a8089;
+  --gr-border: #1d2026;
+  --gr-hover: #16181d;
+  --gr-accent: #ffb020;
+  --gr-accent-fg: #1a1200;
+  --gr-range-bg: #2b2413;
+  --gr-today: #7dd3fc;
+  --gr-shadow: 0 20px 52px rgb(0 0 0 / 70%);
+}

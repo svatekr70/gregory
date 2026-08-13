@@ -686,6 +686,78 @@ footer {
   font-size: 15px;
 }
 
+/* ---------------------------------------------------------------- motivy */
+
+.themes {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.theme-picks {
+  display: grid;
+  gap: 8px;
+}
+
+.theme-pick {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme-pick:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.theme-pick[aria-checked="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Vzorek: pozadí motivu a v něm jeho tři signální barvy. */
+.theme-chip {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: 7px;
+}
+
+.theme-chip i {
+  width: 7px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.theme-pick b {
+  display: block;
+  font-size: 14px;
+}
+
+.theme-pick small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .themes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .example > p {
   margin: 0;
   color: var(--muted);
