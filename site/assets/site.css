@@ -629,7 +629,7 @@ footer {
 }
 
 .css-preview {
-  overflow-x: auto;
+  /* Rolování si panel řeší sám; tady zbývá jen místo na posuvník. */
   padding-bottom: 4px;
 }
 
@@ -648,12 +648,6 @@ footer {
   .css-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-/* Bez tohohle by se panel srazil na šířku sloupce a poslední dny by se
-   ořízly, místo aby šlo odrolovat. */
-.css-preview .gr {
-  max-width: none;
 }
 
 .switch {

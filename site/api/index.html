@@ -1100,6 +1100,16 @@ odhlasit()</pre>
 .gr { --gr-day-font-size: <span class="n">16px</span>; }</pre>
 
       <div class="callout">
+        <strong>Panel v úzkém místě</strong>
+        <p>Do kontejneru užšího, než je jeden měsíc, se panel nevejde — a protože
+          mřížka má pevnou velikost políčka, není co zmenšovat. Takový panel se
+          proto <strong>odroluje vodorovně</strong>, ne ořízne: poslední sloupce
+          dnů zůstanou dosažitelné. Nejmenší rozumná šířka je zhruba
+          <code>7 × --gr-day-size + 2 × --gr-pad</code>, u dvou měsíců dvojnásobek
+          a u zapnutých <code>presets</code> ještě postranní panel navrch.</p>
+      </div>
+
+      <div class="callout">
         <strong>Hotové stupně hustoty</strong>
         <p><code>themes.css</code> nese třídy <code>gr-density-compact</code> a
           <code>gr-density-comfortable</code>. Barvy neřeší, takže se s motivy

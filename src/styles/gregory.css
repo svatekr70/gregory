@@ -45,7 +45,15 @@
      celou šířku a měsíce by se krčily vlevo. */
   width: fit-content;
   max-width: 100%;
-  overflow: hidden;
+  /*
+   * V užším místě, než je jeden měsíc, se panel odroluje — dřív se poslední
+   * sloupce dnů tiše uřízly. Vodorovně `auto`, svisle `hidden`: obě hodnoty
+   * jsou jiné než `visible`, takže se obsah pořád ořezává zaoblenými rohy
+   * (postranní panel zkratek by jinak vyčuhoval z rámečku).
+   */
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
   box-sizing: border-box;
   border: 1px solid var(--gr-border);
   border-radius: var(--gr-radius);
