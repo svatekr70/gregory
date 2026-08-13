@@ -12,6 +12,10 @@ obyčejná JS třída pro imperativní použití a `<gregory-picker>` pro deklar
 - **klávesnice** — šipky, PageUp/PageDown, Enter, Escape
 - **témata přes CSS proměnné**, světlé i tmavé
 
+Dokumentace: [uživatelská příručka](site/guide/index.html) na nasazení krok za
+krokem, [API reference](site/api/index.html) na úplný výčet voleb a
+[demo](site/demo/index.html) s konfigurátorem.
+
 ## Instalace
 
 ```bash
@@ -206,7 +210,7 @@ npm test               # vitest
 npm run test:coverage
 npm run build          # typecheck + ESM/UMD/d.ts do dist/
 
-npm run site:dev       # projektový web (úvod, demo, API dokumentace)
+npm run site:dev       # projektový web (úvod, demo, příručka, API dokumentace)
 npm run site:build     # statický web do dist-site/
 ```
 

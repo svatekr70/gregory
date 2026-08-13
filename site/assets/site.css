@@ -518,7 +518,8 @@ footer {
   font-size: 14.5px;
 }
 
-.callout strong {
+/* Jen nadpis boxu je blok — `strong` uvnitř odstavce musí zůstat v řádku. */
+.callout > strong:first-child {
   display: block;
   margin-bottom: 2px;
 }

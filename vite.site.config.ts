@@ -15,6 +15,7 @@ export default defineConfig({
       input: {
         index: new URL('site/index.html', import.meta.url).pathname,
         demo: new URL('site/demo/index.html', import.meta.url).pathname,
+        guide: new URL('site/guide/index.html', import.meta.url).pathname,
         api: new URL('site/api/index.html', import.meta.url).pathname,
       },
     },

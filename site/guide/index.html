@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uživatelská příručka — Gregory</title>
+<meta name="description" content="Návod, jak Gregory nasadit: první picker, volba režimu, práce s hodnotou, formuláře, omezení výběru, vzhled, recepty na běžné úlohy a řešení potíží.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%234f7ff5'/%3E%3Cg fill='none' stroke='white' stroke-width='2'%3E%3Crect x='6' y='9' width='20' height='17' rx='2'/%3E%3Cpath d='M6 14h20M11 6v5M21 6v5'/%3E%3C/g%3E%3Crect x='10' y='17' width='12' height='4' rx='2' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap wrap-wide nav">
+    <a class="brand" href="../">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="6" fill="var(--accent)"/>
+        <g fill="none" stroke="#fff" stroke-width="2">
+          <rect x="6" y="9" width="20" height="17" rx="2"/>
+          <path d="M6 14h20M11 6v5M21 6v5"/>
+        </g>
+        <rect x="10" y="17.5" width="12" height="4" rx="2" fill="#fff"/>
+      </svg>
+      Gregory
+    </a>
+    <span class="ver">v0.1.0</span>
+    <span class="spacer"></span>
+    <a class="navlink" href="../demo/">Demo</a>
+    <a class="navlink" href="./" aria-current="page">Příručka</a>
+    <a class="navlink" href="../api/">API</a>
+    <a class="navlink" href="https://github.com/svatekr70/gregory">GitHub</a>
+  </div>
+</header>
+
+<main class="wrap wrap-wide">
+  <div class="docs">
+
+    <nav class="toc" id="toc">
+      <strong>Začínáme</strong>
+      <a href="#instalace">Instalace</a>
+      <a href="#prvni-picker">První picker</a>
+      <a href="#rezim">Který režim zvolit</a>
+
+      <strong>Práce s hodnotou</strong>
+      <a href="#hodnota">Čtení a nastavení</a>
+      <a href="#formular">Odeslání formuláře</a>
+      <a href="#omezeni">Omezení výběru</a>
+
+      <strong>Umístění</strong>
+      <a href="#kam">Kam picker pověsit</a>
+      <a href="#jazyk">Jazyk a formáty</a>
+      <a href="#vzhled">Vzhled</a>
+      <a href="#klavesnice">Klávesnice</a>
+
+      <strong>Kuchařka</strong>
+      <a href="#recept-rezervace">Rezervace ubytování</a>
+      <a href="#recept-filtr">Filtr v přehledu</a>
+      <a href="#recept-ordinace">Objednání na hodinu</a>
+      <a href="#recept-migrace">Migrace ze starého pickeru</a>
+      <a href="#recept-framework">React, Vue, Svelte</a>
+
+      <strong>Když něco nehraje</strong>
+      <a href="#potize">Řešení potíží</a>
+      <a href="#dal">Kam dál</a>
+    </nav>
+
+    <article class="prose">
+      <h1>Uživatelská příručka</h1>
+      <p class="lead">Návod, jak Gregory nasadit do reálného projektu. Čte se
+        odshora dolů, ale klidně skoč rovnou do <a href="#recept-rezervace">kuchařky</a> —
+        recepty jsou celé a fungují samostatně. Kompletní výčet všeho, co se dá
+        nastavit, je v <a href="../api/">API dokumentaci</a>.</p>
+
+      <div class="callout">
+        <strong>Co Gregory je a co není</strong>
+        <p>Je to komponenta pro výběr data, rozsahu dat, času a období. Pracuje
+          výhradně v <strong>místním čase</strong> prohlížeče a časové zóny
+          neřeší — datum, na které uživatel klikne, je to datum, které dostaneš.
+          Není to knihovna na počítání s daty; na to si vezmi cokoli jiného,
+          Gregory ti do toho mluvit nebude.</p>
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="instalace">Instalace</h2>
+
+      <p>Z npm, se sestavovacím nástrojem (Vite, Webpack, Rollup):</p>
+
+      <pre class="code">npm install @svatekr70/gregory</pre>
+
+      <pre class="code"><span class="k">import</span> { Gregory } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+<span class="k">import</span> <span class="s">'@svatekr70/gregory/style.css'</span></pre>
+
+      <p>Bez buildu, přímo do stránky — balíček má i UMD sestavení, které vystaví
+        globální <code>Gregory</code>:</p>
+
+      <pre class="code">&lt;link rel="stylesheet" href="/gregory/gregory.css"&gt;
+&lt;script src="/gregory/gregory.umd.cjs"&gt;&lt;/script&gt;
+&lt;script&gt;
+  <span class="k">new</span> Gregory.<span class="t">Gregory</span>(<span class="s">'#termin'</span>, { mode: <span class="s">'date'</span>, locale: <span class="s">'cs'</span> })
+&lt;/script&gt;</pre>
+
+      <p>Styly se importují jednou za aplikaci, ne u každého pickeru. Motivy jsou
+        v samostatném souboru a jsou nepovinné:</p>
+
+      <pre class="code"><span class="k">import</span> <span class="s">'@svatekr70/gregory/themes.css'</span></pre>
+
+      <!-- ============================================================ -->
+      <h2 id="prvni-picker">První picker</h2>
+
+      <p>Gregory se věší na existující prvek. Nejčastěji na textový input:</p>
+
+      <pre class="code">&lt;input type="text" id="termin" placeholder="Vyber datum…"&gt;</pre>
+
+      <pre class="code"><span class="k">const</span> picker = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, {
+  mode: <span class="s">'date'</span>,
+  locale: <span class="s">'cs'</span>,
+})</pre>
+
+      <p>To je všechno. Klik do pole otevře kalendář, klik na den ho zavře a do
+        pole napíše datum. Hodnotu si vyzvedneš kdykoli:</p>
+
+      <pre class="code">picker.<span class="t">getValue</span>()   <span class="c">// Date, nebo null</span></pre>
+
+      <div class="callout">
+        <strong>Proč ne <code>&lt;input type="date"&gt;</code></strong>
+        <p>Nativní pole vypadá v každém prohlížeči jinak, neumí rozsah ani
+          presety a nedá se stylovat. Gregory je naopak všude stejný a řídí se
+          tvým designem. Když ti nativní pole stačí, používej ho — tahle
+          knihovna začíná dávat smysl u rozsahů, omezení a vlastního vzhledu.</p>
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="rezim">Který režim zvolit</h2>
+
+      <p>Volba <code>mode</code> je první a nejdůležitější rozhodnutí: určuje
+        tvar hodnoty i výchozí chování zbytku.</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Potřebuji…</th><th><code>mode</code></th><th>Dostanu</th></tr></thead>
+        <tbody>
+          <tr><td>jeden den (narozeniny, splatnost)</td><td><code>'date'</code></td><td><code>Date | null</code></td></tr>
+          <tr><td>období od–do (pobyt, filtr)</td><td><code>'range'</code></td><td><code>{ from, to }</code></td></tr>
+          <tr><td>den i hodinu (schůzka)</td><td><code>'datetime'</code></td><td><code>Date | null</code></td></tr>
+          <tr><td>od kdy do kdy včetně času (směna)</td><td><code>'datetime-range'</code></td><td><code>{ from, to }</code></td></tr>
+          <tr><td>několik samostatných dnů (dovolená po dnech)</td><td><code>'multiple'</code></td><td><code>Date[]</code></td></tr>
+          <tr><td>celý měsíc (uzávěrka)</td><td><code>'month'</code></td><td><code>Date</code> = 1. den měsíce</td></tr>
+          <tr><td>čtvrtletí (report)</td><td><code>'quarter'</code></td><td><code>Date</code> = 1. den čtvrtletí</td></tr>
+          <tr><td>rok (ročenka)</td><td><code>'year'</code></td><td><code>Date</code> = 1. leden</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Režim se dá měnit i za běhu, ale je to spíš pro konfigurátory než pro
+        běžné stránky — vybraná hodnota se přitom zahodí, pokud do nového tvaru
+        nesedí:</p>
+
+      <pre class="code">picker.<span class="t">setOptions</span>({ mode: <span class="s">'range'</span> })</pre>
+
+      <h3>Období vs. rozsah</h3>
+      <p>Na „celý srpen" jsou dvě cesty. <code>mode: 'month'</code> vrátí jeden
+        <code>Date</code> (1. 8.) a je to volba filtru — server si sám dopočítá,
+        že jde o celý měsíc. <code>mode: 'range'</code> s presetem „Tento měsíc"
+        vrátí <code>{ from: 1. 8., to: 31. 8. }</code> a je to skutečný rozsah,
+        který uživatel může ještě upravit. Ptej se, jestli má jít hranice měnit:
+        když ne, stačí období.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="hodnota">Čtení a nastavení hodnoty</h2>
+
+      <p>Picker rozlišuje dva stavy: <strong>potvrzenou hodnotu</strong> a
+        <strong>rozpracovaný výběr</strong>. Uživatel s otevřeným panelem klikl
+        na první konec rozsahu — výběr se změnil, hodnota ještě ne.</p>
+
+      <pre class="code">picker.<span class="t">getValue</span>()      <span class="c">// potvrzené: to, co je v poli</span>
+picker.<span class="t">getSelection</span>()  <span class="c">// rozpracované: i poloviční rozsah</span></pre>
+
+      <p>Na změny se dá poslouchat. Pro ukládání chceš skoro vždycky
+        <code>apply</code>, ne <code>change</code>:</p>
+
+      <pre class="code">picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&gt; ulozit(value))
+picker.<span class="t">on</span>(<span class="s">'change'</span>, ({ value, complete }) =&gt; {
+  <span class="c">// Padá při každém kliknutí. complete je false, dokud rozsah nemá oba konce.</span>
+})</pre>
+
+      <p>Nastavit hodnotu můžeš čímkoli, co jde přečíst jako datum — ISO řetězec,
+        <code>Date</code>, timestamp:</p>
+
+      <pre class="code">picker.<span class="t">setValue</span>(<span class="s">'2026-08-13'</span>)
+picker.<span class="t">setValue</span>({ from: <span class="s">'2026-08-10'</span>, to: <span class="s">'2026-08-16'</span> })
+picker.<span class="t">setValue</span>([<span class="s">'2026-08-10'</span>, <span class="s">'2026-08-16'</span>])
+picker.<span class="t">clear</span>()</pre>
+
+      <div class="callout">
+        <strong>Pozor na <code>new Date('2026-08-13')</code></strong>
+        <p>JavaScript takový řetězec čte jako <strong>půlnoc v UTC</strong>, takže
+          v Praze z něj vyjde 13. srpna 01:00 a ve westernové zóně 12. srpna
+          večer. Gregory si ISO řetězce parsuje sám a v místním čase, takže
+          <code>setValue('2026-08-13')</code> je vždycky 13. srpna. Když si datum
+          skládáš ručně, použij <code>new Date(2026, 7, 13)</code> nebo utilitu
+          <code>createDate(2026, 7, 13)</code>.</p>
+      </div>
+
+      <h3>Text v poli a hodnota pro server</h3>
+      <p>Do pole se píše datum pro lidi — <code>13. 8. 2026</code>, podle jazyka.
+        Server to spolehlivě nepřečte, tak mu posílej ISO tvar:</p>
+
+      <pre class="code"><span class="k">import</span> { formatISODate } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+
+<span class="k">const</span> value = picker.<span class="t">getValue</span>()
+formatISODate(value)   <span class="c">// '2026-08-13'</span></pre>
+
+      <p>U formulářů to za tebe udělá <code>submitName</code> — viz dál.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="formular">Odeslání formuláře</h2>
+
+      <p>Nejjednodušší cesta: nech Gregory vyrobit skryté pole s ISO hodnotou.
+        Vznikne hned vedle viditelného vstupu, takže spadne do stejného
+        formuláře.</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, {
+  mode: <span class="s">'date'</span>,
+  submitName: <span class="s">'termin'</span>,
+})
+<span class="c">// odejde termin=2026-08-13</span></pre>
+
+      <p>U rozsahu vzniknou pole dvě, s příponami <code>_from</code> a
+        <code>_to</code>. Vlastní jména se dají zadat dvojicí:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#pobyt'</span>, {
+  mode: <span class="s">'range'</span>,
+  submitName: { from: <span class="s">'prijezd'</span>, to: <span class="s">'odjezd'</span> },
+})</pre>
+
+      <h3>Validace</h3>
+      <p>Picker sám nepustí do hodnoty nic, co odporuje nastaveným mezím — ani
+        přes <code>setValue()</code>, ani rukou napsaným textem. Odmítnutí ohlásí
+        událostí <code>invalid</code>, takže si formulář může říct své:</p>
+
+      <pre class="code">picker.<span class="t">on</span>(<span class="s">'invalid'</span>, ({ reason }) =&gt; {
+  chyba.textContent = reason === <span class="s">'unreadable'</span>
+    ? <span class="s">'Datum se nepodařilo přečíst.'</span>
+    : <span class="s">'Tenhle termín nejde vybrat.'</span>
+})</pre>
+
+      <p>Odmítnuté pole zároveň dostane <code>aria-invalid="true"</code>, což se
+        dá obarvit jedním pravidlem:</p>
+
+      <pre class="code">input[aria-invalid] { border-color: <span class="n">#d64545</span>; }</pre>
+
+      <h3>Povinné pole</h3>
+      <p>Vestavěné <code>required</code> na viditelném poli funguje: dokud je
+        prázdné, prohlížeč formulář neodešle. Se skrytým polem
+        z <code>submitName</code> ale <code>required</code> nesahá — na to si
+        napiš kontrolu při odeslání:</p>
+
+      <pre class="code">form.<span class="t">addEventListener</span>(<span class="s">'submit'</span>, (e) =&gt; {
+  <span class="k">if</span> (!picker.<span class="t">getValue</span>()) { e.<span class="t">preventDefault</span>(); chyba.textContent = <span class="s">'Vyber termín.'</span> }
+})</pre>
+
+      <!-- ============================================================ -->
+      <h2 id="omezeni">Omezení výběru</h2>
+
+      <p>Omezení se skládají — platí všechna najednou a zakázaný den je zakázaný
+        i pro klávesnici.</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Chci…</th><th>Volba</th></tr></thead>
+        <tbody>
+          <tr><td>jen budoucnost</td><td><code>min: today()</code></td></tr>
+          <tr><td>nejvýš rok dopředu</td><td><code>max: addDays(today(), 365)</code></td></tr>
+          <tr><td>bez víkendů a svátků</td><td><code>isDisabled: (d) =&gt; …</code></td></tr>
+          <tr><td>pobyt nejvýš na 14 nocí</td><td><code>maxSpan: 15</code></td></tr>
+          <tr><td>pobyt aspoň na dvě noci</td><td><code>minSpan: 3</code></td></tr>
+          <tr><td>rozsah nesmí přeskočit obsazený den</td><td><code>stopAtDisabled: true</code></td></tr>
+          <tr><td>jen v otevírací době</td><td><code>minTime</code>, <code>maxTime</code>, <code>timeWindow</code></td></tr>
+          <tr><td>nejvýš pět dnů v <code>multiple</code></td><td><code>maxSelected: 5</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <div class="callout">
+        <strong>Rozsahy se počítají včetně obou konců</strong>
+        <p>Rozsah 10.–12. srpna jsou <strong>tři dny</strong>, ale jen dvě noci.
+          Pro ubytování na nejvýš 14 nocí je tedy správně <code>maxSpan: 15</code>.
+          Stejné pravidlo platí pro <code>minSpan</code> i pro počet dnů
+          v informačním řádku.</p>
+      </div>
+
+      <h3>Zakázané dny</h3>
+      <p><code>isDisabled</code> dostane <code>Date</code> nastavené na půlnoc
+        daného dne a vrací <code>true</code> pro dny, které nejdou vybrat.
+        Volá se pro každou vykreslenou buňku, takže ať je rychlá — hledání
+        v <code>Set</code>u ano, dotaz na server ne:</p>
+
+      <pre class="code"><span class="k">const</span> obsazeno = <span class="k">new</span> <span class="t">Set</span>([<span class="s">'2026-08-15'</span>, <span class="s">'2026-08-16'</span>])
+
+<span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#pobyt'</span>, {
+  mode: <span class="s">'range'</span>,
+  isDisabled: (d) =&gt; obsazeno.<span class="t">has</span>(formatISODate(d)),
+})</pre>
+
+      <p>Když se seznam obsazených dnů dotáhne později, řekni pickeru, ať se
+        překreslí:</p>
+
+      <pre class="code">obsazeno = <span class="k">new</span> <span class="t">Set</span>(<span class="k">await</span> nactiObsazene())
+picker.<span class="t">setOptions</span>({})   <span class="c">// překreslí panel s aktuálními daty</span></pre>
+
+      <!-- ============================================================ -->
+      <h2 id="kam">Kam picker pověsit</h2>
+
+      <h3>Na jeden input</h3>
+      <p>Výchozí případ. Rozsah se do jednoho pole zapíše jako
+        <code>10.–16. 8. 2026</code>.</p>
+
+      <h3>Na dvě pole</h3>
+      <p>Když má formulář zvlášť „od" a zvlášť „do", drží je jeden picker
+        pohromadě — panel otevře kterékoli z nich a výběr se rozdělí do obou:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#od'</span>, {
+  mode: <span class="s">'range'</span>,
+  endInput: <span class="s">'#do'</span>,
+})</pre>
+
+      <h3>Na cokoli jiného</h3>
+      <p>Datum bývá i mimo formulář — v odznaku, v buňce tabulky. Picker umí
+        viset na jakémkoli prvku: klik ho otevře, potvrzená hodnota se vypíše
+        dovnitř. Když má prvek potomka s <code>data-gr-value</code>, píše se text
+        do něj, takže ikona vedle zůstane:</p>
+
+      <pre class="code">&lt;span class="badge" id="splatnost" data-value="2026-08-13"&gt;
+  📅 &lt;span data-gr-value&gt;13. 8. 2026&lt;/span&gt;
+&lt;/span&gt;</pre>
+
+      <pre class="code"><span class="k">const</span> picker = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#splatnost'</span>, { mode: <span class="s">'date'</span> })
+splatnost.<span class="t">addEventListener</span>(<span class="s">'gregory:change'</span>, (e) =&gt; ulozit(e.detail.value))</pre>
+
+      <h3>Natrvalo rozbalený</h3>
+      <p><code>inline: true</code> vykreslí panel na místo cílového prvku místo
+        popoveru. Hodí se do postranních filtrů; s <code>summary: true</code>
+        má i řádek, který slovy říká, co je vybrané.</p>
+
+      <h3>Deklarativně, bez JavaScriptu</h3>
+      <pre class="code">&lt;gregory-picker mode="range" locale="cs" months="2"&gt;&lt;/gregory-picker&gt;</pre>
+      <pre class="code"><span class="k">import</span> { defineElement } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+<span class="t">defineElement</span>()</pre>
+
+      <!-- ============================================================ -->
+      <h2 id="jazyk">Jazyk a formáty</h2>
+
+      <p>Bez nastavení si Gregory vezme jazyk prohlížeče. Explicitně stačí BCP 47
+        tag:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, { locale: <span class="s">'cs'</span> })</pre>
+
+      <p>Názvy měsíců, dnů, formát data i skloňování počtu dnů řeší
+        <code>Intl</code>, takže fungují pro <strong>jakýkoli</strong> jazyk.
+        Vlastní překlad mají popisky tlačítek — hotové jsou pro češtinu,
+        slovenštinu, angličtinu, němčinu, polštinu, španělštinu, francouzštinu
+        a italštinu. Ostatní jazyky dostanou anglické popisky, dokud jim nějaké
+        nedodáš:</p>
+
+      <pre class="code"><span class="k">import</span> { registerTranslation } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+
+<span class="t">registerTranslation</span>(<span class="s">'nl'</span>, { labels: { apply: <span class="s">'Toepassen'</span>, … }, presets: { … }, days: { … } })</pre>
+
+      <p>Přejmenovat jedno tlačítko jde i bez překladu — <code>locale</code>
+        bere i objekt, který se přiloží na vyřešený jazyk:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, {
+  locale: { code: <span class="s">'cs'</span>, labels: { apply: <span class="s">'Rezervovat'</span> } },
+})</pre>
+
+      <p>Text v poli si můžeš napsat úplně sám:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, {
+  format: (value) =&gt; value ? <span class="s">`termín ${formatISODate(value)}`</span> : <span class="s">''</span>,
+})</pre>
+
+      <!-- ============================================================ -->
+      <h2 id="vzhled">Vzhled</h2>
+
+      <p>Panel nemá stínový DOM, takže se dá stylovat běžným CSS. Skoro všechno
+        ale jde přenastavit proměnnými, což je odolnější než přepisovat
+        jednotlivá pravidla:</p>
+
+      <pre class="code">.gr {
+  --gr-accent: <span class="n">#0e7c86</span>;
+  --gr-radius-day: <span class="n">999px</span>;
+  --gr-day-size: <span class="n">26px</span>;
+}</pre>
+
+      <p>Šířku panelu určuje velikost políčka dne, ne dostupné místo. Hustotu
+        tedy měň přes <code>--gr-day-size</code>, <code>--gr-gap</code>
+        a <code>--gr-pad</code>, ne pevnou šířkou.</p>
+
+      <p>Panel popoveru žije na <code>&lt;body&gt;</code>, takže se k němu
+        selektorem přes rodiče nedostaneš. Vlastní třídu mu dá
+        <code>className</code> — tudy se nasazují i hotové motivy:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, { className: <span class="s">'gr-theme-clinic gr-density-compact'</span> })</pre>
+
+      <p>Motivy (<code>blueprint</code>, <code>riso</code>, <code>clinic</code>,
+        <code>nocturne</code>) a stupně hustoty jsou v <code>themes.css</code>.
+        Všechny jsou jen sadou proměnných, takže si vlastní motiv uděláš
+        zkopírováním kteréhokoli z nich.</p>
+
+      <div class="callout">
+        <strong>Tmavý režim</strong>
+        <p>Výchozí motiv reaguje na <code>prefers-color-scheme</code> sám. Když
+          má aplikace vlastní přepínač, přenastav proměnné pod svou třídou:
+          <code>.dark .gr { --gr-bg: #12141a; --gr-fg: #e8eaed; … }</code></p>
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="klavesnice">Klávesnice</h2>
+
+      <p>Panel je ovladatelný bez myši a to je součástí veřejného chování —
+        nemusíš nic zapínat.</p>
+
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Klávesa</th><th>Co udělá</th></tr></thead>
+        <tbody>
+          <tr><td><code>↓</code> v poli</td><td>otevře panel a skočí do mřížky</td></tr>
+          <tr><td>šipky</td><td>posun po dnech a týdnech</td></tr>
+          <tr><td><code>PageUp</code> / <code>PageDown</code></td><td>o měsíc zpět a vpřed</td></tr>
+          <tr><td><code>Enter</code></td><td>vybere den; v poli přečte napsané datum a zavře</td></tr>
+          <tr><td><code>Esc</code></td><td>zavře panel a vrátí fokus do pole</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Datum se dá i prostě napsat: <code>13. 8. 2026</code>, <code>13.8.</code>
+        (doplní se letošní rok) i <code>2026-08-13</code>. Nesrozumitelný text se
+        vrátí na poslední platnou hodnotu. Když psaní nechceš, vypni ho —
+        <code>allowTyping: false</code> je správnější než <code>readonly</code>,
+        protože to pickeru nezakáže otevřít se.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="recept-rezervace">Recept: rezervace ubytování</h2>
+
+      <p>Příjezd a odjezd, obsazené termíny, nejméně dvě noci a nejvýš čtrnáct,
+        rozsah nesmí přeskočit obsazený den:</p>
+
+      <pre class="code"><span class="k">import</span> { Gregory, formatISODate, today } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
+
+<span class="k">const</span> obsazeno = <span class="k">new</span> <span class="t">Set</span>(<span class="k">await</span> nactiObsazene())
+
+<span class="k">const</span> picker = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#prijezd'</span>, {
+  mode: <span class="s">'range'</span>,
+  locale: <span class="s">'cs'</span>,
+  endInput: <span class="s">'#odjezd'</span>,
+  min: <span class="t">today</span>(),
+  minSpan: <span class="n">3</span>,          <span class="c">// dvě noci</span>
+  maxSpan: <span class="n">15</span>,         <span class="c">// čtrnáct nocí</span>
+  isDisabled: (d) =&gt; obsazeno.<span class="t">has</span>(<span class="t">formatISODate</span>(d)),
+  stopAtDisabled: <span class="k">true</span>,
+  submitName: { from: <span class="s">'prijezd'</span>, to: <span class="s">'odjezd'</span> },
+  summary: <span class="k">true</span>,
+})</pre>
+
+      <p>Po prvním kliknutí se zašedí všechno, co by rozsah protáhlo přes
+        obsazený den nebo mimo povolenou délku — uživatel tedy nemá jak vybrat
+        termín, který mu stejně zamítneš.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="recept-filtr">Recept: filtr v přehledu</h2>
+
+      <p>Rozbalený panel v postranním sloupci, zkratky typu „Posledních 30 dní"
+        a okamžité potvrzení bez tlačítek:</p>
+
+      <pre class="code"><span class="k">const</span> filtr = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#filtr'</span>, {
+  mode: <span class="s">'range'</span>,
+  locale: <span class="s">'cs'</span>,
+  inline: <span class="k">true</span>,
+  autoApply: <span class="k">true</span>,
+  summary: <span class="k">true</span>,
+  presets: <span class="k">true</span>,
+  months: <span class="n">1</span>,
+})
+
+filtr.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&gt; nacistData(value))</pre>
+
+      <p>Vlastní zkratky nahradí vestavěné. Rozsah se vyhodnocuje až při kliknutí,
+        takže „dnes" zůstane dnešek i po půlnoci:</p>
+
+      <pre class="code">presets: [
+  { label: <span class="s">'Toto čtvrtletí'</span>, range: () =&gt; [zacatekCtvrtleti(), <span class="t">today</span>()] },
+  { label: <span class="s">'Loni'</span>, range: () =&gt; [<span class="s">'2025-01-01'</span>, <span class="s">'2025-12-31'</span>] },
+]</pre>
+
+      <p>Když má filtr vracet celé období a ne konkrétní hranice, sáhni rovnou po
+        <code>mode: 'month'</code> nebo <code>'quarter'</code>.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="recept-ordinace">Recept: objednání na hodinu</h2>
+
+      <p>Termín i čas, po půlhodinách, v otevírací době — a ta je v sobotu jiná
+        než ve všední den:</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#objednani'</span>, {
+  mode: <span class="s">'datetime'</span>,
+  locale: <span class="s">'cs'</span>,
+  min: <span class="t">today</span>(),
+  timeStep: <span class="n">30</span>,
+  minTime: <span class="s">'08:00'</span>,
+  maxTime: <span class="s">'18:00'</span>,
+  <span class="c">// V sobotu jen dopoledne, v neděli zavřeno.</span>
+  timeWindow: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">6</span> ? { min: <span class="s">'09:00'</span>, max: <span class="s">'12:00'</span> } : <span class="k">null</span>,
+  isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span>,
+  submitName: <span class="s">'objednani'</span>,
+})</pre>
+
+      <p>Vybraný čas, který by se přesunem na jiný den dostal mimo okno, se
+        srovná dovnitř — z pátečních 17:00 tak v sobotu vyjde 12:00, ne nabídka,
+        kterou nemůžeš splnit.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="recept-migrace">Recept: migrace ze starého pickeru</h2>
+
+      <h3>Z <code>&lt;input type="date"&gt;</code></h3>
+      <p>Změň typ na <code>text</code> — nativní kalendář by se otevíral přes ten
+        náš — a hodnotu čti z pickeru, ne z pole:</p>
+
+      <pre class="code"><span class="c">// bylo</span>
+&lt;input type="date" name="termin"&gt;
+
+<span class="c">// je</span>
+&lt;input type="text" id="termin"&gt;
+<span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, { mode: <span class="s">'date'</span>, locale: <span class="s">'cs'</span>, submitName: <span class="s">'termin'</span> })</pre>
+
+      <p>Skryté pole ze <code>submitName</code> posílá stejný ISO tvar, jaký
+        posílalo nativní pole, takže server se měnit nemusí.</p>
+
+      <h3>Z jQuery daterangepicker</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>daterangepicker</th><th>Gregory</th></tr></thead>
+        <tbody>
+          <tr><td><code>startDate</code>, <code>endDate</code></td><td><code>value: { from, to }</code></td></tr>
+          <tr><td><code>minDate</code>, <code>maxDate</code></td><td><code>min</code>, <code>max</code></td></tr>
+          <tr><td><code>dateLimit</code></td><td><code>maxSpan</code></td></tr>
+          <tr><td><code>singleDatePicker</code></td><td><code>mode: 'date'</code></td></tr>
+          <tr><td><code>timePicker</code></td><td><code>mode: 'datetime'</code> / <code>'datetime-range'</code></td></tr>
+          <tr><td><code>timePickerIncrement</code></td><td><code>timeStep</code></td></tr>
+          <tr><td><code>ranges</code></td><td><code>presets</code></td></tr>
+          <tr><td><code>autoApply</code></td><td><code>autoApply</code></td></tr>
+          <tr><td><code>locale.format</code></td><td>řeší <code>locale</code>, jinak <code>format</code></td></tr>
+          <tr><td><code>on('apply.daterangepicker')</code></td><td><code>picker.on('apply', …)</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>Největší rozdíl: Gregory nevrací momenty ani řetězce, ale
+        <code>Date</code>. A nepotřebuje jQuery ani moment.js, takže s ním
+        z projektu často zmizí dvě další závislosti.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="recept-framework">Recept: React, Vue, Svelte</h2>
+
+      <p>Gregory je obyčejná třída, takže do komponenty patří tam, kde vzniká DOM,
+        a v úklidu se musí zavolat <code>destroy()</code>. V Reactu:</p>
+
+      <pre class="code"><span class="k">function</span> <span class="t">DateField</span>({ value, onChange }) {
+  <span class="k">const</span> ref = <span class="t">useRef</span>(<span class="k">null</span>)
+  <span class="k">const</span> picker = <span class="t">useRef</span>(<span class="k">null</span>)
+
+  <span class="t">useEffect</span>(() =&gt; {
+    picker.current = <span class="k">new</span> <span class="t">Gregory</span>(ref.current, { mode: <span class="s">'date'</span>, locale: <span class="s">'cs'</span> })
+    picker.current.<span class="t">on</span>(<span class="s">'apply'</span>, (e) =&gt; <span class="t">onChange</span>(e.value))
+    <span class="k">return</span> () =&gt; picker.current.<span class="t">destroy</span>()
+  }, [])
+
+  <span class="c">// Hodnota shora dovnitř, bez události zpátky — jinak vznikne smyčka.</span>
+  <span class="t">useEffect</span>(() =&gt; picker.current?.<span class="t">setValue</span>(value, { silent: <span class="k">true</span> }), [value])
+
+  <span class="k">return</span> &lt;input <span class="t">ref</span>={ref} type="text" /&gt;
+}</pre>
+
+      <p>Dvě věci, na kterých to obvykle padá: efekt s prázdným polem závislostí
+        (jinak se picker přestavuje při každém renderu) a
+        <code>{ silent: true }</code> při zápisu hodnoty shora. Ve Vue je to
+        <code>onMounted</code> / <code>onBeforeUnmount</code>, ve Svelte
+        <code>onMount</code> s návratovou funkcí — princip je stejný.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="potize">Řešení potíží</h2>
+
+      <h3>Panel se neotevře</h3>
+      <p>Pole je <code>disabled</code> nebo <code>readonly</code> — obojí picker
+        respektuje. Když chceš zabránit jen psaní, použij
+        <code>allowTyping: false</code>. Zkontroluj taky, jestli není zapnuté
+        <code>disabled: true</code> ve volbách.</p>
+
+      <h3>Panel vypadá rozsypaně</h3>
+      <p>Nejspíš chybí <code>gregory.css</code>. Druhá možnost: stránka má
+        globální pravidlo na značky, ze kterých je panel poskládaný. Gregory se
+        proti tomu brání resetem s nulovou specificitou, ale
+        <code>section { padding: 52px 0 !important }</code> ani ten reset
+        nepřebije.</p>
+
+      <h3>Poslední sloupec dnů není vidět</h3>
+      <p>Panel je v užším místě, než je jeden měsíc. Neořízne se — dá se
+        odrolovat do strany — ale lepší je dát mu místo: zmenši
+        <code>--gr-day-size</code>, sniž <code>months</code> na 1 nebo vypni
+        <code>presets</code>.</p>
+
+      <h3>Datum se posunulo o den</h3>
+      <p>Skoro jistě někde v kódu je <code>new Date('2026-08-13')</code>, což je
+        půlnoc v UTC. Používej <code>createDate()</code>, nebo ISO řetězec
+        předej rovnou pickeru, který ho čte v místním čase.</p>
+
+      <h3>Hodnota v poli je jiná než v databázi</h3>
+      <p>V poli je datum pro lidi, podle jazyka. Pro server ber
+        <code>picker.getValue()</code> a <code>formatISODate()</code>, nebo nech
+        pracovat <code>submitName</code>.</p>
+
+      <h3><code>change</code> se ozývá pořád dokola</h3>
+      <p><code>change</code> padá při každém kliknutí, i uprostřed rozsahu. Na
+        ukládání je <code>apply</code>. A hodnotu nastavovanou zvenčí posílej
+        se <code>{ silent: true }</code>, jinak si posluchače vyvoláš sám.</p>
+
+      <h3>Picker zůstal viset po přepnutí stránky</h3>
+      <p>Panel popoveru žije na <code>&lt;body&gt;</code>, takže odstranění pole
+        ho samo neuklidí. V SPA vždycky volej <code>picker.destroy()</code>.</p>
+
+      <!-- ============================================================ -->
+      <h2 id="dal">Kam dál</h2>
+
+      <p><a href="../demo/">Demo</a> má konfigurátor, ve kterém si každou volbu
+        naklikáš a rovnou vidíš kód. <a href="../api/">API dokumentace</a> je
+        úplný výčet voleb, metod, událostí, CSS proměnných a typů.
+        <a href="https://github.com/svatekr70/gregory">Repozitář</a> bere hlášení
+        chyb i nápady.</p>
+
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap wrap-wide fnav">
+    <span>Gregory · MIT · © Rudolf Svátek</span>
+    <span class="spacer"></span>
+    <a href="../">Úvod</a>
+    <a href="../demo/">Demo</a>
+    <a href="../api/">API</a>
+    <a href="https://github.com/svatekr70/gregory">GitHub</a>
+  </div>
+</footer>
+
+<script type="module" src="../assets/docs.ts"></script>
+</body>
+</html>
