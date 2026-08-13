@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Gregory } from '../src/gregory.js'
+import { formatISODate } from '../src/core/date.js'
 import type { DateRange, GregoryOptions } from '../src/core/types.js'
 
 let input: HTMLInputElement
@@ -90,6 +91,18 @@ describe('range mode', () => {
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ complete: true }))
   })
 
+  it('reports the working selection, not the committed value', () => {
+    const onChange = vi.fn()
+    picker.on('change', onChange)
+
+    day('2026-08-10').click()
+
+    // Nothing is committed yet, but change must still describe what was picked.
+    const payload = onChange.mock.calls.at(-1)![0] as { value: DateRange }
+    expect(payload.value.from?.getDate()).toBe(10)
+    expect((picker.getValue() as DateRange).from).toBeNull()
+  })
+
   it('restores the committed value on cancel', () => {
     picker.setValue(['2026-08-01', '2026-08-05'])
     day('2026-08-20').click()
@@ -109,6 +122,272 @@ describe('range mode', () => {
 
     day('2026-08-11').click()
     expect(apply().disabled).toBe(false)
+  })
+})
+
+describe('week selection', () => {
+  const weeks = (): HTMLButtonElement[] => [
+    ...picker.element.querySelectorAll<HTMLButtonElement>('[data-action="week"]'),
+  ]
+
+  /** The week button whose row starts on `iso`. */
+  const week = (iso: string): HTMLButtonElement => {
+    const button = weeks().find((candidate) => candidate.dataset.value === iso)
+    if (!button) throw new Error(`week starting ${iso} is not rendered`)
+    return button
+  }
+
+  it('leaves week numbers inert unless asked', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true })
+    expect(weeks()).toHaveLength(0)
+    expect(picker.element.querySelectorAll('.gr-weeknum').length).toBeGreaterThan(0)
+  })
+
+  it('needs week numbers and a range mode', () => {
+    mount({ mode: 'range', presets: false, selectableWeeks: true })
+    expect(weeks()).toHaveLength(0)
+
+    mount({ mode: 'date', weekNumbers: true, selectableWeeks: true })
+    expect(weeks()).toHaveLength(0)
+  })
+
+  it('selects the whole week in one click', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true })
+
+    week('2026-08-10').click()
+
+    const selection = picker.getSelection()
+    expect(formatISODate(selection.from!)).toBe('2026-08-10')
+    expect(formatISODate(selection.to!)).toBe('2026-08-16')
+  })
+
+  it('follows firstDayOfWeek rather than the ISO week', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, firstDayOfWeek: 0 })
+
+    // Sunday-first locale: the row runs Sunday to Saturday.
+    week('2026-08-09').click()
+
+    const selection = picker.getSelection()
+    expect(formatISODate(selection.from!)).toBe('2026-08-09')
+    expect(formatISODate(selection.to!)).toBe('2026-08-15')
+  })
+
+  it('marks the whole week as selected in the grid', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true })
+
+    week('2026-08-10').click()
+
+    expect(day('2026-08-10').classList.contains('is-start')).toBe(true)
+    expect(day('2026-08-13').classList.contains('is-in-range')).toBe(true)
+    expect(day('2026-08-16').classList.contains('is-end')).toBe(true)
+    expect(day('2026-08-17').classList.contains('is-in-range')).toBe(false)
+  })
+
+  it('clips the week to min and max', () => {
+    mount({
+      mode: 'range',
+      presets: false,
+      weekNumbers: true,
+      selectableWeeks: true,
+      min: '2026-08-12',
+      max: '2026-08-14',
+    })
+
+    week('2026-08-10').click()
+
+    const selection = picker.getSelection()
+    expect(formatISODate(selection.from!)).toBe('2026-08-12')
+    expect(formatISODate(selection.to!)).toBe('2026-08-14')
+  })
+
+  it('ignores a week that cannot fit in maxSpan', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, maxSpan: 5 })
+
+    week('2026-08-10').click()
+
+    expect(picker.getSelection().from).toBeNull()
+  })
+
+  it('allows a week when maxSpan is exactly seven days', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, maxSpan: 7 })
+
+    week('2026-08-10').click()
+
+    expect(formatISODate(picker.getSelection().to!)).toBe('2026-08-16')
+  })
+
+  it('commits and closes when autoApply is on', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true, autoApply: true })
+
+    week('2026-08-10').click()
+
+    const value = picker.getValue() as DateRange
+    expect(formatISODate(value.from!)).toBe('2026-08-10')
+    expect(formatISODate(value.to!)).toBe('2026-08-16')
+    expect(picker.element.hidden).toBe(true)
+  })
+
+  it('waits for Apply otherwise', () => {
+    mount({ mode: 'range', presets: false, weekNumbers: true, selectableWeeks: true })
+    const onChange = vi.fn()
+    picker.on('change', onChange)
+
+    week('2026-08-10').click()
+
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ complete: true }))
+    expect((picker.getValue() as DateRange).from).toBeNull()
+
+    picker.apply()
+    expect((picker.getValue() as DateRange).from).not.toBeNull()
+  })
+
+  it('keeps the time of day in a datetime range', () => {
+    mount({
+      mode: 'datetime-range',
+      presets: false,
+      weekNumbers: true,
+      selectableWeeks: true,
+      minTime: '08:00',
+      maxTime: '18:00',
+    })
+
+    week('2026-08-10').click()
+
+    expect(picker.getSelection().from?.getHours()).toBe(8)
+    expect(picker.getSelection().to?.getHours()).toBe(8)
+  })
+})
+
+describe('open ranges', () => {
+  const button = (action: string): HTMLButtonElement =>
+    picker.element.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)!
+
+  it('is off by default — one bound is not enough to apply', () => {
+    mount({ mode: 'range', presets: false })
+    day('2026-08-10').click()
+
+    expect(button('apply').disabled).toBe(true)
+    expect(picker.element.querySelector('[data-action="open-end"]')).toBeNull()
+  })
+
+  it('lets a single bound be applied as an open range', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    day('2026-08-10').click()
+
+    expect(button('apply').disabled).toBe(false)
+    picker.apply()
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to).toBeNull()
+  })
+
+  it('drops the end through the button', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    day('2026-08-10').click()
+    day('2026-08-14').click()
+
+    button('open-end').click()
+    picker.apply()
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to).toBeNull()
+  })
+
+  it('drops the start, keeping the remaining bound as the end', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    day('2026-08-10').click()
+
+    // Only "from" is picked, so dropping the start moves it over to "to".
+    button('open-start').click()
+    picker.apply()
+
+    const value = picker.getValue() as DateRange
+    expect(value.from).toBeNull()
+    expect(value.to?.getDate()).toBe(10)
+  })
+
+  it('disables the button for an end that is already gone', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    expect(button('open-start').disabled).toBe(true)
+    expect(button('open-end').disabled).toBe(true)
+
+    day('2026-08-10').click()
+    expect(button('open-start').disabled).toBe(false)
+    expect(button('open-end').disabled).toBe(true)
+
+    day('2026-08-14').click()
+    expect(button('open-start').disabled).toBe(false)
+    expect(button('open-end').disabled).toBe(false)
+  })
+
+  it('accepts an open range as an input value', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    picker.setValue({ from: '2026-08-10', to: null })
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(10)
+    expect(value.to).toBeNull()
+  })
+
+  it('reads an open range from a slash string', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+
+    picker.setValue('2026-08-10/')
+    expect((picker.getValue() as DateRange).to).toBeNull()
+
+    picker.setValue('/2026-08-14')
+    const value = picker.getValue() as DateRange
+    expect(value.from).toBeNull()
+    expect(value.to?.getDate()).toBe(14)
+  })
+
+  it('shows an open value in the input with a prefix', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true, locale: 'cs' })
+
+    picker.setValue('2026-08-10/')
+    expect(input.value).toMatch(/^od /)
+
+    picker.setValue('/2026-08-14')
+    expect(input.value).toMatch(/^do /)
+  })
+
+  it('paints the calendar as running past the picked bound', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    day('2026-08-10').click()
+
+    expect(day('2026-08-20').classList.contains('is-in-range')).toBe(true)
+    expect(day('2026-08-05').classList.contains('is-in-range')).toBe(false)
+  })
+
+  it('does not paint an open tail when the option is off', () => {
+    mount({ mode: 'range', presets: false })
+    day('2026-08-10').click()
+
+    expect(day('2026-08-20').classList.contains('is-in-range')).toBe(false)
+  })
+
+  it('still waits for both bounds before auto-applying', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true, autoApply: true })
+    day('2026-08-10').click()
+
+    // The first click completes an open range, but closing here would deny
+    // the user the second bound.
+    expect(picker.element.hidden).toBe(false)
+
+    day('2026-08-14').click()
+    expect(picker.element.hidden).toBe(true)
+    expect((picker.getValue() as DateRange).to?.getDate()).toBe(14)
+  })
+
+  it('opens the panel on the month of whichever bound exists', () => {
+    mount({ mode: 'range', presets: false, allowOpenRange: true })
+    picker.setValue('/2026-12-24')
+    picker.close()
+    picker.openPanel()
+
+    expect([...picker.element.querySelectorAll('.gr-caption')][0]?.textContent?.toLowerCase()).toContain('prosinec')
   })
 })
 

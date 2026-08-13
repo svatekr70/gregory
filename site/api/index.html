@@ -145,11 +145,13 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>months</code></td><td><code>number</code></td><td><code>2</code> v range, jinak <code>1</code></td><td>Počet panelů vedle sebe.</td></tr>
           <tr><td><code>linkedCalendars</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Listovat všemi panely najednou místo každým zvlášť.</td></tr>
           <tr><td><code>weekNumbers</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Sloupec s ISO čísly týdnů.</td></tr>
+          <tr><td><code>selectableWeeks</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Klik na číslo týdne vybere celý týden jako rozsah.</td></tr>
           <tr><td><code>dropdowns</code></td><td><code>boolean</code></td><td><code>false</code></td><td><code>&lt;select&gt;</code> pro měsíc a rok.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
           <tr><td><code>maxSpan</code></td><td><code>number | null</code></td><td><code>null</code></td><td>Nejdelší rozsah ve dnech (včetně obou konců).</td></tr>
+          <tr><td><code>allowOpenRange</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Povolí rozsah otevřený na jednom konci.</td></tr>
           <tr><td><code>timeStep</code></td><td><code>number</code></td><td><code>5</code></td><td>Krok minut v časových režimech.</td></tr>
           <tr><td><code>timeUi</code></td><td><code>'select' | 'input'</code></td><td><code>'select'</code></td><td>Selecty hodin a minut, nebo nativní <code>input[type=time]</code>.</td></tr>
           <tr><td><code>minTime</code></td><td><code>string | null</code></td><td><code>null</code></td><td>Nejdřívější čas dne, <code>'HH:MM'</code>. Včetně.</td></tr>
@@ -243,6 +245,70 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
   isDisabled: (d) =&gt; d.<span class="t">getDay</span>() === <span class="n">0</span> || d.<span class="t">getDay</span>() === <span class="n">6</span>,
   dayClass: (d) =&gt; jeSvatek(d) ? <span class="s">'je-svatek'</span> : <span class="k">null</span>,
 })</pre>
+
+      <h3><code>selectableWeeks</code></h3>
+
+      <p>Zapne výběr celého týdne jedním klikem — čísla týdnů se stanou tlačítky
+        a klik na ně vybere těch sedm dní jako rozsah. Potřebuje zapnuté
+        <code>weekNumbers</code> a range režim, jinak nedělá nic.</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  mode: <span class="s">'range'</span>,
+  weekNumbers: <span class="k">true</span>,
+  selectableWeeks: <span class="k">true</span>,
+})</pre>
+
+      <p>Vybraný týden se řídí <strong>zobrazeným řádkem</strong>, tedy volbou
+        <code>firstDayOfWeek</code>. V české locale to je pondělí až neděle, v
+        <code>en-US</code> neděle až sobota — číslo vlevo přitom zůstává ISO týdnem,
+        který se počítá vždy od pondělí.</p>
+
+      <p>Omezení platí i tady: týden se ořízne podle <code>min</code> a
+        <code>max</code>, takže z částečně dostupného týdne vybere jen použitelnou
+        část. Když je <code>maxSpan</code> menší než 7, klik se ignoruje — sedm dní
+        by se do limitu nevešlo.</p>
+
+      <h3><code>allowOpenRange</code></h3>
+
+      <p>Někdy je hodnota „od 1. 8. 2026 dál" — bez konce. S touto volbou smí jeden
+        konec rozsahu zůstat <code>null</code>:</p>
+
+      <pre class="code"><span class="k">const</span> picker = <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#vstup'</span>, {
+  mode: <span class="s">'range'</span>,
+  allowOpenRange: <span class="k">true</span>,
+})
+
+picker.<span class="t">getValue</span>()
+<span class="c">// { from: Date(2026-08-01), to: null }</span></pre>
+
+      <p>Chování se tím mění na třech místech:</p>
+      <ul>
+        <li>Výběr je hotový, jakmile je znám <strong>jeden</strong> konec — tlačítko
+          Použít se odemkne hned po prvním kliknutí.</li>
+        <li>V patičce přibudou tlačítka <strong>Bez začátku</strong> a
+          <strong>Bez konce</strong>, která příslušný konec zahodí. Zbylý konec se
+          přesune na správnou stranu, takže z „1. 8." udělá <em>Bez začátku</em>
+          hodnotu <code>{ from: null, to: 1. 8. }</code>.</li>
+        <li>Kalendář vybarví celý zbytek směrem, kterým je rozsah otevřený — je tak
+          vidět, co by potvrzení právě teď znamenalo.</li>
+      </ul>
+
+      <p>V inputu se otevřená hodnota píše s předponou z locale:
+        <code>od 1. 8. 2026</code>, respektive <code>do 14. 8. 2026</code>.
+        Vlastní <code>format</code> to samozřejmě přebije.</p>
+
+      <div class="callout">
+        <strong>autoApply zůstává na obou koncích</strong>
+        <p>I se zapnutým <code>allowOpenRange</code> se panel sám zavře až po
+          vybrání <em>obou</em> konců. Kdyby se zavíral po prvním kliknutí — které
+          je teď „hotové" — nešel by druhý konec vybrat vůbec. Otevřený rozsah se
+          proto potvrzuje výhradně tlačítkem.</p>
+      </div>
+
+      <p>Jako vstup projde <code>{ from, to: null }</code>, dvojice
+        <code>[from, null]</code> i řetězec s prázdnou stranou:
+        <code>'2026-08-01/'</code> nebo <code>'/2026-08-14'</code>. Ve stejném tvaru
+        se hodnota zrcadlí do atributu <code>value</code> custom elementu.</p>
 
       <h3>Čas: <code>timeStep</code>, <code>timeUi</code>, <code>minTime</code>, <code>maxTime</code></h3>
       <p>V režimech <code>datetime</code> a <code>datetime-range</code> je v patičce
@@ -386,7 +452,7 @@ odhlasit()</pre>
       <table>
         <thead><tr><th>Událost</th><th>Payload</th><th>Kdy</th></tr></thead>
         <tbody>
-          <tr><td><code>change</code></td><td><code>{ value, complete }</code></td><td>Při každém kliknutí na den, i na první konec rozsahu.</td></tr>
+          <tr><td><code>change</code></td><td><code>{ value, complete }</code></td><td>Při každém kliknutí na den, i na první konec rozsahu. <code>value</code> je <strong>rozpracovaný výběr</strong>, ne potvrzená hodnota.</td></tr>
           <tr><td><code>apply</code></td><td><code>{ value }</code></td><td>Při potvrzení — tlačítkem, nebo automaticky při <code>autoApply</code>.</td></tr>
           <tr><td><code>cancel</code></td><td><code>{ value }</code></td><td>Zrušit, Escape nebo kliknutí mimo panel.</td></tr>
           <tr><td><code>open</code></td><td><code>{ value }</code></td><td>Otevření popoveru.</td></tr>
@@ -401,6 +467,11 @@ odhlasit()</pre>
         <p>Na <code>apply</code>, pokud tě zajímá jen hotový výsledek — v range režimu se
           <code>change</code> ozve i s polovičním rozsahem. Příznak <code>complete</code>
           říká, jestli je hodnota kompletní.</p>
+        <p style="margin-top:8px">Pozor na rozdíl mezi událostmi: <code>change</code> nese
+          rozpracovaný výběr (totéž co <code>getSelection()</code>), zatímco
+          <code>apply</code>, <code>cancel</code>, <code>open</code> a <code>close</code>
+          nesou potvrzenou hodnotu (totéž co <code>getValue()</code>). Při zapnutém
+          <code>autoApply</code> je to jedno a totéž.</p>
       </div>
 
       <!-- ============================================================ -->
@@ -590,6 +661,7 @@ odhlasit()</pre>
           <tr><td><code>.gr-select</code></td><td>Dropdown měsíce a roku.</td></tr>
           <tr><td><code>.gr-grid</code></td><td>Mřížka dnů, <code>role="grid"</code>.</td></tr>
           <tr><td><code>.gr-weekday</code>, <code>.gr-weeknum</code></td><td>Záhlaví dnů a sloupec čísel týdnů.</td></tr>
+          <tr><td><code>.gr-weeknum-button</code></td><td>Číslo týdne při zapnutém <code>selectableWeeks</code>.</td></tr>
           <tr><td><code>.gr-day</code></td><td>Jeden den. Stavy: <code>.is-outside</code>, <code>.is-today</code>, <code>.is-selected</code>, <code>.is-in-range</code>, <code>.is-start</code>, <code>.is-end</code>, <code>.is-weekend</code>.</td></tr>
           <tr><td><code>.gr-foot</code>, <code>.gr-times</code></td><td>Patička a blok s časem.</td></tr>
           <tr><td><code>.gr-time-group</code>, <code>.gr-time-label</code></td><td>Jeden konec rozsahu a jeho popisek (nese <code>data-bound</code>).</td></tr>

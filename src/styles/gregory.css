@@ -181,6 +181,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Klikatelné číslo týdne vybere celý řádek jako rozsah. */
+.gr-weeknum-button {
+  padding: 0 6px 0 0;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.gr-weeknum-button:hover {
+  background: var(--gr-hover);
+  color: var(--gr-fg);
+}
+
+.gr-weeknum-button:focus-visible {
+  outline: 2px solid var(--gr-accent);
+  outline-offset: -2px;
+}
+
 .gr-day {
   aspect-ratio: 1;
   min-width: 32px;
@@ -333,6 +353,18 @@ div.gr-time {
 .gr-btn-primary {
   background: var(--gr-accent);
   color: var(--gr-accent-fg);
+}
+
+/* Otevřený rozsah — vedlejší akce, drží se zpátky. */
+.gr-btn-open {
+  padding: 6px 10px;
+  color: var(--gr-muted);
+  font-size: 0.9em;
+}
+
+.gr-btn-open:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .gr-btn-primary:disabled {

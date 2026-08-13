@@ -36,6 +36,8 @@ export type { DayCell, MonthContext, MonthView, WeekRow } from './core/calendar.
 export type {
   DateLike,
   DateRange,
+  DateRangeInput,
+  RangeValueInput,
   GregoryEvents,
   GregoryOptions,
   GregoryValue,

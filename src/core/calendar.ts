@@ -50,6 +50,8 @@ export interface MonthContext {
   max: Date | null
   /** Longest selectable range in days; narrows the bounds once one end is picked. */
   maxSpan: number | null
+  /** Paints a half-picked range as running to the edge of time. */
+  openEnded?: boolean | undefined
   isDisabled?: ((date: Date) => boolean) | undefined
   dayClass?: ((date: Date) => string | null | undefined) | undefined
   /** Overrides "today", so tests do not depend on the clock. */
@@ -62,6 +64,18 @@ function effectiveRange(context: MonthContext): DateRange {
   const end = to ?? context.preview
   if (!from || !end) return { from, to }
   return compareDay(from, end) <= 0 ? { from, to: end } : { from: end, to: from }
+}
+
+/**
+ * Days strictly between the bounds. With `openEnded` a single bound reaches to
+ * the edge of the calendar, which is what applying the range now would mean.
+ */
+function isInsideRange(date: Date, range: DateRange, openEnded: boolean): boolean {
+  if (range.from && range.to) return isWithinDay(date, range.from, range.to)
+  if (!openEnded) return false
+  if (range.from) return compareDay(date, range.from) > 0
+  if (range.to) return compareDay(date, range.to) < 0
+  return false
 }
 
 export function isDayDisabled(date: Date, context: MonthContext): boolean {
@@ -105,7 +119,7 @@ export function buildMonth(year: number, month: number, context: MonthContext): 
         isToday: isSameDay(date, now),
         disabled: isDayDisabled(date, context),
         selected: rangeStart || rangeEnd,
-        inRange: isWithinDay(date, range.from, range.to) && !rangeStart && !rangeEnd,
+        inRange: isInsideRange(date, range, context.openEnded ?? false) && !rangeStart && !rangeEnd,
         rangeStart,
         rangeEnd,
         weekend: weekday === 0 || weekday === 6,

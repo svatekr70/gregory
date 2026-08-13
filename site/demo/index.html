@@ -107,12 +107,16 @@
               </select>
             </label>
 
+            <label class="switch"><input type="checkbox" id="opt-openrange">
+              <span>Povolit otevřený rozsah (od…, do…) <code>allowOpenRange</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-linked">
               <span>Listovat měsíci společně <code>linkedCalendars</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-presets" checked>
               <span>Zkratky rozsahů v postranním panelu <code>presets</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-weeknumbers">
               <span>Čísla týdnů <code>weekNumbers</code></span></label>
+            <label class="switch"><input type="checkbox" id="opt-selectableweeks">
+              <span>Klikem na číslo týdne vybrat celý týden <code>selectableWeeks</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-dropdowns">
               <span>Výběr měsíce a roku <code>dropdowns</code></span></label>
             <label class="switch"><input type="checkbox" id="opt-autoapply">
@@ -191,6 +195,22 @@
           <p>Fiskální čtvrtletí místo výchozích zkratek a vlastní <code>format</code> do inputu.</p>
           <input class="stage-input" id="ex-custom" placeholder="Vyber čtvrtletí…">
           <div class="readout" data-for="ex-custom">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Výběr týdne</h3>
+          <p><code>selectableWeeks: true</code> — klikni na číslo týdne vlevo a vybere se
+            celých sedm dní. Řídí se prvním dnem týdne podle locale.</p>
+          <input class="stage-input" id="ex-week" placeholder="Vyber týden…">
+          <div class="readout" data-for="ex-week">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Otevřený rozsah</h3>
+          <p><code>allowOpenRange: true</code> — stačí jeden konec. Vyber datum a dej
+            Použít, nebo použij tlačítka <em>Bez začátku</em> / <em>Bez konce</em>.</p>
+          <input class="stage-input" id="ex-open" placeholder="Od data dál…">
+          <div class="readout" data-for="ex-open">—</div>
         </div>
 
         <div class="card example">

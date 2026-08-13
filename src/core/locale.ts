@@ -74,6 +74,10 @@ function createIntlLocale(requested: string): Locale {
           to: 'Do',
           hours: 'Hodiny',
           minutes: 'Minuty',
+          openStart: 'Bez začátku',
+          openEnd: 'Bez konce',
+          since: 'od',
+          until: 'do',
         }
       : {
           previousMonth: 'Previous month',
@@ -88,6 +92,10 @@ function createIntlLocale(requested: string): Locale {
           to: 'To',
           hours: 'Hours',
           minutes: 'Minutes',
+          openStart: 'No start',
+          openEnd: 'No end',
+          since: 'from',
+          until: 'until',
         },
   }
 }

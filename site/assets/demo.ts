@@ -19,8 +19,9 @@ function describe(value: GregoryValue, mode: Mode): string {
     hasTime(mode) ? `${formatISODate(date)} ${formatISOTime(date)}` : formatISODate(date)
 
   if (value instanceof Date) return `'${stamp(value)}'`
-  if (!value.from) return '{ from: null, to: null }'
-  if (!value.to) return `{ from: '${stamp(value.from)}', to: null }`
+  if (!value.from && !value.to) return '{ from: null, to: null }'
+  if (!value.from) return `{ from: null, to: '${stamp(value.to!)}' }  →  otevřený začátek`
+  if (!value.to) return `{ from: '${stamp(value.from)}', to: null }  →  otevřený konec`
 
   const days = Math.round((+new Date(value.to.getFullYear(), value.to.getMonth(), value.to.getDate()) -
     +new Date(value.from.getFullYear(), value.from.getMonth(), value.from.getDate())) / 86_400_000) + 1
@@ -51,9 +52,11 @@ const controls = {
   minTime: $<HTMLInputElement>('#opt-mintime'),
   maxTime: $<HTMLInputElement>('#opt-maxtime'),
   opens: $<HTMLSelectElement>('#opt-opens'),
+  allowOpenRange: $<HTMLInputElement>('#opt-openrange'),
   linkedCalendars: $<HTMLInputElement>('#opt-linked'),
   presets: $<HTMLInputElement>('#opt-presets'),
   weekNumbers: $<HTMLInputElement>('#opt-weeknumbers'),
+  selectableWeeks: $<HTMLInputElement>('#opt-selectableweeks'),
   dropdowns: $<HTMLInputElement>('#opt-dropdowns'),
   autoApply: $<HTMLInputElement>('#opt-autoapply'),
   inline: $<HTMLInputElement>('#opt-inline'),
@@ -79,9 +82,11 @@ function readOptions(): GregoryOptions & { mode: Mode } {
     minTime: controls.minTime.value.trim() || null,
     maxTime: controls.maxTime.value.trim() || null,
     opens: controls.opens.value as 'left' | 'right' | 'center',
+    allowOpenRange: controls.allowOpenRange.checked,
     linkedCalendars: controls.linkedCalendars.checked,
     presets: controls.presets.checked,
     weekNumbers: controls.weekNumbers.checked,
+    selectableWeeks: controls.selectableWeeks.checked,
     dropdowns: controls.dropdowns.checked,
     autoApply: controls.autoApply.checked,
     inline: controls.inline.checked,
@@ -105,9 +110,11 @@ function buildSnippet(options: GregoryOptions & { mode: Mode }): string {
     if (options.maxTime) lines.push(`maxTime: '${options.maxTime}'`)
   }
   if (options.opens !== 'right') lines.push(`opens: '${options.opens}'`)
+  if (options.allowOpenRange) lines.push('allowOpenRange: true')
   if (options.linkedCalendars) lines.push('linkedCalendars: true')
   if (options.presets !== isRange) lines.push(`presets: ${options.presets}`)
   if (options.weekNumbers) lines.push('weekNumbers: true')
+  if (options.selectableWeeks) lines.push('selectableWeeks: true')
   if (options.dropdowns) lines.push('dropdowns: true')
   if (options.autoApply !== (options.mode === 'date')) lines.push(`autoApply: ${options.autoApply}`)
   if (options.inline) lines.push('inline: true')
@@ -189,6 +196,23 @@ example('ex-single', { mode: 'date', locale: 'cs', dropdowns: true, weekNumbers:
 example('ex-range', { mode: 'range', locale: 'cs', weekNumbers: true })
 
 example('ex-datetime', { mode: 'datetime', locale: 'cs', timeStep: 15 })
+
+example('ex-week', {
+  mode: 'range',
+  locale: 'cs',
+  weekNumbers: true,
+  selectableWeeks: true,
+  presets: false,
+  months: 1,
+})
+
+example('ex-open', {
+  mode: 'range',
+  locale: 'cs',
+  allowOpenRange: true,
+  presets: false,
+  months: 1,
+})
 
 example('ex-hours', {
   mode: 'datetime-range',

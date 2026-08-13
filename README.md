@@ -65,11 +65,13 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `months` | `2` v range módu, jinak `1` | počet panelů vedle sebe |
 | `linkedCalendars` | `false` | listovat všemi panely najednou místo každým zvlášť |
 | `weekNumbers` | `false` | sloupec s ISO čísly týdnů |
+| `selectableWeeks` | `false` | klik na číslo týdne vybere celý týden jako rozsah |
 | `dropdowns` | `false` | `<select>` pro měsíc a rok |
 | `inline` | `false` | vykreslit na místo místo popoveru |
 | `autoApply` | `true` jen v módu `date` | potvrdit hned, bez tlačítek Apply/Cancel |
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |
 | `maxSpan` | `null` | nejdelší povolený rozsah ve dnech |
+| `allowOpenRange` | `false` | povolí rozsah otevřený na jednom konci (`{ from, to: null }`) |
 | `timeStep` | `5` | krok minut v časových režimech |
 | `timeUi` | `'select'` | selecty hodin a minut, nebo nativní `input[type=time]` |
 | `minTime` / `maxTime` | `null` | okno dne, `'HH:MM'`, včetně obou hranic |

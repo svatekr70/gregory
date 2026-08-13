@@ -1,4 +1,4 @@
-import { buildMonth, isDayDisabled, type MonthContext } from './core/calendar.js'
+import { buildMonth, isDayDisabled, type MonthContext, type WeekRow } from './core/calendar.js'
 import {
   addDays,
   addMonths,
@@ -30,6 +30,7 @@ import type {
   GregoryEvents,
   GregoryOptions,
   GregoryValue,
+  RangeValueInput,
   ResolvedOptions,
 } from './core/types.js'
 
@@ -153,6 +154,7 @@ export class Gregory {
       months: options.months ?? (isRangeMode(mode) ? 2 : 1),
       linkedCalendars: options.linkedCalendars ?? false,
       weekNumbers: options.weekNumbers ?? false,
+      selectableWeeks: options.selectableWeeks ?? false,
       dropdowns: options.dropdowns ?? false,
       inline: options.inline ?? false,
       // Only a plain date is complete on the first click. A range still needs its
@@ -160,6 +162,7 @@ export class Gregory {
       autoApply: options.autoApply ?? mode === 'date',
       presets,
       maxSpan: options.maxSpan ?? null,
+      allowOpenRange: options.allowOpenRange ?? false,
       timeStep: options.timeStep ?? 5,
       timeUi: options.timeUi ?? 'select',
       ...resolveTimeBounds(options.minTime, options.maxTime),
@@ -184,7 +187,7 @@ export class Gregory {
 
   // ------------------------------------------------------------------ value
 
-  private toRange(value: DateLike | DateRange | [DateLike, DateLike]): DateRange {
+  private toRange(value: RangeValueInput): DateRange {
     if (value === null || value === undefined || value === '') return { from: null, to: null }
     if (Array.isArray(value)) return { from: parseDate(value[0]), to: parseDate(value[1]) }
     if (typeof value === 'object' && !(value instanceof Date)) {
@@ -199,10 +202,20 @@ export class Gregory {
     return { from: parsed, to: isRangeMode(this.options.mode) ? null : parsed }
   }
 
+  /** Shapes a range as the public value: a `Date` in single modes. */
+  private valueOf(range: DateRange): GregoryValue {
+    if (isRangeMode(this.options.mode)) return { ...range }
+    return range.from ? new Date(range.from.getTime()) : null
+  }
+
   /** The committed value: a `Date` in single modes, a `DateRange` in range modes. */
   getValue(): GregoryValue {
-    if (isRangeMode(this.options.mode)) return { ...this.committed }
-    return this.committed.from ? new Date(this.committed.from.getTime()) : null
+    return this.valueOf(this.committed)
+  }
+
+  /** What `change` reports — the working selection, committed or not. */
+  private selectedValue(): GregoryValue {
+    return this.valueOf(this.selection)
   }
 
   /** The in-progress selection, which may be half-finished in range modes. */
@@ -210,7 +223,7 @@ export class Gregory {
     return { ...this.selection }
   }
 
-  setValue(value: DateLike | DateRange | [DateLike, DateLike], { silent = false } = {}): void {
+  setValue(value: RangeValueInput, { silent = false } = {}): void {
     this.assign(this.toRange(value), { commit: true, silent })
     this.render()
   }
@@ -222,23 +235,34 @@ export class Gregory {
 
   private assign(range: DateRange, { commit = false, silent = false } = {}): void {
     this.selection = range
-    if (range.from) {
-      this.resetViews(range.from)
-      this.focusedDay = range.from
+    // An open range may only know its end, so fall back to whichever bound exists.
+    const anchor = range.from ?? range.to
+    if (anchor) {
+      this.resetViews(anchor)
+      this.focusedDay = anchor
     }
     if (commit) {
       this.committed = { ...range }
       this.syncInput()
     }
     if (!silent) {
-      this.emitter.emit('change', { value: this.getValue(), complete: this.isComplete() })
+      this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
       if (commit) this.emitter.emit('apply', { value: this.getValue() })
     }
   }
 
+  /** Whether the current selection is worth committing. */
   private isComplete(): boolean {
-    if (!this.selection.from) return false
-    return isRangeMode(this.options.mode) ? this.selection.to !== null : true
+    const { from, to } = this.selection
+    if (!isRangeMode(this.options.mode)) return from !== null
+    // An open range is finished as soon as one end is known.
+    return this.options.allowOpenRange ? from !== null || to !== null : from !== null && to !== null
+  }
+
+  /** Both ends picked — the only case where autoApply may close the panel. */
+  private isFullyPicked(): boolean {
+    if (!isRangeMode(this.options.mode)) return this.selection.from !== null
+    return this.selection.from !== null && this.selection.to !== null
   }
 
   formatValue(): string {
@@ -246,10 +270,16 @@ export class Gregory {
     if (format) return format(this.getValue(), locale) ?? ''
 
     const { from, to } = this.committed
-    if (!from) return ''
     const time = hasTime(mode)
-    if (!isRangeMode(mode)) return locale.formatDate(from, time)
-    if (!to) return locale.formatDate(from, time)
+
+    if (!isRangeMode(mode)) return from ? locale.formatDate(from, time) : ''
+    // A range open at one end reads as "od 1. 8." / "do 1. 8.".
+    if (!from) return to ? `${locale.labels.until} ${locale.formatDate(to, time)}` : ''
+    if (!to) {
+      return this.options.allowOpenRange
+        ? `${locale.labels.since} ${locale.formatDate(from, time)}`
+        : locale.formatDate(from, time)
+    }
     return `${locale.formatDate(from, time)}${locale.rangeSeparator}${locale.formatDate(to, time)}`
   }
 
@@ -272,7 +302,8 @@ export class Gregory {
     this.open = true
     this.element.hidden = false
     this.selection = { ...this.committed }
-    if (this.committed.from) this.resetViews(this.committed.from)
+    const anchor = this.committed.from ?? this.committed.to
+    if (anchor) this.resetViews(anchor)
     this.render()
     this.position()
     document.addEventListener('mousedown', this.onDocumentDown, true)
@@ -410,6 +441,9 @@ export class Gregory {
       case 'day':
         this.pick(parseDate(value ?? null))
         break
+      case 'week':
+        this.pickWeek(parseDate(value ?? null))
+        break
       case 'preset': {
         const preset = this.options.presets[Number(value)]
         if (!preset) break
@@ -419,6 +453,12 @@ export class Gregory {
         this.render()
         break
       }
+      case 'open-start':
+        this.openRange('start')
+        break
+      case 'open-end':
+        this.openRange('end')
+        break
       case 'today':
         this.goTo(today())
         break
@@ -620,7 +660,7 @@ export class Gregory {
       this.committed = { ...this.selection }
       this.syncInput()
     }
-    this.emitter.emit('change', { value: this.getValue(), complete: this.isComplete() })
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
     if (rerender) this.render()
   }
 
@@ -639,17 +679,81 @@ export class Gregory {
 
     this.focusedDay = date
     this.preview = null
-    const complete = this.isComplete()
-    if (complete && this.options.autoApply) this.committed = { ...this.selection }
-    if (complete && this.options.autoApply) this.syncInput()
 
-    this.emitter.emit('change', { value: this.getValue(), complete })
-    if (complete && this.options.autoApply) {
+    // Auto-apply needs both ends. With allowOpenRange the first click already
+    // counts as complete, but closing there would deny the second one.
+    const settled = this.isFullyPicked() && this.options.autoApply
+    if (settled) {
+      this.committed = { ...this.selection }
+      this.syncInput()
+    }
+
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+    if (settled) {
       this.emitter.emit('apply', { value: this.getValue() })
       this.render()
       this.close()
       return
     }
+    this.render()
+  }
+
+  /**
+   * Selects a whole week as a range. `start` is the first day of the row the
+   * user clicked, so it follows `firstDayOfWeek` rather than the ISO week.
+   */
+  private pickWeek(start: Date | null): void {
+    if (!start || !this.canSelectWeeks()) return
+    const { min, max, maxSpan, isDisabled } = this.options
+
+    // A week is 7 days; a shorter maxSpan makes the whole gesture impossible.
+    if (maxSpan !== null && maxSpan < 7) return
+
+    // Clip to min/max so a partially available week still selects its usable part.
+    const first = clampDate(start, min, max)
+    const last = clampDate(addDays(start, 6), min, max)
+    if (compareDay(first, last) > 0) return
+    if (isDisabled?.(first) && isDisabled(last)) return
+
+    this.selection = {
+      from: withTimeOf(first, this.timeFor(this.selection.from)),
+      to: withTimeOf(last, this.timeFor(this.selection.to)),
+    }
+    this.focusedDay = first
+    this.preview = null
+
+    if (this.options.autoApply) {
+      this.committed = { ...this.selection }
+      this.syncInput()
+    }
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
+
+    if (this.options.autoApply) {
+      this.emitter.emit('apply', { value: this.getValue() })
+      this.render()
+      this.close()
+      return
+    }
+    this.render()
+  }
+
+  private canSelectWeeks(): boolean {
+    const { selectableWeeks, weekNumbers, mode } = this.options
+    return selectableWeeks && weekNumbers && isRangeMode(mode)
+  }
+
+  /** Drops one end of the range, keeping the other one whichever side it sits on. */
+  private openRange(side: 'start' | 'end'): void {
+    const { from, to } = this.selection
+    const known = side === 'start' ? (to ?? from) : (from ?? to)
+    if (!known) return
+
+    this.selection = side === 'start' ? { from: null, to: known } : { from: known, to: null }
+    if (this.options.autoApply) {
+      this.committed = { ...this.selection }
+      this.syncInput()
+    }
+    this.emitter.emit('change', { value: this.selectedValue(), complete: this.isComplete() })
     this.render()
   }
 
@@ -664,6 +768,7 @@ export class Gregory {
       min: this.options.min,
       max: this.options.max,
       maxSpan: isRangeMode(this.options.mode) ? this.options.maxSpan : null,
+      openEnded: isRangeMode(this.options.mode) && this.options.allowOpenRange,
       isDisabled: this.options.isDisabled,
       dayClass: this.options.dayClass,
     }
@@ -710,7 +815,7 @@ export class Gregory {
       for (const name of view.weekdays) grid.append(h('div', { class: 'gr-weekday', role: 'columnheader' }, [name]))
 
       for (const week of view.weeks) {
-        if (weekNumbers) grid.append(h('div', { class: 'gr-weeknum' }, [String(week.weekNumber)]))
+        if (weekNumbers) grid.append(this.renderWeekNumber(week))
         for (const day of week.days) {
           const classes = ['gr-day']
           if (day.outside) classes.push('is-outside')
@@ -763,6 +868,25 @@ export class Gregory {
     if (this.open && !this.options.inline) this.position()
   }
 
+  private renderWeekNumber(week: WeekRow): HTMLElement {
+    const label = String(week.weekNumber)
+    if (!this.canSelectWeeks()) return h('div', { class: 'gr-weeknum' }, [label])
+
+    // The row's own first day, so the selection follows firstDayOfWeek.
+    return h(
+      'button',
+      {
+        type: 'button',
+        class: 'gr-weeknum gr-weeknum-button',
+        'data-action': 'week',
+        'data-value': week.days[0]?.iso,
+        'aria-label': `${this.options.locale.labels.weekNumber} ${label}`,
+        tabindex: -1,
+      },
+      [label],
+    )
+  }
+
   private renderDropdowns(anchor: Date, panelIndex: number): HTMLElement {
     const { locale, min, max } = this.options
     const caption = h('div', { class: 'gr-caption gr-caption-select' })
@@ -787,7 +911,8 @@ export class Gregory {
   private renderFooter(): HTMLElement | null {
     const { mode, locale, autoApply } = this.options
     const showTime = hasTime(mode)
-    if (!showTime && autoApply && this.options.inline) return null
+    const showOpenButtons = isRangeMode(mode) && this.options.allowOpenRange
+    if (!showTime && !showOpenButtons && autoApply && this.options.inline) return null
 
     const footer = h('footer', { class: 'gr-foot' })
 
@@ -799,6 +924,26 @@ export class Gregory {
     }
 
     const actions = h('div', { class: 'gr-actions' })
+
+    if (isRangeMode(mode) && this.options.allowOpenRange) {
+      // Each button is disabled once that end is already gone — which also
+      // covers the empty selection, where neither would have anything to keep.
+      const { from, to } = this.selection
+      const openButton = (side: 'start' | 'end'): HTMLElement =>
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'gr-btn gr-btn-ghost gr-btn-open',
+            'data-action': side === 'start' ? 'open-start' : 'open-end',
+            disabled: side === 'start' ? from === null : to === null,
+          },
+          [side === 'start' ? locale.labels.openStart : locale.labels.openEnd],
+        )
+
+      actions.append(openButton('start'), openButton('end'))
+    }
+
     actions.append(h('button', { type: 'button', class: 'gr-btn gr-btn-ghost', 'data-action': 'clear' }, [locale.labels.clear]))
     if (!autoApply) {
       actions.append(

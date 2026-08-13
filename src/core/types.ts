@@ -11,6 +11,15 @@ export interface DateRange {
   to: Date | null
 }
 
+/** A range on the way in: both ends go through `parseDate()`. */
+export interface DateRangeInput {
+  from: DateLike
+  to: DateLike
+}
+
+/** Everything accepted where a range value is expected. */
+export type RangeValueInput = DateLike | DateRangeInput | [DateLike, DateLike]
+
 /** Value shape depends on the mode: a single date, or a range. */
 export type GregoryValue = Date | DateRange | null
 
@@ -47,6 +56,12 @@ export interface Locale {
     to: string
     hours: string
     minutes: string
+    /** Buttons that drop one end of the range. */
+    openStart: string
+    openEnd: string
+    /** Prefixes for a range that is open at one end: "od 1. 8.", "do 1. 8." */
+    since: string
+    until: string
   }
 }
 
@@ -58,7 +73,7 @@ export type LocaleInput = string | (Partial<Omit<Locale, 'labels'>> & { labels?:
 
 export interface GregoryOptions {
   mode?: Mode
-  value?: DateLike | DateRange | [DateLike, DateLike]
+  value?: RangeValueInput
   /** BCP 47 tag ("cs", "en-GB") or a partial locale object overriding the resolved one. */
   locale?: LocaleInput
   min?: DateLike
@@ -70,6 +85,11 @@ export interface GregoryOptions {
   /** Page all panels together instead of giving each its own arrows. */
   linkedCalendars?: boolean
   weekNumbers?: boolean
+  /**
+   * Makes the week numbers clickable: one click selects that whole week as a
+   * range. Needs `weekNumbers` and a range mode.
+   */
+  selectableWeeks?: boolean
   /** Month/year `<select>`s in the panel header. */
   dropdowns?: boolean
   /** Render the panel in place instead of a popover attached to an input. */
@@ -80,6 +100,11 @@ export interface GregoryOptions {
   presets?: RangePreset[] | boolean
   /** Longest selectable range, in days. Ignored outside range modes. */
   maxSpan?: number | null
+  /**
+   * Lets a range stay open at one end — `{ from, to: null }` means "from this
+   * day onwards". Only meaningful in range modes.
+   */
+  allowOpenRange?: boolean
   /** Minutes between selectable times in `datetime*` modes. */
   timeStep?: number
   /** Time controls: two `<select>`s, or one native `<input type="time">`. */
@@ -108,11 +133,13 @@ export interface ResolvedOptions {
   months: number
   linkedCalendars: boolean
   weekNumbers: boolean
+  selectableWeeks: boolean
   dropdowns: boolean
   inline: boolean
   autoApply: boolean
   presets: RangePreset[]
   maxSpan: number | null
+  allowOpenRange: boolean
   timeStep: number
   timeUi: 'select' | 'input'
   /** Minutes since midnight, or null for no bound. */
