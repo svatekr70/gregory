@@ -217,6 +217,8 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>'datetime'</code></td><td><code>Date | null</code></td><td>1</td><td><code>false</code></td></tr>
           <tr><td><code>'datetime-range'</code></td><td><code>DateRange</code></td><td>2</td><td><code>false</code></td></tr>
           <tr><td><code>'multiple'</code></td><td><code>Date[]</code></td><td>1</td><td><code>false</code></td></tr>
+          <tr><td><code>'month'</code></td><td><code>Date | null</code></td><td>1</td><td><code>true</code></td></tr>
+          <tr><td><code>'year'</code></td><td><code>Date | null</code></td><td>1</td><td><code>true</code></td></tr>
         </tbody>
       </table>
       </div>
@@ -240,6 +242,29 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
 
       <p>Prázdná hodnota má tvar <code>null</code> v single režimech a
         <code>{ from: null, to: null }</code> v rozsazích.</p>
+
+      <h3>Režimy <code>month</code> a <code>year</code></h3>
+
+      <p>Na filtry v přehledech („vyber měsíc") je denní kalendář zbytečný.
+        Tyhle režimy místo dnů ukážou mřížku dvanácti měsíců, respektive
+        dvanácti let.</p>
+
+      <pre class="code"><span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#obdobi'</span>, { mode: <span class="s">'month'</span> })
+
+picker.<span class="t">getValue</span>()  <span class="c">// Date(2026-08-01) — první den období</span></pre>
+
+      <p>Hodnotou je <strong>první den</strong> vybraného období, takže se s ní dá
+        dál počítat jako s běžným datem. V poli se píše „srpen 2026",
+        respektive „2026".</p>
+
+      <p>Šipky listují po celých obdobích — u měsíců po rocích, u roků po
+        stránkách po dvanácti. Stránky jsou ukotvené na násobky dvanácti, takže
+        listování tam a zpět skončí, kde začalo.</p>
+
+      <p><code>min</code> a <code>max</code> zakážou období, které do rozmezí
+        vůbec nezasahuje: s <code>min: '2026-03-15'</code> je únor zakázaný,
+        ale březen ne. Potvrzuje se hned, bez tlačítek, a postranní zkratky ani
+        čísla týdnů nedávají smysl, takže se nevykreslují.</p>
 
       <h3>Režim <code>multiple</code></h3>
 

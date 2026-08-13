@@ -427,6 +427,9 @@ example('ex-badge', { mode: 'date', locale: 'cs' })
 
 example('ex-multiple', { mode: 'multiple', locale: 'cs', summary: true, months: 1 })
 
+example('ex-month', { mode: 'month', locale: 'cs' })
+example('ex-year', { mode: 'year', locale: 'cs' })
+
 // Předstíraná data: „kolik je ten den rezervací".
 const BOOKINGS = new Map<string, number>([
   ['2026-08-11', 2],

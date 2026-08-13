@@ -1,7 +1,7 @@
 /** Anything Gregory accepts where a date is expected. */
 export type DateLike = Date | string | number | null | undefined
 
-export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range' | 'multiple'
+export type Mode = 'date' | 'range' | 'datetime' | 'datetime-range' | 'multiple' | 'month' | 'year'
 
 /** How a whole week can be picked. See `GregoryOptions.weekSelection`. */
 export type WeekSelection = 'off' | 'number' | 'day' | 'both'

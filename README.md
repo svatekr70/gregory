@@ -73,7 +73,7 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 
 | volba | výchozí | popis |
 | --- | --- | --- |
-| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range`, `multiple` |
+| `mode` | `'date'` | `date`, `range`, `datetime`, `datetime-range`, `multiple`, `month`, `year` |
 | `className` | — | vlastní třídy pro kořen panelu (takhle se aplikují motivy) |
 | `value` | `null` | `Date`, ISO string, `{from,to}` nebo `[from, to]` |
 | `locale` | jazyk prohlížeče | BCP 47 tag nebo částečný objekt `Locale` |

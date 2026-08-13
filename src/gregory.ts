@@ -62,6 +62,14 @@ function isMultiMode(mode: ResolvedOptions['mode']): boolean {
   return mode === 'multiple'
 }
 
+/** Režimy, které nevybírají den, ale celý měsíc nebo rok. */
+function isPeriodMode(mode: ResolvedOptions['mode']): mode is 'month' | 'year' {
+  return mode === 'month' || mode === 'year'
+}
+
+/** Kolik let se vejde na jednu stránku výběru roku. */
+const YEARS_PER_PAGE = 12
+
 function hasTime(mode: ResolvedOptions['mode']): boolean {
   return mode === 'datetime' || mode === 'datetime-range'
 }
@@ -175,7 +183,7 @@ export class Gregory {
     const mode = options.mode ?? 'date'
     const locale = resolveLocale(options.locale)
     const presets =
-      options.presets === false || (options.presets === undefined && !isRangeMode(mode))
+      options.presets === false || (options.presets === undefined && !isRangeMode(mode)) || isPeriodMode(mode)
         ? []
         : options.presets === true || options.presets === undefined
           ? defaultPresets(locale)
@@ -188,7 +196,8 @@ export class Gregory {
       min: parseDate(options.min),
       max: parseDate(options.max),
       firstDayOfWeek: options.firstDayOfWeek ?? locale.firstDayOfWeek,
-      months: options.months ?? (isRangeMode(mode) ? 2 : 1),
+      // Výběr měsíce nebo roku je vždy jeden panel.
+      months: isPeriodMode(mode) ? 1 : (options.months ?? (isRangeMode(mode) ? 2 : 1)),
       linkedCalendars: options.linkedCalendars ?? false,
       endInput: options.endInput ?? null,
       allowTyping: options.allowTyping ?? true,
@@ -200,7 +209,7 @@ export class Gregory {
       inline: options.inline ?? false,
       // Only a plain date is complete on the first click. A range still needs its
       // second bound and a datetime still needs its time, so both keep Apply.
-      autoApply: options.autoApply ?? mode === 'date',
+      autoApply: options.autoApply ?? (mode === 'date' || isPeriodMode(mode)),
       presets,
       maxSpan: options.maxSpan ?? null,
       allowOpenRange: options.allowOpenRange ?? false,
@@ -376,6 +385,13 @@ export class Gregory {
 
     const { from, to } = this.committed
     const time = hasTime(mode)
+
+    if (isPeriodMode(mode)) {
+      if (!from) return ''
+      return mode === 'month'
+        ? locale.monthLabel(from)
+        : String(from.getFullYear())
+    }
 
     if (isMultiMode(mode)) {
       // Dlouhý seznam by se do pole nevešel, takže se za třetím dnem zkrátí.
@@ -818,6 +834,9 @@ export class Gregory {
       case 'week':
         this.pickWeek(parseDate(value ?? null))
         break
+      case 'period':
+        this.pickPeriod(parseDate(value ?? null))
+        break
       case 'preset': {
         const preset = this.options.presets[Number(value)]
         if (!preset) break
@@ -838,7 +857,16 @@ export class Gregory {
         // na jeho buňku. Když je dnešek mimo min/max, jen se tam přesune.
         const now = today()
         this.goTo(now)
-        this.pick(now)
+        // Ve výběru období není co vybírat po dnech — bere se dnešní měsíc/rok.
+        if (isPeriodMode(this.options.mode)) {
+          const start =
+            this.options.mode === 'month'
+              ? createDate(now.getFullYear(), now.getMonth(), 1)
+              : createDate(now.getFullYear(), 0, 1)
+          this.pickPeriod(start)
+        } else {
+          this.pick(now)
+        }
         break
       }
       case 'clear':
@@ -1058,6 +1086,15 @@ export class Gregory {
     const view = this.views[index]
     if (!view || amount === 0) return
 
+    // Výběr měsíce listuje po rocích, výběr roku po stránkách let.
+    if (isPeriodMode(this.options.mode)) {
+      const years = this.options.mode === 'month' ? amount : amount * YEARS_PER_PAGE
+      this.views = [addMonths(view, years * 12)]
+      this.emitter.emit('month-change', { year: this.views[0]!.getFullYear(), month: 0, index: 0 })
+      this.render()
+      return
+    }
+
     if (this.options.linkedCalendars) {
       this.shiftAllViews(amount)
     } else {
@@ -1211,6 +1248,28 @@ export class Gregory {
     return startOfWeek(date, this.options.firstDayOfWeek)
   }
 
+  /** Vybere celý měsíc nebo rok — hodnotou je jeho první den. */
+  private pickPeriod(start: Date | null): void {
+    if (!start) return
+    this.selection = { from: start, to: null }
+    this.focusedDay = start
+    this.views = [monthAnchor(start)]
+
+    if (this.options.autoApply) {
+      this.committed = { ...this.selection }
+      this.syncInput()
+    }
+    this.emitter.emit('change', { value: this.selectedValue(), complete: true })
+
+    if (this.options.autoApply) {
+      this.emitter.emit('apply', { value: this.getValue() })
+      this.render()
+      this.close()
+      return
+    }
+    this.render()
+  }
+
   /** Přidá nebo odebere den ze seznamu v režimu `multiple`. */
   private togglePicked(date: Date): void {
     const key = formatISODate(date)
@@ -1273,8 +1332,79 @@ export class Gregory {
     }
   }
 
+  /**
+   * Mřížka měsíců nebo roků. Sdílí s denním kalendářem hlavičku, patičku
+   * i celý stav — liší se jen tím, co je v mřížce a co znamená klik.
+   */
+  private renderPeriodPanel(): HTMLElement {
+    const { locale, mode, min, max } = this.options
+    const year = this.firstView().getFullYear()
+    const months = mode === 'month'
+    const picked = this.selection.from
+
+    const head = h('header', { class: 'gr-head' })
+    const arrow = (direction: 'prev' | 'next'): HTMLElement =>
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'gr-nav',
+          'data-action': direction,
+          'data-index': 0,
+          'aria-label': direction === 'prev' ? locale.labels.previousMonth : locale.labels.nextMonth,
+        },
+        [direction === 'prev' ? '‹' : '›'],
+      )
+
+    // U roků se listuje po celých stránkách, u měsíců po rocích.
+    const pageStart = year - ((year % YEARS_PER_PAGE) + YEARS_PER_PAGE) % YEARS_PER_PAGE
+    const caption = months ? String(year) : `${pageStart} – ${pageStart + YEARS_PER_PAGE - 1}`
+    head.append(arrow('prev'), h('div', { class: 'gr-caption' }, [caption]), arrow('next'))
+
+    const grid = h('div', { class: 'gr-periods', role: 'grid' })
+    const names = locale.monthNames()
+
+    for (let index = 0; index < (months ? 12 : YEARS_PER_PAGE); index += 1) {
+      const date = months ? createDate(year, index, 1) : createDate(pageStart + index, 0, 1)
+      const label = months ? (names[index] ?? '') : String(pageStart + index)
+
+      // Zakázané je celé období, které nezasahuje do min/max.
+      const last = months ? createDate(date.getFullYear(), date.getMonth() + 1, 0) : createDate(date.getFullYear(), 11, 31)
+      const disabled = (min !== null && compareDay(last, min) < 0) || (max !== null && compareDay(date, max) > 0)
+      const isCurrent =
+        picked !== null &&
+        picked.getFullYear() === date.getFullYear() &&
+        (!months || picked.getMonth() === date.getMonth())
+
+      grid.append(
+        h(
+          'button',
+          {
+            type: 'button',
+            class: isCurrent ? 'gr-period is-selected' : 'gr-period',
+            'data-action': 'period',
+            'data-value': formatISODate(date),
+            disabled,
+            'aria-selected': String(isCurrent),
+          },
+          [label],
+        ),
+      )
+    }
+
+    return h('div', { class: 'gr-body' }, [h('section', { class: 'gr-calendar' }, [head, grid])])
+  }
+
   private render(): void {
     if (this.destroyed) return
+    if (isPeriodMode(this.options.mode)) {
+      const body = this.renderPeriodPanel()
+      const footer = this.renderFooter()
+      if (footer) body.append(footer)
+      this.element.replaceChildren(body)
+      if (this.open && !this.options.inline) this.position()
+      return
+    }
     const { locale, months, presets, weekNumbers, dropdowns, linkedCalendars, showOutsideDays } = this.options
     const context = this.monthContext()
 

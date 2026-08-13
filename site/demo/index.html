@@ -51,6 +51,8 @@
                 <option value="datetime">datetime — datum a čas</option>
                 <option value="datetime-range">datetime-range — rozsah s časem</option>
                 <option value="multiple">multiple — více samostatných dnů</option>
+                <option value="month">month — výběr měsíce</option>
+                <option value="year">year — výběr roku</option>
               </select>
             </label>
 
@@ -294,6 +296,17 @@
           <p>Fiskální čtvrtletí místo výchozích zkratek a vlastní <code>format</code> do inputu.</p>
           <input class="stage-input" id="ex-custom" placeholder="Vyber čtvrtletí…">
           <div class="readout" data-for="ex-custom">—</div>
+        </div>
+
+        <div class="card example">
+          <h3>Výběr měsíce a roku</h3>
+          <p><code>mode: 'month'</code> a <code>'year'</code> — na filtry v přehledech,
+            kde je denní kalendář zbytečný.</p>
+          <div class="two-fields">
+            <input class="stage-input" id="ex-month" placeholder="Měsíc…">
+            <input class="stage-input" id="ex-year" placeholder="Rok…">
+          </div>
+          <div class="readout" data-for="ex-month">—</div>
         </div>
 
         <div class="card example">

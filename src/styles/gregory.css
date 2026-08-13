@@ -318,6 +318,42 @@
   grid-template-columns: auto repeat(7, var(--gr-day-size));
 }
 
+/* Mřížka měsíců a roků (mode: 'month' / 'year'). */
+.gr-periods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gr-gap);
+  min-width: calc(var(--gr-day-size) * 7);
+}
+
+.gr-period {
+  padding: 10px 6px;
+  border: 0;
+  border-radius: var(--gr-radius-day);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.gr-period:hover:not(:disabled):not(.is-selected) {
+  background: var(--gr-hover);
+}
+
+.gr-period.is-selected {
+  background: var(--gr-accent);
+  color: var(--gr-accent-fg);
+  font-weight: 600;
+}
+
+.gr-period:disabled {
+  color: var(--gr-muted);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .gr-weekday {
   padding-bottom: 2px;
   color: var(--gr-muted);
