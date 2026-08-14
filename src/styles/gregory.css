@@ -173,9 +173,15 @@
   min-width: 0;
 }
 
+/*
+ * Měsíce zůstávají vždy vedle sebe. Dřív se zalamovaly, takže stačil delší
+ * název měsíce („červenec") a druhý měsíc skočil pod první — panel měnil tvar
+ * podle toho, kam se člověk proklikal. Když místo opravdu není, odroluje se
+ * panel vodorovně (viz `overflow-x` na `.gr`).
+ */
 .gr-calendars {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 14px;
   padding: var(--gr-pad);
 }
