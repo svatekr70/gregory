@@ -191,6 +191,22 @@
  * absolutně pozicovaný popover roztáhne po dostupné šířce a spolu s ním
  * i čtvercové buňky, takže na širokém monitoru vznikne obří kalendář.
  */
+/*
+ * Výjimka pro dialog přes celou obrazovku: na telefon se dva měsíce vedle
+ * sebe nevejdou ani omylem a vodorovné rolování uvnitř modálu je horší než
+ * měsíce pod sebou. Na popover na desktopu tohle pravidlo nesahá.
+ */
+.gr[data-fullscreen] .gr-calendars {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Zalomený měsíc začíná nový sloupec, takže dělící čára patří nad něj. */
+.gr[data-fullscreen] .gr-calendar + .gr-calendar {
+  padding-left: 0;
+  border-left: 0;
+}
+
 .gr-calendar {
   position: relative;
   flex: 0 0 auto;
