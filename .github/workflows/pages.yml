@@ -39,6 +39,15 @@ jobs:
 
       - run: npm run site:build
 
+      # Vedle dokumentace se publikuje i sestavená knihovna, aby šla načíst
+      # rovnou z URL — bez npm, bez klonování a bez lokálního buildu.
+      - name: Přibalit sestavenou knihovnu
+        run: |
+          npm run build
+          mkdir -p dist-site/dist
+          cp dist/gregory.js dist/gregory.umd.cjs dist/gregory.css dist/gregory-themes.css dist-site/dist/
+          cp -r dist/*.d.ts dist/core dist-site/dist/
+
       # Pojistka proti tomu, co se jednou stalo: tree-shaking zahodil import
       # stylů knihovny a nasadil se web s nenastylovaným kalendářem. Ve
       # vývojovém serveru to vidět není, protože ten netřese ničím.
