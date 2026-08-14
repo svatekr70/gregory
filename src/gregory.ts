@@ -16,7 +16,7 @@ import {
   withTimeOf,
 } from './core/date.js'
 import { Emitter } from './core/emitter.js'
-import { resolveLocale } from './core/locale.js'
+import { resolveLocale, splitRangeText } from './core/locale.js'
 import { defaultPresets } from './core/presets.js'
 import {
   formatTimeOfDay,
@@ -770,7 +770,7 @@ export class Gregory {
     }
 
     if (isRangeMode(mode)) {
-      const parts = text.split(/\s*(?:–|—|-{1,2}|až|to)\s*/i).filter(Boolean)
+      const parts = splitRangeText(text, locale.rangeSeparator)
       // Konec se čte první, aby zkrácený začátek („10.–14. 8. 2026") věděl,
       // do jakého měsíce a roku patří.
       const to = parts.length > 1 ? locale.parseInput(parts[1] ?? '') : null

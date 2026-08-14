@@ -89,7 +89,7 @@ function parseWritten(text: string, order: Array<'day' | 'month' | 'year'>, refe
   return date.getMonth() === month && date.getDate() === day ? date : null
 }
 
-function createIntlLocale(requested: string): Locale {
+function createIntlLocale(requested: string, separator?: string): Locale {
   const code = supportedCode(requested)
   // Popisky jdou z tabulky překladů, zbytek řeší Intl.
   const { labels, days } = translationFor(code)
@@ -100,7 +100,9 @@ function createIntlLocale(requested: string): Locale {
   const monthFormat = new Intl.DateTimeFormat(code, { month: 'long' })
   const weekdayFormat = new Intl.DateTimeFormat(code, { weekday: 'short' })
   const dateFormat = new Intl.DateTimeFormat(code, { day: 'numeric', month: 'numeric', year: 'numeric' })
-  const rangeSeparator = ' – '
+  // Vlastní oddělovač musí dorazit sem, ne až do výsledného objektu — jinak by
+  // ho `formatRange` neviděl, protože si drží uzávěr nad touhle proměnnou.
+  const rangeSeparator = separator ?? ' – '
 
   // Pořadí polí v datu: en-US má měsíc první, většina Evropy den.
   const order = dateFormat
@@ -144,12 +146,35 @@ function createIntlLocale(requested: string): Locale {
       const parts = dateFormat.formatToParts(from)
       const index = parts.findIndex((part) => part.type === 'day')
       const suffix = parts[index + 1]?.type === 'literal' ? parts[index + 1]!.value.trimEnd() : ''
-      return `${parts[index]!.value}${suffix}–${dateFormat.format(to)}`
+      return `${parts[index]!.value}${suffix}${rangeSeparator}${dateFormat.format(to)}`
     },
     formatDayCount: (count) => `${count} ${days[plural.select(count)] ?? days.other ?? ''}`.trim(),
     rangeSeparator,
     labels,
   }
+}
+
+// Pomlčky nejdřív ty delší, jinak by „--" snědla jednoduchá varianta.
+const RANGE_SEPARATORS = ['–', '—', '--', '-', 'až', 'to']
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Splits a typed range into its two ends. Besides the usual dashes and words it
+ * honours the locale's own `rangeSeparator`, so a custom one reads back the way
+ * it was written out.
+ */
+export function splitRangeText(text: string, separator: string): string[] {
+  const custom = separator.trim()
+  // Oddělovač složený jen z mezer se zahodí — rozsekal by i „10. 8. 2026".
+  // Vlastní stojí první, aby delší tvar („— do —") nesnědla holá pomlčka.
+  const candidates = custom && !RANGE_SEPARATORS.includes(custom)
+    ? [custom, ...RANGE_SEPARATORS]
+    : RANGE_SEPARATORS
+  const pattern = new RegExp(`\\s*(?:${candidates.map(escapeRegExp).join('|')})\\s*`, 'i')
+  return text.split(pattern).filter(Boolean)
 }
 
 /**
@@ -159,7 +184,7 @@ function createIntlLocale(requested: string): Locale {
  */
 export function resolveLocale(input?: LocaleInput): Locale {
   if (typeof input === 'object' && input !== null) {
-    const base = createIntlLocale(input.code ?? defaultLocaleCode())
+    const base = createIntlLocale(input.code ?? defaultLocaleCode(), input.rangeSeparator)
     return { ...base, ...input, labels: { ...base.labels, ...input.labels } }
   }
   return createIntlLocale(input ?? defaultLocaleCode())

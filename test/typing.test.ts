@@ -126,6 +126,18 @@ describe('typing into the field', () => {
     expect((picker.getValue() as DateRange).to?.getDate()).toBe(14)
   })
 
+  it('reads back a range written with a custom separator', () => {
+    mount({ mode: 'range', presets: false, locale: { code: 'cs', rangeSeparator: ' — do — ' } })
+
+    // Přesně to, co picker sám vypíše.
+    type('30. 8. 2026 — do — 2. 9. 2026')
+
+    const value = picker.getValue() as DateRange
+    expect(value.from?.getDate()).toBe(30)
+    expect(value.to?.getDate()).toBe(2)
+    expect(value.to?.getMonth()).toBe(8)
+  })
+
   it('treats a lone date in a range field as a single day', () => {
     mount({ mode: 'range', presets: false })
 

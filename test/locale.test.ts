@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveLocale } from '../src/core/locale.js'
+import { resolveLocale, splitRangeText } from '../src/core/locale.js'
 import { availableTranslations, registerTranslation } from '../src/core/i18n.js'
 import { createDate, formatISODate } from '../src/core/date.js'
 
@@ -126,7 +126,39 @@ describe('resolveLocale', () => {
 describe('formatRange', () => {
   it('vytkne společný měsíc a rok', () => {
     const locale = resolveLocale('cs')
-    expect(locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)).toBe('10.–14. 8. 2026')
+    expect(locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)).toBe('10. – 14. 8. 2026')
+  })
+
+  it('drží stejný oddělovač i ve zkrácené podobě', () => {
+    const locale = resolveLocale('cs')
+    const shortened = locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)
+    const full = locale.formatRange(date('2026-08-30'), date('2026-09-02'), false)
+    expect(shortened).toContain(locale.rangeSeparator)
+    expect(full).toContain(locale.rangeSeparator)
+  })
+
+  it('respektuje přepsaný oddělovač v obou podobách', () => {
+    const locale = resolveLocale({ code: 'cs', rangeSeparator: ' až ' })
+    expect(locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)).toBe('10. až 14. 8. 2026')
+    expect(locale.formatRange(date('2026-08-30'), date('2026-09-02'), false)).toBe('30. 8. 2026 až 2. 9. 2026')
+    const from = date('2026-08-10')
+    const to = date('2026-08-10')
+    from.setHours(8, 30)
+    to.setHours(17, 0)
+    expect(locale.formatRange(from, to, true)).toBe('10. 8. 2026 08:30 až 10. 8. 2026 17:00')
+  })
+
+  it('zformátovaný rozsah se dá rozdělit zpátky', () => {
+    for (const separator of [' – ', ' až ', ' — do — ', ' / ']) {
+      const locale = resolveLocale({ code: 'cs', rangeSeparator: separator })
+      const text = locale.formatRange(date('2026-08-30'), date('2026-09-02'), false)
+      expect(splitRangeText(text, locale.rangeSeparator)).toEqual(['30. 8. 2026', '2. 9. 2026'])
+    }
+  })
+
+  it('vlastní formatRange přebije ten z locale', () => {
+    const locale = resolveLocale({ code: 'cs', rangeSeparator: ' až ', formatRange: () => 'vlastní' })
+    expect(locale.formatRange(date('2026-08-10'), date('2026-08-14'), false)).toBe('vlastní')
   })
 
   it('jednodenní rozsah píše jako jedno datum', () => {
