@@ -47,6 +47,9 @@ jobs:
           mkdir -p dist-site/dist
           cp dist/gregory.js dist/gregory.umd.cjs dist/gregory.css dist/gregory-themes.css dist-site/dist/
           cp -r dist/*.d.ts dist/core dist-site/dist/
+          # UMD má příponu .cjs, kterou Pages servírují jako application/node.
+          # Kopie s .js dostane správný MIME typ pro <script src>.
+          cp dist/gregory.umd.cjs dist-site/dist/gregory.umd.js
 
       # Pojistka proti tomu, co se jednou stalo: tree-shaking zahodil import
       # stylů knihovny a nasadil se web s nenastylovaným kalendářem. Ve

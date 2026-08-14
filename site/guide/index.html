@@ -83,21 +83,43 @@
       <!-- ============================================================ -->
       <h2 id="instalace">Instalace</h2>
 
-      <p>Z npm, se sestavovacím nástrojem (Vite, Webpack, Rollup):</p>
+      <p>Se sestavovacím nástrojem (Vite, Webpack, Rollup). Balíček zatím není
+        na npm, takže se instaluje rovnou z GitHubu — <code>npm</code> si ho po
+        naklonování sestaví sám, nic se nemusí buildit ručně:</p>
 
-      <pre class="code">npm install @svatekr70/gregory</pre>
+      <pre class="code">npm install github:svatekr70/gregory        <span class="c"># poslední main</span>
+npm install github:svatekr70/gregory<span class="s">#v0.1.0</span> <span class="c"># konkrétní verze</span></pre>
 
       <pre class="code"><span class="k">import</span> { Gregory } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
 <span class="k">import</span> <span class="s">'@svatekr70/gregory/style.css'</span></pre>
 
-      <p>Bez buildu, přímo do stránky — balíček má i UMD sestavení, které vystaví
+      <p>Až balíček vyjde na npm, bude to obyčejné
+        <code>npm install @svatekr70/gregory</code>; import zůstane stejný.</p>
+
+      <p>Bez buildu, přímo do stránky — sestavená knihovna se publikuje spolu
+        s touhle dokumentací, takže jde načíst z URL. UMD podoba vystaví
         globální <code>Gregory</code>:</p>
 
-      <pre class="code">&lt;link rel="stylesheet" href="/gregory/gregory.css"&gt;
-&lt;script src="/gregory/gregory.umd.cjs"&gt;&lt;/script&gt;
+      <pre class="code">&lt;link rel="stylesheet" href="https://svatekr70.github.io/gregory/dist/gregory.css"&gt;
+&lt;script src="https://svatekr70.github.io/gregory/dist/gregory.umd.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   <span class="k">new</span> Gregory.<span class="t">Gregory</span>(<span class="s">'#termin'</span>, { mode: <span class="s">'date'</span>, locale: <span class="s">'cs'</span> })
 &lt;/script&gt;</pre>
+
+      <p>Nebo jako ES modul, bez globální proměnné:</p>
+
+      <pre class="code">&lt;script type="module"&gt;
+  <span class="k">import</span> { Gregory } <span class="k">from</span> <span class="s">'https://svatekr70.github.io/gregory/dist/gregory.js'</span>
+  <span class="k">new</span> <span class="t">Gregory</span>(<span class="s">'#termin'</span>, { mode: <span class="s">'date'</span>, locale: <span class="s">'cs'</span> })
+&lt;/script&gt;</pre>
+
+      <div class="callout">
+        <strong>Na produkci raději k sobě</strong>
+        <p>Adresy výše ukazují na poslední verzi na <code>main</code> a visí na
+          cizím serveru. Pro ostrý provoz si stáhni přílohu vydání
+          z <a href="https://github.com/svatekr70/gregory/releases/latest">GitHub
+          Releases</a> a soubory si nahraj k sobě.</p>
+      </div>
 
       <p>Styly se importují jednou za aplikaci, ne u každého pickeru. Motivy jsou
         v samostatném souboru a jsou nepovinné:</p>

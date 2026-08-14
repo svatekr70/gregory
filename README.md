@@ -46,14 +46,49 @@ i lokálně přes `npm run site:dev`.
 
 ## Instalace
 
+Balíček zatím není na npm, takže se instaluje rovnou z GitHubu. `npm` si ho po
+naklonování sestaví sám (skript `prepare`), nic se nemusí buildit ručně:
+
 ```bash
-npm install @svatekr70/gregory
+npm install github:svatekr70/gregory        # poslední main
+npm install github:svatekr70/gregory#v0.1.0 # konkrétní verze
 ```
 
 ```js
 import { Gregory } from '@svatekr70/gregory'
 import '@svatekr70/gregory/style.css'
+import '@svatekr70/gregory/themes.css'      // nepovinné, jen hotové motivy
 ```
+
+Až balíček vyjde na npm, bude to obyčejné `npm install @svatekr70/gregory`;
+import zůstane stejný.
+
+### Bez npm, rovnou ze stránky
+
+Sestavená knihovna se publikuje s dokumentací, takže jde načíst z URL. Soubory
+odpovídají poslední verzi na `main`:
+
+```html
+<link rel="stylesheet" href="https://svatekr70.github.io/gregory/dist/gregory.css">
+<script src="https://svatekr70.github.io/gregory/dist/gregory.umd.js"></script>
+<script>
+  new Gregory.Gregory('#termin', { mode: 'date', locale: 'cs' })
+</script>
+```
+
+Nebo jako ES modul:
+
+```html
+<link rel="stylesheet" href="https://svatekr70.github.io/gregory/dist/gregory.css">
+<script type="module">
+  import { Gregory } from 'https://svatekr70.github.io/gregory/dist/gregory.js'
+  new Gregory('#termin', { mode: 'date', locale: 'cs' })
+</script>
+```
+
+Pro produkci, kde nechceš viset na cizí adrese ani na posledním commitu, si
+stáhni [přílohu vydání](https://github.com/svatekr70/gregory/releases/latest)
+a soubory si nahraj k sobě.
 
 ## Použití
 
