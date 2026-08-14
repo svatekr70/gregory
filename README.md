@@ -51,7 +51,7 @@ naklonování sestaví sám (skript `prepare`), nic se nemusí buildit ručně:
 
 ```bash
 npm install github:svatekr70/gregory        # poslední main
-npm install github:svatekr70/gregory#v0.1.0 # konkrétní verze
+npm install github:svatekr70/gregory#v0.1.2 # konkrétní verze
 ```
 
 ```js

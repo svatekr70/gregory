@@ -1,6 +1,6 @@
 {
   "name": "@svatekr70/gregory",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Fast, dependency-free date, range and time picker for the web. Works as a plain class or as a <gregory-picker> custom element.",
   "keywords": [
     "datepicker",
