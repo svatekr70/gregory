@@ -471,9 +471,10 @@ splatnost.<span class="t">addEventListener</span>(<span class="s">'gregory:chang
 
       <p>Datum se dá i prostě napsat: <code>13. 8. 2026</code>, <code>13.8.</code>
         (doplní se letošní rok) i <code>2026-08-13</code>. Nesrozumitelný text se
-        vrátí na poslední platnou hodnotu. Když psaní nechceš, vypni ho —
-        <code>allowTyping: false</code> je správnější než <code>readonly</code>,
-        protože to pickeru nezakáže otevřít se.</p>
+        vrátí na poslední platnou hodnotu. Když psaní nechceš, vypni ho přes
+        <code>allowTyping: false</code>. Samotné <code>readonly</code> na poli
+        pickeru nevadí — otevře se a datum do pole zapíše. Zamknout ho i tam jde
+        volbou <code>lockOnReadonly: true</code>.</p>
 
       <!-- ============================================================ -->
       <h2 id="recept-rezervace">Recept: rezervace ubytování</h2>
@@ -635,10 +636,9 @@ filtr.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&gt
       <h2 id="potize">Řešení potíží</h2>
 
       <h3>Panel se neotevře</h3>
-      <p>Pole je <code>disabled</code> nebo <code>readonly</code> — obojí picker
-        respektuje. Když chceš zabránit jen psaní, použij
-        <code>allowTyping: false</code>. Zkontroluj taky, jestli není zapnuté
-        <code>disabled: true</code> ve volbách.</p>
+      <p>Pole je <code>disabled</code>, nebo má picker <code>disabled: true</code>
+        či <code>lockOnReadonly: true</code> nad <code>readonly</code> polem. Když
+        chceš zabránit jen psaní, použij <code>allowTyping: false</code>.</p>
 
       <h3>Panel vypadá rozsypaně</h3>
       <p>Nejspíš chybí <code>gregory.css</code>. Druhá možnost: stránka má

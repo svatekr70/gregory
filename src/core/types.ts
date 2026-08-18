@@ -163,11 +163,16 @@ export interface GregoryOptions {
   submitName?: string | { from: string; to: string } | null
   /**
    * Zamkne picker bez ohledu na pole. Panel se neotevře a klikání v něm nic
-   * nevybere. Bez tohoto přepínače se stejně chová `disabled` i `readonly`
-   * na samotném poli — pole, do kterého uživatel nesmí psát, ale datum si
-   * vybrat má, se dělá přes `allowTyping: false`.
+   * nevybere. Stejně se chová `disabled` na samotném poli.
    */
   disabled?: boolean
+  /**
+   * Zamkne picker i nad polem s `readonly`. Výchozí `false`: `readonly` pole,
+   * do kterého se datum dostane jen z kalendáře, je běžný vzor a picker by ho
+   * jinak vůbec neotevřel. Zakázat psaní a nechat výběr jde přes
+   * `allowTyping: false`.
+   */
+  lockOnReadonly?: boolean
   /** Render the panel in place instead of a popover attached to an input. */
   inline?: boolean
   /** Commit on the last click instead of showing Apply/Cancel. */
@@ -250,6 +255,7 @@ export interface ResolvedOptions {
   weekSelection: WeekSelection
   dropdowns: false | 'select' | 'menu'
   disabled: boolean
+  lockOnReadonly: boolean
   inline: boolean
   autoApply: boolean
   presets: RangePreset[]

@@ -181,6 +181,7 @@ export class Gregory {
 
     this.createHiddenFields()
     this.bindHost()
+    this.element.addEventListener('mousedown', this.onPanelDown)
     this.element.addEventListener('click', this.onPanelClick)
     this.element.addEventListener('change', this.onPanelChange)
     this.element.addEventListener('input', this.onPanelInput)
@@ -219,6 +220,7 @@ export class Gregory {
       weekSelection: options.weekSelection ?? 'off',
       dropdowns: options.dropdowns === true ? 'select' : (options.dropdowns ?? false),
       disabled: options.disabled ?? false,
+      lockOnReadonly: options.lockOnReadonly ?? false,
       inline: options.inline ?? false,
       // Only a plain date is complete on the first click. A range still needs its
       // second bound and a datetime still needs its time, so both keep Apply.
@@ -264,14 +266,18 @@ export class Gregory {
 
   /**
    * Zamčený picker nic nevybírá. Kromě vlastní volby `disabled` se ptáme i
-   * prvku, na kterém picker visí: `disabled` a `readonly` na poli znamenají,
-   * že hodnotu nesmí měnit uživatel — a výběr v kalendáři je změna jako každá
-   * jiná. Programové `setValue()` se tím neblokuje.
+   * prvku, na kterém picker visí: `disabled` na poli znamená, že hodnotu nesmí
+   * měnit uživatel — a výběr v kalendáři je změna jako každá jiná. Programové
+   * `setValue()` se tím neblokuje.
+   *
+   * `readonly` samo o sobě nezamyká: pole, do kterého se nedá psát a datum se
+   * vybírá jen z kalendáře, je u pickerů nejběžnější vzor. Kdo chce i to
+   * zamknout, má na to `lockOnReadonly`.
    */
   private isLocked(field: HTMLElement | null = this.activeInput ?? this.input ?? this.trigger): boolean {
     if (this.options.disabled) return true
     if (!field) return false
-    if (field instanceof HTMLInputElement) return field.disabled || field.readOnly
+    if (field instanceof HTMLInputElement) return field.disabled || (this.options.lockOnReadonly && field.readOnly)
     return field.hasAttribute('disabled') || field.getAttribute('aria-disabled') === 'true'
   }
 
@@ -500,16 +506,21 @@ export class Gregory {
 
     if (this.endField) {
       // Rozdělený picker: každé pole dostane svůj konec, ne celý rozsah.
-      const { locale, mode, format } = this.options
-      const time = hasTime(mode)
-      const text = (date: Date | null): string =>
-        date ? (format ? (format(date, locale) ?? '') : locale.formatDate(date, time)) : ''
-      this.writeField(this.input, text(this.committed.from))
-      this.writeField(this.endField, text(this.committed.to))
+      this.writeField(this.input, this.fieldText(this.input))
+      this.writeField(this.endField, this.fieldText(this.endField))
       return
     }
 
-    this.writeField(this.input, this.formatValue())
+    this.writeField(this.input, this.fieldText(this.input))
+  }
+
+  /** Text, který v poli stojí, dokud se hodnota nezmění. */
+  private fieldText(field: HTMLInputElement): string {
+    if (!this.endField) return this.formatValue()
+    const { locale, mode, format } = this.options
+    const date = field === this.endField ? this.committed.to : this.committed.from
+    if (!date) return ''
+    return format ? (format(date, locale) ?? '') : locale.formatDate(date, hasTime(mode))
   }
 
   /**
@@ -753,8 +764,14 @@ export class Gregory {
    */
   private readTyped(field: HTMLInputElement): void {
     if (this.isLocked(field)) return
+    // Do readonly pole nikdo nepsal, není co číst.
+    if (field.readOnly) return
     const { locale, mode } = this.options
     const text = field.value.trim()
+
+    // Nezměněný text nemá co nastavovat. Zbytečné `setValue()` by překreslilo
+    // panel a ohlásilo `apply` při každém opuštění pole.
+    if (text === this.fieldText(field).trim()) return
 
     if (!text) {
       if (this.committed.from || this.committed.to) this.clear()
@@ -865,6 +882,22 @@ export class Gregory {
     }
     this.cancel()
     this.returnFocus()
+  }
+
+  /**
+   * Klik do panelu nesmí sebrat fokus poli, na kterém picker visí. Jinak přijde
+   * `blur`, ten přečte napsaný text a překreslí panel — a tlačítko, na kterém
+   * `mousedown` začal, mezitím zmizí. `mouseup` pak dopadne na jiný uzel a
+   * prohlížeč `click` vůbec nepošle, takže se ztratil vždy první klik do
+   * otevřeného panelu.
+   */
+  private onPanelDown = (event: MouseEvent): void => {
+    const focused = this.host.ownerDocument.activeElement
+    const onAnchor = focused === this.trigger || this.fields().some((field) => field === focused)
+    if (!onAnchor) return
+    // Roletky, časová pole a jezdec se bez fokusu ovládat nedají.
+    if ((event.target as HTMLElement | null)?.closest('select, input, textarea')) return
+    event.preventDefault()
   }
 
   private onPanelClick = (event: MouseEvent): void => {

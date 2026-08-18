@@ -74,6 +74,68 @@ describe('single date mode', () => {
   })
 })
 
+// Regrese: `mousedown` v panelu sebral fokus poli, `blur` přečetl nezměněný
+// text, `setValue()` překreslil panel — a protože `mouseup` dopadl na nový
+// uzel, prohlížeč klik vůbec neposlal. Ztrácel se tak vždy první klik.
+describe('first click in the panel', () => {
+  function mousedownOn(target: Element): MouseEvent {
+    const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+    target.dispatchEvent(event)
+    return event
+  }
+
+  it('keeps the focus on the anchor field', () => {
+    mount({ mode: 'datetime', autoApply: false })
+    input.focus()
+
+    expect(mousedownOn(day('2026-08-13')).defaultPrevented).toBe(true)
+  })
+
+  it('lets dropdowns and time controls take the focus', () => {
+    mount({ mode: 'datetime', dropdowns: true })
+    input.focus()
+
+    const select = picker.element.querySelector('select')
+    expect(select).not.toBeNull()
+    expect(mousedownOn(select!).defaultPrevented).toBe(false)
+  })
+
+  it('leaves an inline panel alone — there is no field to protect', () => {
+    mount({ mode: 'date', inline: true })
+
+    expect(mousedownOn(day('2026-08-13')).defaultPrevented).toBe(false)
+  })
+
+  it('does not re-render when the field text has not changed', () => {
+    mount({ mode: 'datetime', autoApply: false, value: '2026-08-13T09:00' })
+    picker.goTo('2026-08-01')
+    const cell = day('2026-08-13')
+
+    input.dispatchEvent(new Event('blur'))
+
+    expect(day('2026-08-13')).toBe(cell)
+  })
+
+  it('does not report apply just because the field was left', () => {
+    mount({ mode: 'date', value: '2026-08-13' })
+    const onApply = vi.fn()
+    picker.on('apply', onApply)
+
+    input.dispatchEvent(new Event('blur'))
+
+    expect(onApply).not.toHaveBeenCalled()
+  })
+
+  it('still reads a date typed by hand', () => {
+    mount({ mode: 'date', value: '2026-08-13' })
+    input.value = '20. 8. 2026'
+
+    input.dispatchEvent(new Event('blur'))
+
+    expect(formatISODate(picker.getValue() as Date)).toBe('2026-08-20')
+  })
+})
+
 describe('range mode', () => {
   beforeEach(() => mount({ mode: 'range', presets: false }))
 

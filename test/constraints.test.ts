@@ -45,15 +45,29 @@ describe('zamčené pole', () => {
     expect(picker.element.hidden).toBe(true)
   })
 
-  it('neotevře panel nad readonly polem', () => {
+  // Readonly pole, do kterého se datum dostane jen z kalendáře, je běžný vzor —
+  // picker se nad ním otevřít musí.
+  it('otevře panel nad readonly polem a vybere v něm', () => {
     mount({ mode: 'date' })
+    input.readOnly = true
+
+    input.dispatchEvent(new Event('click'))
+    expect(picker.element.hidden).toBe(false)
+
+    picker.goTo('2026-08-01')
+    day('2026-08-13').click()
+    expect(formatISODate(picker.getValue() as Date)).toBe('2026-08-13')
+  })
+
+  it('zamkne readonly pole na požádání', () => {
+    mount({ mode: 'date', lockOnReadonly: true })
     input.readOnly = true
 
     input.dispatchEvent(new Event('click'))
     expect(picker.element.hidden).toBe(true)
   })
 
-  it('nečte napsané datum ze zamčeného pole', () => {
+  it('nečte hodnotu z readonly pole — nikdo do něj nepsal', () => {
     mount({ mode: 'date', value: '2026-08-13' })
     input.readOnly = true
     input.value = '1. 1. 2020'

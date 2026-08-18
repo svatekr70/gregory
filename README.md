@@ -155,7 +155,8 @@ Element vypisuje `gregory:change`, `gregory:apply`, `gregory:open` a
 | `endInput` | — | druhé pole pro konec rozsahu (`from` do prvního, `to` do druhého) |
 | `allowTyping` | `true` | číst datum napsané rukou do pole |
 | `submitName` | — | skrytá pole s ISO hodnotou pro odeslání formuláře |
-| `disabled` | `false` | zamkne picker; totéž udělá `disabled` i `readonly` na poli |
+| `disabled` | `false` | zamkne picker; totéž udělá `disabled` na poli |
+| `lockOnReadonly` | `false` | zamknout i nad polem s `readonly` (jinak se nad ním picker normálně otevře) |
 | `inline` | `false` | vykreslit na místo místo popoveru |
 | `autoApply` | `true` jen v módu `date` | potvrdit hned, bez tlačítek Apply/Cancel |
 | `presets` | vestavěné v range módu | postranní zkratky, `false` je skryje |
