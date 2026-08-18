@@ -184,6 +184,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
           <tr><td><code>allowTyping</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Číst datum napsané rukou do pole.</td></tr>
           <tr><td><code>submitName</code></td><td><code>string | { from, to }</code></td><td>—</td><td>Skrytá pole s ISO hodnotou pro odeslání formuláře.</td></tr>
           <tr><td><code>disabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Zamkne picker bez ohledu na stav pole.</td></tr>
+          <tr><td><code>lockOnReadonly</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Zamknout i nad polem s <code>readonly</code>. Bez toho se picker nad readonly polem normálně otevře.</td></tr>
           <tr><td><code>inline</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Vykreslit na místo místo popoveru.</td></tr>
           <tr><td><code>autoApply</code></td><td><code>boolean</code></td><td><code>true</code> jen v režimu <code>date</code></td><td>Potvrdit hned, bez tlačítek.</td></tr>
           <tr><td><code>presets</code></td><td><code>RangePreset[] | boolean</code></td><td>vestavěné v range režimech</td><td>Postranní zkratky.</td></tr>
@@ -239,6 +240,7 @@ picker.<span class="t">on</span>(<span class="s">'apply'</span>, ({ value }) =&g
         <thead><tr><th>Tlačítko</th><th>Co udělá</th></tr></thead>
         <tbody>
           <tr><td><strong>Dnes</strong></td><td>Přeskočí na dnešek a vybere ho — stejně, jako by se kliklo na jeho buňku. Když je dnešek mimo <code>min</code>/<code>max</code>, je zašedlé.</td></tr>
+          <tr><td><strong>Nyní</strong></td><td>Totéž v režimech s časem (<code>datetime</code>, <code>datetime-range</code>), akorát nastaví i aktuální čas — srovnaný po <code>timeStep</code> do okna <code>minTime</code>/<code>maxTime</code>. Popisek je <code>labels.now</code>.</td></tr>
           <tr><td><strong>Vymazat</strong></td><td>Vyprázdní hodnotu a <strong>rovnou ji potvrdí</strong>: vyšle <code>apply</code> s <code>null</code>, vyprázdní input a zavře panel. Takhle se odesílá „nic". Zašedlé, dokud není co mazat.</td></tr>
           <tr><td><strong>Zrušit</strong></td><td>Zahodí rozpracovaný výběr a vrátí poslední potvrzenou hodnotu. Jen mimo <code>autoApply</code>.</td></tr>
           <tr><td><strong>Použít</strong></td><td>Povýší výběr na hodnotu. Jen mimo <code>autoApply</code>.</td></tr>
@@ -385,17 +387,17 @@ picker.<span class="t">getValue</span>()  <span class="c">// [Date, Date, Date] 
 })</pre>
 
       <h3><code>disabled</code>, <code>readonly</code></h3>
-      <p>Picker respektuje obojí na poli, na kterém visí: panel se neotevře a
-        napsaný text se nečte. Volba <code>disabled</code> udělá totéž bez ohledu
-        na pole — hodí se na inline panel, který žádné pole nemá. Programové
+      <p>Pole s <code>disabled</code> picker zamkne: panel se neotevře a napsaný
+        text se nečte. Volba <code>disabled</code> udělá totéž bez ohledu na pole
+        — hodí se na inline panel, který žádné pole nemá. Programové
         <code>setValue()</code> funguje dál, zamčené je jen ovládání.</p>
       <div class="callout">
         <strong>Pole bez psaní, ale s pickerem</strong>
-        <p>Klasický trik <code>readonly</code>, aby uživatel do pole nemohl psát,
-          tady kalendář zamkne taky — <code>readonly</code> znamená „uživatel
-          hodnotu nemění" a výběr v kalendáři je změna jako každá jiná. Na tenhle
-          případ je <code>allowTyping: false</code>: pole se nedá přepsat rukou,
-          ale kalendář se otevře.</p>
+        <p>Nad <code>readonly</code> polem se picker otevře a datum do něj zapíše
+          — pole, do kterého se hodnota dostane jen z kalendáře, je běžný vzor.
+          Z pole se pak nic nečte, psát do něj stejně nejde. Když má být zamčené
+          i to, je na to <code>lockOnReadonly: true</code>; když má jít jen
+          o zákaz psaní u obyčejného pole, stačí <code>allowTyping: false</code>.</p>
       </div>
 
       <h3><code>isDisabled</code> a <code>dayClass</code></h3>
@@ -944,7 +946,7 @@ odhlasit()</pre>
       <pre class="code"><span class="k">import</span> { registerTranslation } <span class="k">from</span> <span class="s">'@svatekr70/gregory'</span>
 
 <span class="t">registerTranslation</span>(<span class="s">'ja'</span>, {
-  labels: { apply: <span class="s">'適用'</span>, cancel: <span class="s">'キャンセル'</span>, today: <span class="s">'今日'</span>, <span class="c">/* … */</span> },
+  labels: { apply: <span class="s">'適用'</span>, cancel: <span class="s">'キャンセル'</span>, today: <span class="s">'今日'</span>, now: <span class="s">'現在'</span>, <span class="c">/* … */</span> },
   presets: { today: <span class="s">'今日'</span>, yesterday: <span class="s">'昨日'</span>, <span class="c">/* … */</span> },
   days: { other: <span class="s">'日'</span> },
 })</pre>
@@ -982,7 +984,7 @@ odhlasit()</pre>
           <tr><td><code>weekdayNames(first)</code></td><td><code>string[]</code></td><td>7 zkratek, už otočených.</td></tr>
           <tr><td><code>formatDate(date, withTime)</code></td><td><code>string</code></td><td>Text do inputu.</td></tr>
           <tr><td><code>rangeSeparator</code></td><td><code>string</code></td><td>Oddělovač konců rozsahu.</td></tr>
-          <tr><td><code>labels</code></td><td><code>object</code></td><td>Popisky tlačítek a ARIA.</td></tr>
+          <tr><td><code>labels</code></td><td><code>object</code></td><td>Popisky tlačítek a ARIA. Mimo jiné <code>today</code> a <code>now</code> — druhý se použije v režimech s časem.</td></tr>
         </tbody>
       </table>
       </div>

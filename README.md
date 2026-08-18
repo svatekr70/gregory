@@ -209,7 +209,7 @@ Chybějící jazyk se dodá zvenčí:
 import { registerTranslation } from '@svatekr70/gregory'
 
 registerTranslation('ja', {
-  labels: { apply: '適用', cancel: 'キャンセル', today: '今日', /* … */ },
+  labels: { apply: '適用', cancel: 'キャンセル', today: '今日', now: '現在', /* … */ },
   presets: { today: '今日', yesterday: '昨日', /* … */ },
   days: { other: '日' },
 })
