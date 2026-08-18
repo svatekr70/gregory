@@ -47,6 +47,31 @@ describe('single date mode', () => {
   it('renders a single month panel by default', () => {
     expect(picker.element.querySelectorAll('.gr-calendar')).toHaveLength(1)
   })
+
+  // Regrese: klik nechával `to` prázdné, takže den dostal jen `is-start`
+  // a vypadal jako rozdělaný začátek rozsahu — zaoblený jen vlevo.
+  it('marks a clicked day as both ends of the selection', () => {
+    mount({ mode: 'date', autoApply: false })
+
+    day('2026-08-26').click()
+
+    const cell = day('2026-08-26')
+    expect(cell.classList.contains('is-selected')).toBe(true)
+    expect(cell.classList.contains('is-start')).toBe(true)
+    expect(cell.classList.contains('is-end')).toBe(true)
+  })
+
+  it('styles a clicked day exactly like one set from outside', () => {
+    mount({ mode: 'datetime', autoApply: false })
+
+    picker.setValue('2026-08-24')
+    const fromValue = [...day('2026-08-24').classList].sort()
+
+    day('2026-08-26').click()
+    const fromClick = [...day('2026-08-26').classList].sort()
+
+    expect(fromClick).toEqual(fromValue)
+  })
 })
 
 describe('range mode', () => {

@@ -1252,7 +1252,11 @@ export class Gregory {
     }
 
     if (!isRangeMode(this.options.mode)) {
-      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: null }
+      // Mimo rozsah je výběr jediný den, takže drží oba konce — stejně jako
+      // hodnota nastavená zvenčí. S `to: null` vypadal den po kliknutí jako
+      // rozdělaný začátek rozsahu: zaoblený jen vlevo.
+      const picked = withTimeOf(date, this.timeFor(this.selection.from, date))
+      this.selection = { from: picked, to: new Date(picked.getTime()) }
     } else if (!this.selection.from || this.selection.to) {
       this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: null }
     } else if (compareDay(date, this.selection.from) < 0) {
