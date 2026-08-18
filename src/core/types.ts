@@ -79,6 +79,8 @@ export interface Locale {
     previousMonth: string
     nextMonth: string
     today: string
+    /** Náhrada za „Dnes" v režimech s časem — nastaví i aktuální čas. */
+    now: string
     clear: string
     apply: string
     cancel: string

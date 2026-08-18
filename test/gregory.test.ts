@@ -1331,6 +1331,87 @@ describe('footer actions', () => {
     expect(value.getDate()).toBe(now.getDate())
   })
 
+  it('offers Now instead of Today when the mode has a time', () => {
+    mount({ mode: 'datetime' })
+    const button = () => picker.element.querySelector<HTMLButtonElement>('[data-action="today"]')!
+    expect(button().textContent).toBe('Nyní')
+
+    mount({ mode: 'date' })
+    expect(button().textContent).toBe('Dnes')
+  })
+
+  it('sets the current time along with today', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 18, 14, 37))
+    try {
+      mount({ mode: 'datetime', timeStep: 1 })
+      picker.goTo('2020-01-01')
+
+      click('today')
+
+      const value = picker.getSelection().from!
+      expect(formatISODate(value)).toBe('2026-08-18')
+      expect(value.getHours()).toBe(14)
+      expect(value.getMinutes()).toBe(37)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('snaps Now into the allowed time window', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 18, 20, 12))
+    try {
+      mount({ mode: 'datetime', timeStep: 30, minTime: '08:00', maxTime: '18:00' })
+
+      click('today')
+
+      const value = picker.getSelection().from!
+      expect(value.getHours()).toBe(18)
+      expect(value.getMinutes()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('gives each bound of a datetime range its own current time', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 18, 9, 15))
+    try {
+      mount({ mode: 'datetime-range', presets: false })
+
+      click('today')
+      vi.setSystemTime(new Date(2026, 7, 18, 11, 45))
+      click('today')
+
+      const { from, to } = picker.getSelection()
+      expect(from?.getHours()).toBe(9)
+      expect(from?.getMinutes()).toBe(15)
+      expect(to?.getHours()).toBe(11)
+      expect(to?.getMinutes()).toBe(45)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps the picked time when another day is clicked afterwards', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 18, 14, 37))
+    try {
+      mount({ mode: 'datetime', timeStep: 1 })
+
+      click('today')
+      day('2026-08-25').click()
+
+      const value = picker.getSelection().from!
+      expect(formatISODate(value)).toBe('2026-08-25')
+      expect(value.getHours()).toBe(14)
+      expect(value.getMinutes()).toBe(37)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('only navigates when today is out of bounds', () => {
     mount({ mode: 'date', min: '2030-01-01', max: '2030-12-31' })
 

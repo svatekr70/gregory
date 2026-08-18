@@ -970,14 +970,16 @@ export class Gregory {
       case 'today': {
         // Doskočí na dnešek a rovnou ho vybere — stejně, jako by se kliklo
         // na jeho buňku. Když je dnešek mimo min/max, jen se tam přesune.
-        const now = today()
+        // V režimech s časem je z tlačítka „Nyní", takže bere i aktuální čas.
+        const withTime = hasTime(this.options.mode)
+        const now = withTime ? new Date() : today()
         this.goTo(now)
         // Ve výběru období není co vybírat po dnech — bere se dnešní měsíc/rok.
         if (isPeriodMode(this.options.mode)) {
           const start = createDate(now.getFullYear(), this.periodStartMonth(now), 1)
           this.pickPeriod(start)
         } else {
-          this.pick(now)
+          this.pick(now, { ownTime: withTime })
         }
         break
       }
@@ -1273,7 +1275,11 @@ export class Gregory {
     if (rerender) this.render()
   }
 
-  private pick(date: Date | null): void {
+  /**
+   * Vybere den. `ownTime` znamená, že se má vzít čas z předaného data místo
+   * času, který si drží dosavadní konec výběru — na tom stojí tlačítko „Nyní".
+   */
+  private pick(date: Date | null, { ownTime = false } = {}): void {
     if (!date || isDayDisabled(date, this.monthContext())) return
     if (this.daysPickWeeks()) {
       this.pickWeek(this.weekStartOf(date))
@@ -1284,18 +1290,22 @@ export class Gregory {
       return
     }
 
+    // Čas nového konce: buď se podědí z toho dosavadního, nebo — u „Nyní" —
+    // vezme z právě vybraného data. Okno `minTime`/`maxTime` platí pro obojí.
+    const timeOf = (bound: Date | null): Date | null => this.timeFor(ownTime ? date : bound, date)
+
     if (!isRangeMode(this.options.mode)) {
       // Mimo rozsah je výběr jediný den, takže drží oba konce — stejně jako
       // hodnota nastavená zvenčí. S `to: null` vypadal den po kliknutí jako
       // rozdělaný začátek rozsahu: zaoblený jen vlevo.
-      const picked = withTimeOf(date, this.timeFor(this.selection.from, date))
+      const picked = withTimeOf(date, timeOf(this.selection.from))
       this.selection = { from: picked, to: new Date(picked.getTime()) }
     } else if (!this.selection.from || this.selection.to) {
-      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: null }
+      this.selection = { from: withTimeOf(date, timeOf(this.selection.from)), to: null }
     } else if (compareDay(date, this.selection.from) < 0) {
-      this.selection = { from: withTimeOf(date, this.timeFor(this.selection.from, date)), to: this.selection.from }
+      this.selection = { from: withTimeOf(date, timeOf(this.selection.from)), to: this.selection.from }
     } else {
-      this.selection = { ...this.selection, to: withTimeOf(date, this.timeFor(this.selection.to, date)) }
+      this.selection = { ...this.selection, to: withTimeOf(date, timeOf(this.selection.to)) }
     }
 
     this.focusedDay = date
@@ -1856,6 +1866,9 @@ export class Gregory {
     }
 
     const now = today()
+    // S časem nestačí „Dnes" — tlačítko nastaví i aktuální čas, takže je z něj
+    // „Nyní".
+    const nowLabel = hasTime(mode) ? locale.labels.now : locale.labels.today
     helpers.append(
       h(
         'button',
@@ -1864,9 +1877,9 @@ export class Gregory {
           class: 'gr-btn gr-btn-link',
           'data-action': 'today',
           disabled: isDayDisabled(now, this.monthContext()),
-          title: locale.labels.today,
+          title: nowLabel,
         },
-        [locale.labels.today],
+        [nowLabel],
       ),
       h(
         'button',

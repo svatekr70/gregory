@@ -150,7 +150,8 @@ function createIntlLocale(requested: string, separator?: string): Locale {
     },
     formatDayCount: (count) => `${count} ${days[plural.select(count)] ?? days.other ?? ''}`.trim(),
     rangeSeparator,
-    labels,
+    // `now` přibylo později, takže překlad zaregistrovaný zvenčí ho mít nemusí.
+    labels: { ...labels, now: labels.now ?? labels.today },
   }
 }
 
